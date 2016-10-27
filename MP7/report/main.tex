@@ -1,0 +1,309 @@
+\documentclass[12pt]{extarticle}
+\usepackage{amsmath, amsthm, latexsym, tikz, graphicx, listings, microtype, mathtools, soul, color, fancyhdr}
+\usepackage[margin=1in]{geometry}
+
+\newenvironment{myindentpar}[1]%
+ {\begin{list}{}%
+         {\setlength{\leftmargin}{#1}}%
+         \item[]%
+ }
+ {\end{list}}
+ 
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
+
+% Swap the definition of \abs* and \norm*, so that \abs
+% and \norm resizes the size of the brackets, and the 
+% starred version does not.
+\makeatletter
+\let\oldabs\abs
+\def\abs{\@ifstar{\oldabs}{\oldabs*}}
+%
+\let\oldnorm\norm
+\def\norm{\@ifstar{\oldnorm}{\oldnorm*}}
+\makeatother
+
+\definecolor{lightgray}{gray}{0.65}
+\definecolor{pinegreen}{RGB}{1, 171, 161}
+\definecolor{lightblue}{RGB}{135, 206, 250}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+\newcommand*{\Value}{\frac{1}{2}x^2}%
+\newcommand{\hlc}[2][yellow]{ {\sethlcolor{#1} \hl{#2}} }
+
+
+% /*--------------------------------------------------------------*/
+%   Changing the values here sets the due date for the assignment!
+% /*--------------------------------------------------------------*/
+\newcommand{\duedate}{XX/XX/XX }
+\newcommand{\semester}{SEMESTER}
+
+\lstset{frame=tb,
+  language=C++,
+  breaklines=true,
+  showstringspaces=false,
+  columns=flexible,
+  numbers=none,
+  tabsize=3,
+  escapeinside={(*@}{@*)}
+  %,
+  %commentstyle=\color{dkgreen},
+  %stringstyle=\color{mauve}
+}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\lhead{\color{lightgray} CSCE-313}
+\rhead{\color{lightgray} \semester}
+\rfoot{\thepage}
+\pagenumbering{arabic}
+
+\definecolor{codegray}{gray}{0.9}
+\newcommand{\code}[1]{\colorbox{codegray}{\texttt{#1}}}
+
+\begin{document}
+
+
+\begin{center}
+    \underline{{\large Machine Problem 7: UNIX Threads \  }(Due: \duedate)}  \\
+\end{center}
+
+\ \\
+{\large \underline{Introduction}:}
+
+\begin{myindentpar}{5mm}
+
+    \noindent
+    For many computing tasks it is sufficient that one instruction be executed immediately after another, sequentially, until the program completes. However, in the case that many tasks need to be executed at once, or that a single task can be appropriately split into sub-tasks, a program’s performance can be greatly improved by working on tasks concurrently or in parallel through the use of threads. Sometimes it works just as well to use multiple processes, or multitasking, instead of multithreading, but there are many benefits that result from multithreading.  
+
+\end{myindentpar}
+
+\ \\
+{\large \underline{Threading Background}:}
+
+\begin{myindentpar}{5mm}
+
+    \noindent
+    \textbf{How do threads differ from processes?}
+    
+    \vspace{-3mm}
+    \ \\
+    A process is a container for code in execution.  It consists of an address space which houses program code and all program data (See Advanced Concepts section for further information).  In UNIX/Linux operating systems, processes are maintained as completely separate execution units.  Any given process knows absolutely nothing about other processes executing on the system, and processes can only communicate using one of the IPC (Inter-Process Communication) mechanisms offered by the kernel (Named/unnamed pipes, shared memory regions, etc...).  
+    
+    \ \\
+    Processes are kept separate to ensure system security.  One can conjure up a multitude of reasons why it would be disastrous if one process could easily access the data of another.  However, given that modern processors have multiple execution units ("cores"), there is a need to provide a way for multiple instances of sequential code execution to work together.  
+    
+    \ \\
+    Context switches of entire processes are extremely expensive.  In order to switch one process out for another, the state of the currently executing process must be saved, and the state of the process being switched to must be loaded into registers/memory.  
+    
+    \ \\
+    In an environment that must perform multiple tasks at the same time which all contribute to a single goal, switching back and forth between processes would be an unnecessary drain on computing resources.  To address this problem, POSIX offers a library specifying light weight execution units known as threads.  
+    
+    \ \\
+    Threads are initialized inside of a parent process.  They execute within (share) the context of the parent process, so no full context switch is required in order to switch from one thread to another.  Some data can be shared between threads executing under the same process, and some must be kept individual.  The heap, program code, and open files are shared between threads, whereas threads must have their own stack space and CPU register values.  
+    
+    \ \\
+    As a result of this shared data scheme, switching between threads is as simple as switching out the stack pointer (\%esp on x86 systems) and saving/replacing CPU register values.  This takes considerably less time than switching out entire processes and makes multithreaded execution of code practical.
+    
+    \begin{center}
+        Figure \#1: Threading Visual Representation
+    \end{center}
+    \vspace{-6mm}
+    \begin{center}
+        \includegraphics{threading.png}
+    \end{center}
+
+    \ \\
+    \textbf{Advantages of Threads}
+    
+    \ \\
+    The list below provides some of the most popular incentives for utilizing multithreaded programming.  For further reading, there is a variety of readily available literature pertaining to the topic (The author recommends \textit{Programming with POSIX Threads} by Butenhof).  
+    
+    \begin{itemize}
+        \setlength\itemsep{-0.1em}
+        
+        \item \emph{Faster Execution}: Threads can take advantage of computer systems which possess multiple CPUs.  Instead of being bound to doing one sequence of instructions at a time, the only limitation is the number of processors available.  This scales from small personal computers to massive supercomputers.  
+        \item \emph{Lower Resource Consumption}: Threads spare the kernel from having to do significant amounts of computation.  By sharing the parent's address space, less time is required in kernel mode doing work not pertinent to the problem.  Additionally, by utilizing the same address spaces, less memory management must be performed during switching.  
+        \item \emph{Better System Utilization}: Most code is inherently parallelizable even though it is traditionally envisioned as sequential.  Any number of disjoint tasks can be executed in parallel instead of in a sequence.  A classic analogy for parallelization envisions a house with 5 rooms to be painted.  Assuming that painting a room is an individual task that cannot be subdivided, up to 5 painters can be hired to paint the house.  Painting some rooms may take longer than others, but overall, having 5 painters will always be much faster than just one.  
+        \item \emph{Simplified Sharing \& Communication}: Since threads can share data structures (given that they have a common heap space), passage of information between threads is simple and does not require kernel intervention (as is usually required in traditional IPC mechanisms).  
+        
+    \end{itemize}
+
+\end{myindentpar}
+
+\ \\
+{\large \underline{Assignment}:}
+
+\begin{myindentpar}{5mm}
+
+	You are given 5 files: client\_E7.cpp, dataserver.cpp, request\_channel.cpp, request\_channel.h, and a functional makefile. When you type the command 'make' into your shell prompt, two executables will be produced: client and dataserver.  
+	
+	\ \\
+	The code given to you is functional.  You may type ./client (With no arguments) to observe execution and behavior of the system. The client process calls fork() and runs the dataserver program.  Afterwards, it populates a request buffer with 300 requests, 100 each for three hypothetical users: John Smith, Jane Smith, and Joe Smith. This is done using one, single-threaded process.  The preprogrammed argument, -n, allows you to specify the number of requests \emph{per person}.  For example, typing "./client –n 10000" would cause 30000 requests to be generated (10000 per person).  Since the program is single threaded, you should observe that the program will run much slower with 100 times more work to do.  
+	
+	\ \\
+	In large systems, it is quite possible that the number of requests could grow exponentially.  Websites like Amazon receive around 80 million requests daily.  Other companies such as Google and Youtube, receive requests numbering in the hundreds of millions.  No single process will ever be able to this volume of traffic.  So, how do the worlds largest businesses handle it in stride?  Instead of making one process do all of the work, multiple processes handle data requests concurrently.  In doing so, it is possible to handle large quantities of data since one can continue to add more cores/process threads to the system as load increases.  
+	
+	\ \\
+	In this assignment, you are to increase the efficiency of the client-server program given to you by using multithreading.  You must add a command line option, -w, which allows users to enter a number.  This number will define how many worker threads your program will utilize.  Your program must spawn that many worker threads successfully, and these threads must work together to handle all of the requests provided to it.  
+	
+	\ \\
+	Aside from multithreading, your program should have the following characteristics and satisfy the following requirements:
+	\begin{itemize}
+	    \setlength\itemsep{-0.1em}
+	    
+	    \item The program should function correctly for any number of threads (There are operating system limits to the thread count.  On most machines, that upper bound appears to be around 250.  Your program should function correctly for any integer number in the range [1, 250]).  
+	    \item No fifo files should remain after running the client program with any number of threads.  
+	    \item The client program should not take an unreasonably long time to execute.  Generally, the execution should be quicker than the single threaded version.  You can use the sample code as a performance baseline.  
+	    \item All requests for the program are handled correctly.  The histogram should report the correct number of requests and should NOT drop any requests.  
+	    
+	\end{itemize}
+
+\end{myindentpar}
+
+\ \\
+{\large \underline{Deliverables}:}
+
+\begin{itemize}
+    \setlength\itemsep{-0.1em}
+
+    \item \textbf{Code:}
+    \begin{itemize}
+        \setlength\itemsep{-0.1em}
+        
+        \item You are to turn in one file ZIP file which contains the files provided in the sample code, modified to fulfil the requirements of the assignment.  Along with this, turn in the report (described below) and any other code that your program requires to run.  
+        \item If your program requires specific steps to compile and run, please provide a README file that describes these steps.  (Please do try to keep it to only a makefile.  You shouldn't need to do anything fancy or convoluted)
+        
+    \end{itemize}
+
+    \item \textbf{Report:}
+    \begin{itemize}
+        \setlength\itemsep{-0.1em}
+        
+        \item Once you've finished all programming tasks, author a report that answers the following questions about your code:
+        \begin{enumerate}
+        
+            \item Describe what your code does and how it differs from the code that was initially given to you.  
+            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints starting at 1 and going to the highest number that will run on your OS.  After making the graph, Describe the behavior of the client program is w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given.  
+            \begin{itemize}
+                \setlength\itemsep{-0.1em}
+                
+                \item Note: Timing may be done in several ways.  One way is to use the time command from the shell (See the time manual page using the command man 1 time).  Another would be to time your program internally using either clock\_gettime() or gettimeofday() (see corresponding manpages man clock\_gettime and man gettimeofday). 
+                
+            \end{itemize}
+            
+            \item Describe the platform that you gathered data on (I.e. CSCE Linux server, Raspberry Pi, personal computer, etc...).  If it was a personal device (This includes the raspberry pi), describe the operating system that it runs.  Also answer the following sub-questions:
+            \begin{itemize}
+                \setlength\itemsep{-0.1em}
+                
+                \item What is the maximum number of threads that the host machine will allow your client program to create before throwing an error?
+                \item What does the operating system do when your client program tries to create more threads than allowed?
+                \item How does your client program behave in response?
+                
+            \end{itemize}
+            
+        \end{enumerate}
+        
+    \end{itemize}
+    
+\end{itemize}
+
+\ \\
+{\large \underline{Advanced Concepts}:}
+
+\begin{myindentpar}{5mm}
+
+    \noindent
+    \textbf{Atomic Operations \& Race Conditions}
+    
+    \ \\
+    The scheduler (process 0 on UNIX/Linux machines) makes all decisions regarding when processes execute and in what order.  The choice of which process to execute next is made by complex algorithms which strive for efficiency and fairness (all processes get a chance).  However, the order of execution is not defined by these algorithms (i.e. there is no enforced execution sequence given a list of processes to be run).  As a result, processes are switched in and out of execution depending on the will of the system's scheduling algorithm.  
+
+    \ \\
+    UNIX processes are known as preemptive or reentrant (both terms mean the same thing).  Reentrant processes are those which can be context switched in the middle of execution and then resumed later.  This means that operations such as function calls, file I/O, and even system calls can and will be interrupted during execution and resumed later.  
+    
+    \ \\
+    There are some operations that are so fundamental to the system and the hardware that they cannot be interrupted.  They either run to completion or not at all.  These are known as atomic operations.  Most instructions that can be implemented as a single assembly language instruction are atomic.  These assembly language statements are executed directly on the processor in one clock cycle.  Add with two arguments, subtract with two arguments, load a word from memory, store a word to memory, etc. are all atomic operations.  Anything more complex, such as adding three+ arguments, can be divided into more than one assembly instruction.  As a result, they are not atomic and can potentially be interrupted.  
+    
+    \ \\
+    In the context of normal processes, interruptions are fine.  As long as the state is resumed properly, the user is never aware that their program was interrupted (potentially several times).  When a program uses threads, however, the results can be disastrous.  As a thought experiment, imagine a process containing two threads (1 \& 2) and a set of shared global variables.  If both threads attempt to execute code to modify any of these variables, the result is dependent on the order in which the two threads execute.  The order of thread execution is impossible to predict.  By default, there are no guarantees, and every possible situation can and could happen.  Situations like this, where the result is dependent on the order of execution, are known as \emph{race conditions}.  The figure below illustrates the above situation and shows all possible interleavings of code execution for a given set of instructions.  
+    
+    \begin{center}
+        Figure \textbf{XXX}: Race Condition
+    \end{center}
+    \begin{center}
+        \includegraphics{race_condition.png}
+    \end{center}
+
+    \ \\
+    \textbf{Synchronization}
+    
+    \ \\
+    A segment of code that potentially could be damaging if caught in a race condition is known as a critical section.  Critical sections must be executed atomically with respect to all other threads in the system.  Even though system calls and functions generally aren't atomic, they can be made atomic through the use of synchronization.  This means that when a process calls an function or performs an operation, the function or operation will complete fully or not at all without another process or thread performing the same operation.  There are multiple ways of making complex expressions into atomic operations, such as locks and semaphores.  Many of these methods will be covered in extensive detail in lecture.  Consequently, this section focuses on the synchronization method that you should use for this assignment: the pthread mutex.  
+    
+    \ \\
+    A mutex, short for "mutual exclusion," prevents two concurrently running threads from entering the same section of code at the same time.  The POSIX API that you'll be using in this maching problem provides some very convenient functions for using mutexes.  To use them, be sure to add "\#include$<$pthread.h$>$" to your program.  Mutex types can be declared like any other variables (i.e. pthread\_mutex\_t temp;) and passed by address to the relevant API calls, such as pthread\_mutex\_init(\&temp, NULL).  
+    
+    \ \\
+    A list of relavant API calls along with short descriptions of each is provided below:
+    \begin{enumerate}
+        \setlength\itemsep{-0.1em}
+
+        \item \textbf{pthread\_mutex\_lock(pthread\_mutex\_t *mutex)}
+        
+        \ \\
+        When a process calls lock on a mutex, one of two things will occur.  If no other process has the mutex locked, the mutex becomes locked, and the process continues on into the critical section that follows.  If another process has control over the mutex (i.e. it is locked by another process), the process that just called for the lock is put to sleep.  Any other processes that call lock while the mutex is locked will also be put to sleep.  
+        
+        \ \\
+        All threads must utilize the same pthread\_mutex\_t object or they will not be synchronized.  
+        
+        \ \\
+        For more information about the use of this function, consult the manual page using the shell command \code{man 3 pthread\_mutex\_lock}.  
+        
+        \ \\
+        Important note about POSIX thread manpages: Your Linux/UNIX machine (such as a raspberry pi) may not come with certain manpages by default.  In order to acquire them, you will need to instal lthe package \code{manpages-posix-dev} using the installation mechanism required by your distribution.  For the raspberry pi running raspbian, the command is: \code{sudo apt-get install manpages-posix-dev}.  
+        
+        \vspace{-7mm}
+        \ \\
+        \item \textbf{pthread\_mutex\_unlock(pthread\_mutex\_t *mutex)}
+        
+        \ \\
+        Calling this function releases (unlocks) a mutex that had previously been locked by pthread\_mutex\_lock.  If there is another process waiting to lock the mutex, that process is woken up and given the lock.  Afterwards, the whole process starts over again.  For more information, consult \code{man 3 pthread\_mutex\_unlock}.  
+        
+        \vspace{-7mm}
+        \ \\
+        \item \textbf{pthread\_mutex\_init(pthread\_mutex\_t *mutex, const pthread\_mutexattr\_t *attr)}
+        
+        \ \\
+        This function initializes the mutex referenced by \emph{mutex} to the attributes specified by \emph{attr}.  (Note: In this machine problem, attr can always be NULL and \emph{mutex} will automatically be initialized using default values).  It returns 0 if mutex initialization was successful or an error value if it failed.  For more information, consult \code{man 3 pthread\_mutex\_init}.  
+
+        \vspace{-7mm}
+        \ \\        
+        \item \textbf{pthread\_mutex\_destroy(pthread\_mutex\_t *mutex)}
+        
+        \ \\
+        Uninitializes the mutex passed as an argument.  As always, for more information, consult \code{man 3 pthread\_mutex\_destroy}.  
+        
+    \end{enumerate}
+
+\end{myindentpar}
+
+\newpage
+\noindent
+{\large \underline{Bibliography}:}
+
+\ \\
+{[} 1 {]} \hspace{1.2mm} Northwood, Chris. "Computer Science Notes $\Rightarrow$ Operating Systems." Operating
+\hspace*{1.15cm} Systems. N.p., n.d. Web. 03 June 2016.
+
+\ \\
+{[} 2 {]} \hspace{1.7mm} Iwillgetthatjobatgoogle. "Race Conditions: First Approach." I Will Get That Job
+\hspace*{1.05cm} At Google. N.p., n.d. Web. 03 June 2016.
+
+
+\end{document}
+

@@ -82,10 +82,221 @@ void cleanup()
     exit(255);
 }
 
-void handle_signals(int signum)
+Rvoid handle_signals(int signum)
 {
     cleanup();
 }
+
+
+
+sig_atomic_t time_quantum_expired = 0;
+void sigalarm_handler(int signum)
+{
+    time_quantum_expired = 1;
+}
+
+
+class Running_process
+{
+public
+    /* Constructor */
+    Running_process();
+    Running_process(pid_t pid, double remaining_exec_time, bool active = false);
+
+    /* Getter Methods */
+    pid_t get_process_pid();
+    double get_remaining_execution_time();
+    bool is_running();
+    bool is_initialized();
+    
+    /* Setter Methods */
+    void set_process_pid(pid_t new_pid);
+    void set_remaining_execution_time(double new_exec_time);
+    void set_initialized(bool is_initialized);
+
+    /* Control Methods */
+    void start();
+    void stop();
+
+private
+    pid_t process_pid;
+    double remaining_execution_time;
+    bool is_running;
+    bool is_initialized;
+
+
+    Running_process();
+}
+
+/* Constructors */
+Running_process::Running_process();
+{
+    process_pid = 0;   
+    remaining_execution_time = 0.0;
+    running = false;
+    initialized = false;
+}
+
+Running_process::Running_process(pid_t pid, double remaining_exec_time, bool active = false)
+{
+    process_pid = pid;
+    remeaining_execution_time = remaining_exec_time;
+    running = active;
+    initialized = true;
+}
+
+
+/* Getter Methods */
+pid_t Running_process::get_process_pid()
+{
+    return process_pid;
+}
+
+double Running_process::get_remaining_execution_time()
+{
+    return remaining_execution_time;
+}
+
+bool Running_process::is_running()
+{
+    return
+}
+
+bool Running_process::is_initialized()
+{
+    return initialized
+}
+
+
+/* Setter Methods */
+void Running_process::set_process_pid(pid_t new_pid, bool is_initialized = false,
+    double remaining_exec_time = 0.0, bool active = false)
+{
+    process_pid = new_pid;
+    initialized = is_initialized;
+    if(initialized == true)
+    {
+        running = active;
+        remaining_execution_time = remaining_exec_time;
+    }
+    else
+    {
+        running = false;
+        remaining_execution_time = 0.0;
+    }
+}
+
+void Running_process::set_remaining_execution_time(double new_exec_time)
+{
+    remaining_execution_time = new_exec_time;
+}
+
+void Running_process::set_initialized(bool is_initialized)
+{
+    initialized = is_initialized;
+}
+
+
+/* Control Methods */
+void Running_process::start()
+{
+    is_running = true;
+    kill(process_pid, SIGCONT);
+}
+
+void Running_process::stop()
+{
+    is_running = false;
+    kill(process_pid, SIGSTOP);
+}
+
+
+// Defines to specify the type of scheduling policy to be used
+#define NO_POLICY 0
+#define ROUND_ROBIN 1
+#define FIFO 2
+#define SJF 
+
+class Scheduler
+{
+public:
+
+    /* Constructor */
+    Scheduler();
+
+    /* Utility methods */
+    void schedule_process(pid_t process_pid, double expected_run_time = 0.0);
+    
+    /* Setter Methods */
+    void set_policy(int policy);
+
+    /* Public Scheduling Routines */
+    void schedule_all();
+
+private:
+    int scheduling_policy;
+    vector<Running_process*> scheduleable_processes;
+
+    /* Private Scheduling Routines */
+    void schedule_RR();
+    void schedule_FIFO();
+    void schedule_SJF();
+};
+
+/* Constructor */
+Scheduler::Scheduler()
+{
+    scheduling_policy = NO_POLICY;
+}
+
+
+/* Utility Methods */
+void Scheduler::scheule_process(pid_t process_pid, double expected_run_time = 0.0)
+{
+    Running_process *new_process = new Running_process(process_pid, expected_run_time, false);
+    scheduleable_processes.push_back(new_process);
+}
+
+
+/* Setter Methods */
+void set_policy(int policy)
+{
+    if(policy == NO_POLICY || policy == ROUND_ROBIN
+        || policy == FIFO || policy == SJF)
+    {
+        scheduling_policy = policy;
+    }
+    else
+    {
+        std::cout << "[ERROR]: Unknown scheduling policy." << std::endl;
+    }
+}
+
+
+/* Public Scheduling Routines */
+void Scheduler::schedule_all()
+{
+    if(scheduling_policy == ROUND_ROBIN)
+    {
+        schedule_RR();
+    }
+    else if(scheduling_policy == FIFO)
+    {
+        schedule_FIFO();
+    }
+    else if(scheduling_policy == SJF)
+    {
+        schedule_SJF();
+    }
+    else if(scheduling_policy == NO_POLICY)
+    {
+
+    }
+}
+
+
+
+
 
 
 int main()

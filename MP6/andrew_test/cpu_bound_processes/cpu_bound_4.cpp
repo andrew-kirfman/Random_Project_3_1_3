@@ -20,8 +20,6 @@
 
 void sort_list(std::vector<int>& list)
 {
-    std::cout << "Got Here!" << std::endl;
-
     int num_swaps = 0;
     int placeholder = 0;
     int num_iterations = 0;
@@ -34,7 +32,6 @@ void sort_list(std::vector<int>& list)
 
         for(int i=0; i<(list.size() - num_iterations - 1); i++)
         {
-            std::cout << "Flag1" << std::endl;
             if(list[i] > list[i + 1])
             {
                 placeholder = list[i + 1];

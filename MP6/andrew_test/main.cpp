@@ -101,7 +101,7 @@ class Running_process
     public:
     /* Constructor */
     Running_process();
-    Running_process(pid_t pid, bool is_initialized, double remaining_exec_time, bool active = false);
+    Running_process(pid_t pid, double remaining_exec_time, bool active);
 
     /* Getter Methods */
     pid_t get_process_pid();
@@ -110,7 +110,8 @@ class Running_process
     bool is_initialized();
     
     /* Setter Methods */
-    void set_process_pid(pid_t new_pid);
+    void set_process_pid(pid_t new_pid, bool is_initialized, double remaining_exec_time,
+        bool is_active);
     void set_remaining_execution_time(double new_exec_time);
     void set_initialized(bool is_initialized);
 
@@ -232,7 +233,7 @@ public:
 
 private:
     int scheduling_policy;
-    vector<Running_process*> scheduleable_processes;
+    std::vector<Running_process*> scheduleable_processes;
 
     /* Private Scheduling Routines */
     void schedule_RR();
@@ -291,6 +292,61 @@ void Scheduler::schedule_all()
     }
 }
 
+/* Global Variables */
+sig_atomic_t signal_flag = 0;
+
+void handle_RR(int signum)
+{
+    signal_flag = 1;
+}
+
+
+/* Private Scheduling Routines */
+void Scheduler::schedule_RR()
+{
+    std::cout << "[INFO]: Starting RR processes." << std::endl;
+
+
+
+    return;
+}
+
+void Scheduler::schedule_FIFO()
+{
+    std::cout << "[INFO]: Starting FIFO processes." << std::endl;
+
+    struct sigaction signal_struct;
+    signal_struct.sa_handler = 
+
+    while(true)
+    {
+        Running_process current_process = scheduleable_processes.front();
+        pid_t current_pid = current_process.get_process_pid();
+        
+        // Currently waiting for the process to finish
+        if(current_process.is_running())
+        {
+            // CONTINUE HERE!!!   
+        }
+        // The process has not been started.  Start it.  
+        else
+        {
+
+        }
+
+
+    }
+
+
+    return;
+}
+
+void Scheduler::schedule_SJF()
+{
+    
+    return;
+}
+
 
 int main()
 {
@@ -319,7 +375,6 @@ int main()
     /* Reused Variables */
     pid_t pid = 0;
     int return_val = 0;
-    struct sched_param scheduling_struct;
     std::string system_string = "";
 
     /* Clear old occurrences of the temp directories */

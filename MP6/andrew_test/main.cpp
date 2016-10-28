@@ -82,7 +82,7 @@ void cleanup()
     exit(255);
 }
 
-Rvoid handle_signals(int signum)
+void handle_signals(int signum)
 {
     cleanup();
 }
@@ -98,10 +98,10 @@ void sigalarm_handler(int signum)
 
 class Running_process
 {
-public
+    public:
     /* Constructor */
     Running_process();
-    Running_process(pid_t pid, double remaining_exec_time, bool active = false);
+    Running_process(pid_t pid, bool is_initialized, double remaining_exec_time, bool active = false);
 
     /* Getter Methods */
     pid_t get_process_pid();
@@ -118,18 +118,15 @@ public
     void start();
     void stop();
 
-private
+private:
     pid_t process_pid;
     double remaining_execution_time;
-    bool is_running;
-    bool is_initialized;
-
-
-    Running_process();
-}
+    bool running;
+    bool initialized;
+};
 
 /* Constructors */
-Running_process::Running_process();
+Running_process::Running_process()
 {
     process_pid = 0;   
     remaining_execution_time = 0.0;
@@ -140,7 +137,7 @@ Running_process::Running_process();
 Running_process::Running_process(pid_t pid, double remaining_exec_time, bool active = false)
 {
     process_pid = pid;
-    remeaining_execution_time = remaining_exec_time;
+    remaining_execution_time = remaining_exec_time;
     running = active;
     initialized = true;
 }
@@ -159,12 +156,12 @@ double Running_process::get_remaining_execution_time()
 
 bool Running_process::is_running()
 {
-    return
+    return running;
 }
 
 bool Running_process::is_initialized()
 {
-    return initialized
+    return initialized;
 }
 
 
@@ -200,13 +197,13 @@ void Running_process::set_initialized(bool is_initialized)
 /* Control Methods */
 void Running_process::start()
 {
-    is_running = true;
+    running = true;
     kill(process_pid, SIGCONT);
 }
 
 void Running_process::stop()
 {
-    is_running = false;
+    running = false;
     kill(process_pid, SIGSTOP);
 }
 
@@ -215,7 +212,7 @@ void Running_process::stop()
 #define NO_POLICY 0
 #define ROUND_ROBIN 1
 #define FIFO 2
-#define SJF 
+#define SJF 3
 
 class Scheduler
 {
@@ -225,7 +222,7 @@ public:
     Scheduler();
 
     /* Utility methods */
-    void schedule_process(pid_t process_pid, double expected_run_time = 0.0);
+    void schedule_process(pid_t process_pid, double expected_run_time);
     
     /* Setter Methods */
     void set_policy(int policy);
@@ -251,7 +248,7 @@ Scheduler::Scheduler()
 
 
 /* Utility Methods */
-void Scheduler::scheule_process(pid_t process_pid, double expected_run_time = 0.0)
+void Scheduler::schedule_process(pid_t process_pid, double expected_run_time = 0.0)
 {
     Running_process *new_process = new Running_process(process_pid, expected_run_time, false);
     scheduleable_processes.push_back(new_process);
@@ -259,7 +256,7 @@ void Scheduler::scheule_process(pid_t process_pid, double expected_run_time = 0.
 
 
 /* Setter Methods */
-void set_policy(int policy)
+void Scheduler::set_policy(int policy)
 {
     if(policy == NO_POLICY || policy == ROUND_ROBIN
         || policy == FIFO || policy == SJF)
@@ -295,11 +292,96 @@ void Scheduler::schedule_all()
 }
 
 
-
-
-
-
 int main()
+{
+    /* Define signal handlers to clean up from exceptions */
+    /* 
+     * Note: It would disastrous for any of the cpu intensive processes to 
+     * continue running in the event that something goes wrong.  Make absolutely
+     * sure that they will be cleaned up by the machine.  
+     */
+    struct sigaction signal_struct;
+    signal_struct.sa_handler = handle_signals;
+    sigaction(SIGINT, &signal_struct, NULL);
+    sigaction(SIGQUIT, &signal_struct, NULL);
+    sigaction(SIGILL, &signal_struct, NULL);
+    sigaction(SIGABRT, &signal_struct, NULL);
+    sigaction(SIGFPE, &signal_struct, NULL);
+    sigaction(SIGSEGV, &signal_struct, NULL);
+    sigaction(SIGTERM, &signal_struct, NULL);
+
+    std::cout << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* Setup                                                                      */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << std::endl;
+
+    /* Reused Variables */
+    pid_t pid = 0;
+    int return_val = 0;
+    struct sched_param scheduling_struct;
+    std::string system_string = "";
+
+    /* Clear old occurrences of the temp directories */
+    return_val = system("rm -rf ./cpu_bound 2>&1 > /dev/null");
+    if(return_val == -1)
+    {
+        std::cout << "[ERROR]: Cound not remove old cpu_bound directory." << std::endl;
+    }
+
+    return_val = system("rm -rf ./cpu_bound 2>&1 > /dev/null");
+    if(return_val == -1)
+    {
+        std::cout << "[ERROR]: Cound not remove old cpu_bound directory." << std::endl;
+    }
+
+    /* Make a directory to write executable files to */
+    mkdir("./cpu_bound", S_IRWXU | S_IRWXG | S_IRWXO);
+    mkdir("./io_bound", S_IRWXU | S_IRWXG | S_IRWXO);
+
+    /* Start CPU bound processes */
+    std::cout << "Starting CPU bound processes." << std::endl;
+    
+    for(unsigned short int i=1; i<=5; i++)
+    {
+        system_string = "g++ -std=c++11 ./cpu_bound_processes/cpu_bound_" + std::to_string(i) + ".cpp -o ./cpu_bound/cpu_" + std::to_string(i);
+        return_val = system(system_string.c_str());
+        if(return_val == -1)
+        {
+            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create CPU_" << std::to_string(i) << std::endl
+                << "    " << strerror(errno) << std::endl;
+            cleanup();
+        }
+        else
+        {
+            pid = fork();
+
+            if(pid == 0)
+            {
+                system_string = "./cpu_bound/cpu_" + std::to_string(i);
+                return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+            }
+            else if(pid == -1)
+            {
+                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create CPU_" << std::to_string(i) << std::endl
+                    << "    " << strerror(errno) << std::endl;
+                cleanup();
+            }
+            else
+            {
+                cpu_bound.push_back(pid);
+                std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created CPU_" << std::to_string(i) << std::endl;
+            }
+        }
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+
+
+
+int thing1()
 {
     /* Define signal handlers to clean up from exceptions */
     /* 

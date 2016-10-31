@@ -33,8 +33,7 @@
 /* Global Variables                                                            */
 /* --------------------------------------------------------------------------- */
 
-std::vector<pid_t> cpu_bound;
-std::vector<pid_t> io_bound;
+std::vector<pid_t> running_processes;
 
 /* 
  * This machine problem will introduce you to the function of the operating system's scheduler and how different
@@ -63,21 +62,14 @@ std::vector<pid_t> io_bound;
 
 void cleanup()
 {
-    /* Clean up CPU bound processes */
-    for(unsigned short int i=0; i<cpu_bound.size(); i++)
+    /* Clean up all running processes */
+    for(unsigned short int i=0; i<running_processes.size(); i++)
     {
-        kill(cpu_bound[i], SIGKILL);
-    }
-
-    /* Clean up I/O bound processes */
-    for(unsigned short int i=0; i<io_bound.size(); i++)
-    {
-        kill(io_bound[i], SIGKILL);
+        kill(running_processes[i], SIGKILL);
     }
 
     /* Clean up temporary directories */
-    system("rm -rf ./cpu_bound");
-    system("rm -rf ./io_bound");
+    system("rm -rf ./active");
 
     exit(255);
 }
@@ -157,6 +149,7 @@ double Running_process::get_remaining_execution_time()
 
 bool Running_process::is_running()
 {
+    std::cout << "RUNNING RUNNING: " << running << std::endl;
     return running;
 }
 
@@ -294,10 +287,16 @@ void Scheduler::schedule_all()
 
 /* Global Variables */
 sig_atomic_t signal_flag = 0;
+sig_atomic_t terminated_pid = -1;
 
 void handle_RR(int signum)
 {
     signal_flag = 1;
+}
+
+void handle_term(int signum)
+{
+    terminated_pid = waitpid(-1, NULL, 0);
 }
 
 
@@ -311,27 +310,66 @@ void Scheduler::schedule_RR()
     return;
 }
 
+
 void Scheduler::schedule_FIFO()
 {
-    std::cout << "[INFO]: Starting FIFO processes." << std::endl;
+    for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
+    {
+        std::cout << "THING: " << (*scheduleable_processes[i]).get_process_pid() << std::endl;
+    }
+
+    std::cout << "[INFO]: Starting FIFO processes." << std::endl << std::endl;
 
     struct sigaction signal_struct;
-    signal_struct.sa_handler = 
+    signal_struct.sa_handler = handle_term;
+    sigaction(SIGCHLD, &signal_struct, NULL);
+
+    return;
 
     while(true)
     {
-        Running_process current_process = scheduleable_processes.front();
-        pid_t current_pid = current_process.get_process_pid();
-        
+        if(terminated_pid != -1 && terminated_pid >= 0)
+        {
+            std::cout << "Process terminated." << std::endl;
+            bool found = false;
+            for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
+            {
+                if(scheduleable_processes[i]->get_process_pid() == terminated_pid)
+                {
+                    scheduleable_processes.erase(scheduleable_processes.begin() + i);
+                    found = true;
+
+                    terminated_pid = -1;
+
+                    std::cout << "  [SUCCESS]: Proceds_" << std::to_string(i) << " terminated successfully." << std::endl;
+                    break;
+                }
+            }
+
+            if(found == false)
+            {
+                std::cout << "[ERROR]: Cound not terminate finished process successfully." << std::endl;
+            }
+        }
+
+        Running_process current_process = *scheduleable_processes[scheduleable_processes.size() - 1];
+        std::cout << "THING: " << std::to_string(current_process.get_process_pid()) << std::endl;
+
         // Currently waiting for the process to finish
         if(current_process.is_running())
         {
-            // CONTINUE HERE!!!   
+            std::cout << "continuing." << std::endl;
+            usleep(10000);
+            continue;
         }
         // The process has not been started.  Start it.  
         else
         {
-
+            std::cout << "Starting" << std::endl;
+            current_process.start();
+            std::cout << "STATUS: " << current_process.is_running();
+            return;
+            usleep(10000);
         }
 
 
@@ -378,32 +416,27 @@ int main()
     std::string system_string = "";
 
     /* Clear old occurrences of the temp directories */
-    return_val = system("rm -rf ./cpu_bound 2>&1 > /dev/null");
+    return_val = system("rm -rf ./active 2>&1 > /dev/null");
     if(return_val == -1)
     {
-        std::cout << "[ERROR]: Cound not remove old cpu_bound directory." << std::endl;
-    }
-
-    return_val = system("rm -rf ./cpu_bound 2>&1 > /dev/null");
-    if(return_val == -1)
-    {
-        std::cout << "[ERROR]: Cound not remove old cpu_bound directory." << std::endl;
+        std::cout << "[" << BOLDRED << "ERROR" << RESET << "]: Cound not remove old running_processes directory." << std::endl;
     }
 
     /* Make a directory to write executable files to */
-    mkdir("./cpu_bound", S_IRWXU | S_IRWXG | S_IRWXO);
-    mkdir("./io_bound", S_IRWXU | S_IRWXG | S_IRWXO);
+    mkdir("./active", S_IRWXU | S_IRWXG | S_IRWXO);
 
     /* Start CPU bound processes */
-    std::cout << "Starting CPU bound processes." << std::endl;
+    std::cout << "Starting processes." << std::endl;
     
     for(unsigned short int i=1; i<=5; i++)
     {
-        system_string = "g++ -std=c++11 ./cpu_bound_processes/cpu_bound_" + std::to_string(i) + ".cpp -o ./cpu_bound/cpu_" + std::to_string(i);
+        // RESTART HERE!!!
+        system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
+            + std::to_string(i);
         return_val = system(system_string.c_str());
         if(return_val == -1)
         {
-            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create CPU_" << std::to_string(i) << std::endl
+            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
                 << "    " << strerror(errno) << std::endl;
             cleanup();
         }
@@ -413,23 +446,45 @@ int main()
 
             if(pid == 0)
             {
-                system_string = "./cpu_bound/cpu_" + std::to_string(i);
+                system_string = "./active/process_" + std::to_string(i);
                 return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
             }
             else if(pid == -1)
             {
-                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create CPU_" << std::to_string(i) << std::endl
+                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
                     << "    " << strerror(errno) << std::endl;
                 cleanup();
             }
             else
             {
-                cpu_bound.push_back(pid);
-                std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created CPU_" << std::to_string(i) << std::endl;
+                running_processes.push_back(pid);
+                std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
             }
         }
     }
+
+    /* ------------------------------------------------------------------------- */
+    /* First In First Out                                                        */
+    /* ------------------------------------------------------------------------- */
+ 
     std::cout << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* First In First Out                                                         */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << std::endl;
+
+    /* Instantiate the scheduler class and add the processes to it */
+    Scheduler *process_scheduler = new Scheduler();
+    for(unsigned short int i=0; i<running_processes.size(); i++)
+    {
+        process_scheduler->schedule_process(running_processes[i]);
+    }
+    process_scheduler->set_policy(FIFO);
+
+    /* Create CPU Bound Processes */
+    std::cout << "Starting CPU bound scheduler." << std::endl;
+    process_scheduler->schedule_all();
+
 
     return 0;
 }
@@ -467,20 +522,20 @@ int thing1()
     std::string system_string = "";
 
     /* Clear old occurrences of the temp directories */
-    return_val = system("rm -rf ./cpu_bound 2>&1 > /dev/null");
+    return_val = system("rm -rf ./running_processes 2>&1 > /dev/null");
     if(return_val == -1)
     {
-        std::cout << "[ERROR]: Cound not remove old cpu_bound directory." << std::endl;
+        std::cout << "[ERROR]: Cound not remove old running_processes directory." << std::endl;
     }
 
-    return_val = system("rm -rf ./cpu_bound 2>&1 > /dev/null");
+    return_val = system("rm -rf ./running_processes 2>&1 > /dev/null");
     if(return_val == -1)
     {
-        std::cout << "[ERROR]: Cound not remove old cpu_bound directory." << std::endl;
+        std::cout << "[ERROR]: Cound not remove old running_processes directory." << std::endl;
     }
 
     /* Make a directory to write executable files to */
-    mkdir("./cpu_bound", S_IRWXU | S_IRWXG | S_IRWXO);
+    mkdir("./running_processes", S_IRWXU | S_IRWXG | S_IRWXO);
     mkdir("./io_bound", S_IRWXU | S_IRWXG | S_IRWXO);
 
     /* Start CPU bound processes */
@@ -488,7 +543,7 @@ int thing1()
     
     for(unsigned short int i=1; i<=5; i++)
     {
-        system_string = "g++ -std=c++11 ./cpu_bound_processes/cpu_bound_" + std::to_string(i) + ".cpp -o ./cpu_bound/cpu_" + std::to_string(i);
+        system_string = "g++ -std=c++11 ./running_processes_processes/running_processes_" + std::to_string(i) + ".cpp -o ./running_processes/cpu_" + std::to_string(i);
         return_val = system(system_string.c_str());
         if(return_val == -1)
         {
@@ -502,7 +557,7 @@ int thing1()
 
             if(pid == 0)
             {
-                system_string = "./cpu_bound/cpu_" + std::to_string(i);
+                system_string = "./running_processes/cpu_" + std::to_string(i);
                 return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
             }
             else if(pid == -1)
@@ -513,44 +568,8 @@ int thing1()
             }
             else
             {
-                cpu_bound.push_back(pid);
+                running_processes.push_back(pid);
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created CPU_" << std::to_string(i) << std::endl;
-            }
-        }
-    }
-    std::cout << std::endl;
-
-    /* Start I/O bound processes */
-    std::cout << "Starting I/O bound processes." << std::endl;
-
-    for(unsigned short int i=1; i<=5; i++)
-    {
-        system_string = "g++ --std=c++11 ./io_bound_processes/io_bound_" + std::to_string(i) + ".cpp -o ./io_bound/io_" + std::to_string(i);
-        return_val = system(system_string.c_str());
-        if(return_val == -1)
-        {
-            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Couild not create IO_" << std::to_string(i) << std::endl
-                << "    " << strerror(errno) << std::endl;
-        }
-        else
-        {
-            pid = fork();
-
-            if(pid == 0)
-            {
-                system_string = "./io_bound/io_" + std::to_string(i);
-                execlp(system_string.c_str(), system_string.c_str(), NULL);
-            }
-            else if(pid == -1)
-            {
-                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create IO_" << std::to_string(i) << std::endl
-                    << "    " << strerror(errno) << std::endl;
-                cleanup();
-            }
-            else
-            {
-                io_bound.push_back(pid);
-                std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: CREATED IO_" << std::to_string(i) << std::endl;
             }
         }
     }
@@ -590,7 +609,7 @@ int thing1()
     std::cout << "Setting Child scheduling policies." << std::endl;
     for(unsigned short int i=1; i<=5; i++)
     {
-        return_val = sched_setscheduler(cpu_bound[i-1], SCHED_RR, &scheduling_struct);
+        return_val = sched_setscheduler(running_processes[i-1], SCHED_RR, &scheduling_struct);
         if(return_val == -1)
         {
             std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not set scheduling priority for cpu_" << std::to_string(i) << "." << std::endl
@@ -604,23 +623,6 @@ int thing1()
     }
     std::cout << std::endl;
 
-    /* Set scheduling priority for I/O bound processes */
-    for(unsigned short int i=1; i<=5; i++)
-    {
-        return_val = sched_setscheduler(io_bound[i-1], SCHED_RR, &scheduling_struct);
-        if(return_val == -1)
-        {
-            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not set scheduling priority for IO_" << std::to_string(i) << "." << std::endl
-                << "      " << strerror(errno) << std::endl;
-            cleanup();
-        }
-        else
-        {
-            std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Set IO_" << std::to_string(i) << " scheduling policy to round robin." << std::endl;
-        }
-    }
-    std::cout << std::endl;
-
     /* Keep time during program runs */
     struct timespec run_time;
     struct timespec snapshot_time;
@@ -630,7 +632,7 @@ int thing1()
 
     /* Start the CPU bound processes */
     struct timespec rr_time;
-    return_val = sched_rr_get_interval(cpu_bound[0], &rr_time);
+    return_val = sched_rr_get_interval(running_processes[0], &rr_time);
 
     std::cout << "Starting cpu bound processes in order from 1 through 5." << std::endl;
     if(return_val != -1)
@@ -645,9 +647,9 @@ int thing1()
         std::cout << "[ERROR]: Could not determine round robin time quantum." << std::endl
             << "    " << strerror(errno) << std::endl;
     }
-    for(unsigned short int i=0; i<cpu_bound.size(); i++)
+    for(unsigned short int i=0; i<running_processes.size(); i++)
     {
-        return_val = kill(cpu_bound[i], SIGCONT);
+        return_val = kill(running_processes[i], SIGCONT);
 
         if(return_val == -1)
         {
@@ -663,11 +665,11 @@ int thing1()
     }
 
     unsigned short int wait_count = 0;
-    while(wait_count < cpu_bound.size())
+    while(wait_count < running_processes.size())
     {
-        for(unsigned short int i=0; i<cpu_bound.size(); i++)
+        for(unsigned short int i=0; i<running_processes.size(); i++)
         {
-            return_val = waitpid(cpu_bound[i], NULL, WNOHANG);
+            return_val = waitpid(running_processes[i], NULL, WNOHANG);
             if(return_val != 0 && return_val != -1)
             {
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process " << std::to_string(i + 1) << " completed!  ";
@@ -689,81 +691,14 @@ int thing1()
         }
     }
     std::cout << std::endl;
-
-    /* Start I/O-bound processes */
-    std::cout << "Starting io bound processes in order from 1 through 5." << std::endl;
-    clock_gettime(CLOCK_MONOTONIC, &run_time);
-
-    rr_time.tv_sec = 0;
-    rr_time.tv_nsec = 0;
-    return_val = sched_rr_get_interval(io_bound[0], &rr_time);
-    
-    if(return_val != -1)
-    {
-        std::cout << "  Round robin time quantum: " << std::endl
-            << "    - seconds: " << rr_time.tv_sec << std::endl
-            << "    - nanoseconds: " << rr_time.tv_nsec << std::endl
-            << std::endl;
-    }
-    else
-    {
-        std::cout << "[" << BOLDRED << "ERROR" << RESET << "]: Could not determine round robin time quantum." << std::endl
-            << std::endl;
-    }
-    for(unsigned short int i=0; i<io_bound.size(); i++)
-    {
-        return_val = kill(io_bound[i], SIGCONT);
-        if(return_val == -1)
-        {
-            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not wake up io_" << std::to_string(i + 1);
-            cleanup();
-        }
-
-        usleep(10000);
-    }
-
-    wait_count = 0;
-    while(wait_count < io_bound.size())
-    {
-        for(unsigned short int i=0; i<io_bound.size(); i++)
-        {
-            return_val = waitpid(io_bound[i], NULL, WNOHANG);
-            if(return_val != 0 && return_val != -1)
-            {
-                std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process " << std::to_string(i + 1) << " completed!  ";
-                clock_gettime(CLOCK_MONOTONIC, &snapshot_time);
-                seconds = snapshot_time.tv_sec - run_time.tv_sec;
-                if(run_time.tv_nsec > snapshot_time.tv_nsec)
-                {
-                    nanoseconds = snapshot_time.tv_nsec + (1*pow(10, 9) - run_time.tv_nsec);
-                    seconds -= 1;
-                }
-                else
-                {
-                    nanoseconds = snapshot_time.tv_nsec - run_time.tv_nsec;
-                }
-                std::cout << " Finish Time: " << seconds << " seconds, " << nanoseconds << " nanoseconds." << std::endl;
-
-                wait_count += 1;
-            }
-            usleep(100000);
-        }
-    }
  
     /* Clean up at the very end of round robin */
-    cpu_bound.clear();
-    io_bound.clear();
+    running_processes.clear();
 
     /* ------------------------------------------------------------------------- */
     /* First In First Out                                                        */
     /* ------------------------------------------------------------------------- */
  
-    /* Remember Reused Variables */
-    // pid_t pid = 0;
-    // int return_val = 0;
-    // struct sched_param scheduling_struct;
-    // std::string system_string = "";
-
     std::cout << std::endl;
     std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
     std::cout << BOLDGREEN << "/* First In First Out                                                         */" << RESET << std::endl;
@@ -778,7 +713,7 @@ int thing1()
 
         if(pid == 0)
         {
-            system_string = "./cpu_bound/cpu_" + std::to_string(i);
+            system_string = "./running_processes/cpu_" + std::to_string(i);
             execlp(system_string.c_str(), system_string.c_str(), NULL);
         }
         else if(pid == -1)
@@ -790,34 +725,11 @@ int thing1()
         else
         {
             std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created CPU_" << std::to_string(i) << std::endl;
-            cpu_bound.push_back(pid);
+            running_processes.push_back(pid);
         }
     }
     std::cout << std::endl;
 
-    /* Create I/O Bound Processes */
-    std::cout << "Starting I/O bound processes." << std::endl;
-    for(unsigned short int i=1; i<=5; i++)
-    {
-        pid = fork();
-
-        if(pid == 0)
-        {
-            system_string = "./io_bound/io_" + std::to_string(i);
-            execlp(system_string.c_str(), system_string.c_str(), NULL);
-        }
-        else if(pid == -1)
-        {
-            std::cout << "[" << BOLDRED << "ERROR" << RESET << "]: Could not create IO_" << std::to_string(i) << std::endl
-                << "    " << strerror(errno) << std::endl;
-        }
-        else
-        {
-            std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: CREATED IO_" << std::to_string(i) << std::endl;
-            io_bound.push_back(pid);
-        }
-    }
-    std::cout << std::endl;
 
     /* Set scheduling priority to fifo for CPU bound processes */
     
@@ -840,9 +752,9 @@ int thing1()
 
     std::cout << "Setting child scheduling policies." << std::endl;
     scheduling_struct.sched_priority = scheduling_struct.sched_priority - 1;
-    for(unsigned short int i=0; i<cpu_bound.size(); i++)
+    for(unsigned short int i=0; i<running_processes.size(); i++)
     {
-        return_val = sched_setscheduler(cpu_bound[i], SCHED_FIFO, &scheduling_struct);
+        return_val = sched_setscheduler(running_processes[i], SCHED_FIFO, &scheduling_struct);
 
         if(return_val == -1)
         {
@@ -857,31 +769,13 @@ int thing1()
     }   
     std::cout << std::endl;
 
-    /* Set scheduling priority to fifo for I/O bound processes */
-    for(unsigned short int i=0; i<io_bound.size(); i++)
-    {
-        return_val = sched_setscheduler(io_bound[i], SCHED_FIFO, &scheduling_struct);
-
-        if(return_val == -1)
-        {
-            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not set scheduling priority for IO_" << std::to_string(i) << "." << std::endl
-                << "    " << strerror(errno) << std::endl;
-            cleanup();
-        }
-        else
-        {
-            std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Set IO_" << std::to_string(i) << " scheduling policy to fifo." << std::endl;
-        }
-    }
-    std::cout << std::endl;
-
     /* Start CPU bound processes */
     std::cout << "Starting cpu bound processes in order from 1 through 5." << std::endl;
     clock_gettime(CLOCK_MONOTONIC, &run_time);
 
-    for(unsigned short int i=0; i<cpu_bound.size(); i++)
+    for(unsigned short int i=0; i<running_processes.size(); i++)
     {
-        return_val = kill(cpu_bound[i], SIGCONT);
+        return_val = kill(running_processes[i], SIGCONT);
 
         if(return_val == -1)
         {
@@ -899,9 +793,9 @@ int thing1()
     {
         pid_t returned_pid = wait(NULL);
 
-        for(unsigned short int i=0; i<cpu_bound.size(); i++)
+        for(unsigned short int i=0; i<running_processes.size(); i++)
         {
-            if(returned_pid == cpu_bound[i])
+            if(returned_pid == running_processes[i])
             {
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process " << std::to_string(i + 1) << " completed!";
                 clock_gettime(CLOCK_MONOTONIC, &snapshot_time);

@@ -26,8 +26,10 @@
 /*--------------------------------------------------------------------------*/
 /* INCLUDES */
 /*
-    This assignment does not require any additional includes,
-    though you are free to add any that you find helpful.
+    This assignment does not require any additional includes
+ 	besides un-commenting SafeBuffer.h, nor will you probably use
+ 	all the provided includes, but you are free to add any that
+ 	you find helpful.
 */
 /*--------------------------------------------------------------------------*/
 
@@ -50,23 +52,30 @@
 #include <list>
 #include <vector>
 
+//#include "SafeBuffer.h"
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */
 /*--------------------------------------------------------------------------*/
 
-struct worker_params {
+struct PARAMS_REQUEST {
+	/*
+		This structure will be used as a "shipping container"
+		for everything that will be USED in the request thread
+		function but has to be INITIALIZED or DEFINED in main.
+		These will be mostly pointers to data structures, such as
+	 	the request buffer, or function parameters such as
+	 	which person the request thread is for, as well as the
+	 	number of requests to make.
+	 */
+};
+
+struct PARAMS_WORKER {
     /*
-        This is a helpful struct to have,
-        but you can implement the program
-        some other way it you'd like.
-     
-        For example, it can hold pointers to
-        the containers that hold the histogram information
-        so that all the threads combine their data
-        instead of assembling "w" different histograms,
-        as well as pointers to RequestChannels and
-        to synchronization objects.
+	 	This structure has the same general purpose as PARAMS_REQUEST
+	 	but is used in the worker thread function, and thus requires
+	 	different fields and a different constructor based on what
+	 	the worker thread function needs to use.
      */
 };
 
@@ -123,12 +132,27 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
     return results;
 }
 
+void* request_thread_function(void* arg) {
+	/*
+		Fill in the loop conditions and body.
+		If you use PARAMS_REQUEST well, the body
+		should require only a single line of code.
+		The conditions should be somewhat intuitive.
+	 */
+	
+	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
+	
+	for(;;) {
+		
+	}
+}
+
 void* worker_thread_function(void* arg) {
     /*
-        Fill in the loop. Make sure
-        it terminates when, and not before,
+        Fill in the loop body. Make sure
+        it terminates only when, and not before,
         all the requests have been processed.
-        
+	 
         Each thread must have its own dedicated
         RequestChannel. Make sure that if you
         construct a RequestChannel (or any object)
@@ -138,7 +162,8 @@ void* worker_thread_function(void* arg) {
         whether you used "new" for it.
      */
     
-    worker_params p = *(worker_params*)arg;
+    PARAMS_WORKER wp = *(PARAMS_WORKER*)arg;
+	
     while(true) {
         
     }
@@ -200,12 +225,15 @@ int main(int argc, char * argv[]) {
         /*
             All worker threads will use these,
             but the current implementation puts
-            them on the stack in main as opposed
-            to global scope. They can be moved to
-            global scope, but you could also pass
-            pointers to them to your thread functions.
+            them on the stack in main. You can change the code
+		 	to use the heap if you'd like, or even a
+		 	container other than std::vector. However,
+		 	in the end you MUST use SafeBuffer instead
+		 	of std::list for request_buffer.
          */
-        std::list<std::string> request_buffer;
+		
+		//SafeBuffer request_buffer;
+		std::list<std::string> request_buffer;
         std::vector<int> john_frequency_count(10, 0);
         std::vector<int> jane_frequency_count(10, 0);
         std::vector<int> joe_frequency_count(10, 0);
@@ -213,12 +241,33 @@ int main(int argc, char * argv[]) {
         /*-------------------------------------------*/
         /* START TIMER HERE */
         /*-------------------------------------------*/
-        
+		
 /*--------------------------------------------------------------------------*/
-/* BEGIN "MODIFY AT YOUR OWN RISK" SECTION */
+/*  BEGIN CRITICAL SECTION  */
 /*
-    But please remember to comment out the output statements
-    while gathering data for your report. They throw off the timer.
+	You will modify the program so that client.cpp
+ 	populates the request buffer using 3 request threads
+ 	in parallel instead of sequentially in a loop, and likewise
+ 	to process the request using w worker threads instead of
+ 	sequentially in a loop.
+ 
+ 	Note that in the finished product, as in this initial code,
+ 	all the requests will be pushed to the request buffer
+ 	BEFORE the worker threads begin processing them. This means
+ 	that you will have to ensure that all 3 request threads
+ 	have terminated before kicking off any worker threads.
+ 	In the next machine problem, we'll deal with the 
+ 	synchronization problems that arise from allowing the
+ 	request threads and worker threads to run in parallel
+ 	with each other. 
+ 
+ 	Just to be clear: for this machine problem, request
+	threads will run concurrently with request threads, and worker
+ 	threads will run concurrently with worker threads, but request
+	threads will NOT run concurrently with worker threads.
+	
+	Please remember to comment out the output statements
+	while gathering data for your report. They throw off the timer.
 */
 /*--------------------------------------------------------------------------*/
         
@@ -237,26 +286,7 @@ int main(int argc, char * argv[]) {
             request_buffer.push_back("quit");
         }
         std::cout << "done." << std::endl;
-        
-/*--------------------------------------------------------------------------*/
-/* END "MODIFY AT YOUR OWN RISK" SECTION    */
-/*--------------------------------------------------------------------------*/
-        
-/*--------------------------------------------------------------------------*/
-/*  BEGIN CRITICAL SECTION  */
-/*
-    Most of the changes you make will be
-    to this section of code and to the
-    worker thread function from earlier, unless
-    you also decide to utilize the worker_params struct (which is
-    *highly* recommended) and then you'll need
-    to fill that in as well.
- 
-    You will modify the program so that client.cpp
-    uses w threads to process the requests, instead of
-    sequentially using a single loop.
-*/
-/*--------------------------------------------------------------------------*/
+		
         std::string s = chan->send_request("newthread");
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
         
@@ -324,7 +354,7 @@ int main(int argc, char * argv[]) {
         /*
             EVERY RequestChannel must send a "quit"
             request before program termination, and
-            the destructor for RequestChannel must be
+            the destructor for each RequestChannel must be
             called somehow.
          */
         std::string finale = chan->send_request("quit");

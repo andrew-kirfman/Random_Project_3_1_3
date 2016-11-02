@@ -26,6 +26,7 @@
 #define VERBOSITY_DEFAULT               1
 #define VERBOSITY_CHECK_CORRECTNESS     2
 #define VERBOSITY_DEBUG                 3
+#define VERBOSITY_HYPER					4
 
 /*--------------------------------------------------------------------------*/
 /* INCLUDES */
@@ -47,50 +48,37 @@
 #include <list>
 #include <vector>
 
+#include "SafeBuffer.h"
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */
 /*--------------------------------------------------------------------------*/
 
 //DEATH TO GLOBAL VARIABLES!
-
-/* ---------------------------------------------
- NEW CLASS, TANZIR-REQUESTED REVISION
- --------------------------------------------- */
-struct request_params {
-	std::list<std::string> *request_buffer;
-	pthread_mutex_t *req_m;
+struct PARAMS_REQUEST {
+	SafeBuffer *request_buffer;
 	std::string name;
 	int n;
-	int v;
-	request_params(std::list<std::string> *req_buf, pthread_mutex_t *_req_m, std::string _name, int _n, int verbosity) :
-		request_buffer(req_buf), req_m(_req_m), name(_name), n(_n), v(verbosity) {};
+	int v = 0;
+	PARAMS_REQUEST(SafeBuffer *req_buf, std::string _name, int _n, int verbosity) :
+		request_buffer(req_buf), name(_name), n(_n), v(verbosity) {};
 };
 
-struct worker_params {
+struct PARAMS_WORKER {
     RequestChannel* workerChannel;
-    std::list<std::string> *request_buffer;
+	SafeBuffer *request_buffer;
     std::vector<int> *john_frequency_count;
     std::vector<int> *jane_frequency_count;
     std::vector<int> *joe_frequency_count;
-    pthread_mutex_t *req_m;
     pthread_mutex_t *john_m;
     pthread_mutex_t *jane_m;
     pthread_mutex_t *joe_m;
-    worker_params(RequestChannel *wc, std::list<std::string> *req_buf,
-           std::vector<int> *john_fc, std::vector<int> *jane_fc, std::vector<int> *joe_fc,
-           pthread_mutex_t *_req_m, pthread_mutex_t *_john_m, pthread_mutex_t *_jane_m,
-           pthread_mutex_t *_joe_m) {
-        workerChannel = wc;
-        request_buffer = req_buf;
-        john_frequency_count = john_fc;
-        jane_frequency_count = jane_fc;
-        joe_frequency_count = joe_fc;
-        req_m = _req_m;
-        john_m = _john_m;
-        jane_m = _jane_m;
-        joe_m = _joe_m;
-    }
+	int v = 0;
+    PARAMS_WORKER(RequestChannel *wc, SafeBuffer *req_buf, std::vector<int> *john_fc,
+				  std::vector<int> *jane_fc, std::vector<int> *joe_fc, pthread_mutex_t *_john_m,
+				  pthread_mutex_t *_jane_m, pthread_mutex_t *_joe_m, int verbosity) :
+	workerChannel(wc), request_buffer(req_buf), john_frequency_count(john_fc), jane_frequency_count(jane_fc),
+	joe_frequency_count(joe_fc), john_m(_john_m), jane_m(_jane_m), joe_m(_joe_m), v(verbosity) {};
 };
 
 /*
@@ -125,34 +113,34 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
     return results;
 }
 
-/* ---------------------------------------------
- NEW FUNCTION, TANZIR-REQUESTED REVISION
- --------------------------------------------- */
 void* request_thread_function(void* arg) {
-	request_params rp = *(request_params*)arg;
-	if(rp.v >= VERBOSITY_DEBUG) {
+	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
+	if(rp.v >= VERBOSITY_HYPER) {
 		threadsafe_standard_output.println("Inside request thread function for " + rp.name + "...");
 	}
 	for(int i = 0; i < rp.n; ++i) {
-		pthread_mutex_lock(rp.req_m);
 		rp.request_buffer->push_back(std::string("data " + rp.name));
-		pthread_mutex_unlock(rp.req_m);
 	}
-	if(rp.v >= VERBOSITY_DEBUG) {
+	if(rp.v >= VERBOSITY_HYPER) {
 		threadsafe_standard_output.println("Exiting request thread function for " + rp.name + "...");
 	}
-
 }
 
 void* worker_thread_function(void* arg) {
-    worker_params wp = *(worker_params*)arg;
+    PARAMS_WORKER wp = *(PARAMS_WORKER*)arg;
     while(true) {
-        pthread_mutex_lock(wp.req_m);
-        std::string request = wp.request_buffer->front();
-        wp.request_buffer->pop_front();
-        pthread_mutex_unlock(wp.req_m);
+		if(wp.v >= VERBOSITY_HYPER) {
+			threadsafe_standard_output.println("wthread[" + wp.workerChannel->name() + " retrieving request...");
+		}
+		std::string request = wp.request_buffer->retrieve_front();
+		if(wp.v >= VERBOSITY_HYPER) {
+			threadsafe_standard_output.println("wthread[" + wp.workerChannel->name() + " sending request " + request + "...");
+		}
         std::string response = wp.workerChannel->send_request(request);
-
+		if(wp.v >= VERBOSITY_HYPER) {
+			threadsafe_standard_output.println("wthread[" + wp.workerChannel->name() + " received response " + response + " to request " + request + "...");
+		}
+		
         if(request == "data John Smith") {
             pthread_mutex_lock(wp.john_m);
             wp.john_frequency_count->at(stoi(response) / 10) += 1;
@@ -241,30 +229,27 @@ int main(int argc, char * argv[]) {
             these but they are kept on the stack in
             main and NOT in global scope.
          */
-        std::list<std::string> request_buffer;
+
+		SafeBuffer request_buffer;
         std::vector<int> john_frequency_count(10, 0);
         std::vector<int> jane_frequency_count(10, 0);
         std::vector<int> joe_frequency_count(10, 0);
-        pthread_mutex_t req_m, john_m, jane_m, joe_m;
-        pthread_mutex_init(&req_m, NULL);
+        pthread_mutex_t john_m, jane_m, joe_m;
         pthread_mutex_init(&john_m, NULL);
         pthread_mutex_init(&jane_m, NULL);
         pthread_mutex_init(&joe_m, NULL);
 
-		/* ---------------------------------------------
-		 	NEW CODE, TANZIR-REQUESTED REVISION
-		--------------------------------------------- */
-		request_params john_req_params(&request_buffer, &req_m, "John Smith", n, v);
-		request_params jane_req_params(&request_buffer, &req_m, "Jane Smith", n, v);
-		request_params joe_req_params(&request_buffer, &req_m, "Joe Smith", n, v);
+		PARAMS_REQUEST john_req_params(&request_buffer, "John Smith", n, v);
+		PARAMS_REQUEST jane_req_params(&request_buffer, "Jane Smith", n, v);
+		PARAMS_REQUEST joe_req_params(&request_buffer, "Joe Smith", n, v);
 		
         /*
-            Failing to initialize these worker_params properly can
+            Failing to initialize these properly can
             leads to some pretty nasty bugs.
          */
-        std::vector<worker_params> params(w, worker_params(nullptr, &request_buffer, &john_frequency_count,
+        std::vector<PARAMS_WORKER> params(w, PARAMS_WORKER(nullptr, &request_buffer, &john_frequency_count,
                                              &jane_frequency_count, &joe_frequency_count,
-                                             &req_m, &john_m, &jane_m, &joe_m));
+                                             &john_m, &jane_m, &joe_m, v));
         
         /*
             Request buffer is populated sequentially,
@@ -287,9 +272,6 @@ int main(int argc, char * argv[]) {
             fflush(NULL);
         }
 		
-		/* ---------------------------------------------
-		 NEW CODE, TANZIR-REQUESTED REVISION
-		 --------------------------------------------- */
 		pthread_t john_req_tid, jane_req_tid, joe_req_tid;
 		
 		pthread_create(&john_req_tid, NULL, request_thread_function, (void*) &john_req_params);
@@ -338,7 +320,7 @@ int main(int argc, char * argv[]) {
         std::string jane_results = make_histogram("Jane Smith Smith", &jane_frequency_count);
         std::string joe_results = make_histogram("Joe Smith", &joe_frequency_count);
         
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Results for n == " << n << ", w == " << w << std::endl;
+        if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
         if(v >= VERBOSITY_DEFAULT) std::cout << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
         if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
         if(v >= VERBOSITY_DEBUG) std::cout << john_results << std::endl;
@@ -346,7 +328,7 @@ int main(int argc, char * argv[]) {
         if(v >= VERBOSITY_DEBUG) std::cout << jane_results << std::endl;
         if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
         if(v >= VERBOSITY_DEBUG) std::cout << joe_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << std::endl;
+        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
         if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
         if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
         if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
@@ -361,7 +343,8 @@ int main(int argc, char * argv[]) {
         /*
             EVERY RequestChannel must send a "quit"
             request before program termination, and
-            the destructor must be called somehow.
+            the destructor for each RequestChannel
+		 	must be called somehow.
          */
         std::string finale = chan->send_request("quit");
         if(v >= VERBOSITY_DEFAULT) std::cout << "Finale: " << finale << std::endl;

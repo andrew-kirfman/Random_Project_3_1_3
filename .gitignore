@@ -38,3 +38,8 @@ output*.txt
 *.dSYM
 .DS_Store
 *.*AppleDouble
+
+#TeXShop byproducts
+*.log
+*.aux
+*.synctex.gz

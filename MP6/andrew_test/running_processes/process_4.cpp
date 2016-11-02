@@ -24,7 +24,7 @@ void sort_list(std::vector<int>& list)
     int placeholder = 0;
     int num_iterations = 0;
     while(true)
-    {
+    {   
         if(num_iterations == list.size() - 1)
         {
             break;
@@ -59,34 +59,20 @@ std::vector<int> generate_list(int size)
     {
         list.push_back(rand() % INT_MAX);
     }
+
+    return list;
 }
 
-
-void handle_start(int sig_num)
-{
-    int list_size = 2 << 10;
-    std::vector<int> list_to_sort = generate_list(list_size);
-    sort_list(list_to_sort);
-}
 
 int main()
 {
-    int list_size = 2 << 20;
-    std::vector<int> list_to_sort = generate_list(list_size);
-    sort_list(list_to_sort);
-    
-    exit(0);
-
-    struct sigaction start_action;
-    start_action.sa_handler = handle_start;
-    sigaction(SIGCONT, &start_action, NULL);
-
     raise(SIGSTOP);
 
-    while(true)
-    {
-        usleep(100000);
-    }
+    std::cout << "STARTING SORT LIST (4)" << std::endl;
+    //int list_size = 2 << 15;
+    int list_size = 2 << 8;
+    std::vector<int> list_to_sort = generate_list(list_size);
+    sort_list(list_to_sort);
 
     exit(0);
 }

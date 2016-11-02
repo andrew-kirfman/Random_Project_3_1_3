@@ -31,19 +31,14 @@ void tight_loop(int loop_size)
     }
 }
 
-void handle_start(int sig_num)
-{
-    int input_size = 2 << 9;
-    tight_loop(input_size);
-}
 
 int main()
 {
-    struct sigaction start_action;
-    start_action.sa_handler = handle_start;
-    sigaction(SIGCONT, &start_action, NULL);
-
     raise(SIGSTOP);
+
+    std::cout << "STARTING TIGHT LOOP (3)" << std::endl;
+    int input_size = 2 << 9;
+    tight_loop(input_size);
 
     exit(0);
 }

@@ -501,23 +501,12 @@ int solve_cpt()
 }
 
 
-
-void handle_start(int sig_num)
-{
-	solve_cpt();  
-}
-
 int main()
 {
-	solve_cpt();
-	exit(0);
-	
-	
-    struct sigaction start_action;
-    start_action.sa_handler = handle_start;
-    sigaction(SIGCONT, &start_action, NULL);
+    kill(getpid(), SIGSTOP);
 
-    raise(SIGSTOP);
+    std::cout << "STARTING CRYPTARITHM SOLVER (5)" << std::endl;
+    solve_cpt();
 
     exit(0);
 }

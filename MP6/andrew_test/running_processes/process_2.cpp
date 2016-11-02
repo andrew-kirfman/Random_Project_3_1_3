@@ -192,19 +192,12 @@ void Matrix::set_element(int row_pos, int column_pos, int value)
     matrix_elements[row_pos][column_pos] = value;
 }
 
-void handle_start(int sig_num)
-{
-    Matrix m1(10, 10);
-    Matrix m2(10, 10);
-    m1.random_populate();
-    m2.random_populate();
-    
-    Matrix::multiply(m1, m2);
-}
-
 
 int main()
 {
+    raise(SIGSTOP);
+    
+    std::cout << "STARTING MATRIX MULTIPLICATION (2)" << std::endl;
     Matrix m1(700, 700);
     Matrix m2(700, 700);
     m1.random_populate();
@@ -212,14 +205,5 @@ int main()
     
     Matrix::multiply(m1, m2);
 
-    exit(0);
-
-
-    struct sigaction start_action;
-    start_action.sa_handler = handle_start;
-    sigaction(SIGCONT, &start_action, NULL);
-
-    raise(SIGSTOP);
-    
     exit(0);
 }

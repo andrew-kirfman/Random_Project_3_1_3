@@ -59,20 +59,12 @@ void runEratosthenesSieve(int upperBound)
 }
 
 
-void handle_start(int sig_num)
-{
-    int prime_max = 2 << 24;
-    runEratosthenesSieve(prime_max);
-}
-
-
 int main()
 {
-    struct sigaction start_action;
-    start_action.sa_handler = handle_start;
-    sigaction(SIGCONT, &start_action, NULL);
+    kill(getpid(), SIGSTOP);
 
-    raise(SIGSTOP);
+    int prime_max = 2 << 24;
+    runEratosthenesSieve(prime_max);
 
     exit(0);
 }

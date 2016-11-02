@@ -149,7 +149,6 @@ double Running_process::get_remaining_execution_time()
 
 bool Running_process::is_running()
 {
-    std::cout << "RUNNING RUNNING: " << running << std::endl;
     return running;
 }
 
@@ -313,29 +312,22 @@ void Scheduler::schedule_RR()
 
 void Scheduler::schedule_FIFO()
 {
-    for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
-    {
-        std::cout << "THING: " << (*scheduleable_processes[i]).get_process_pid() << std::endl;
-    }
-
-    std::cout << "[INFO]: Starting FIFO processes." << std::endl << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Starting FIFO processes." << std::endl;
 
     struct sigaction signal_struct;
     signal_struct.sa_handler = handle_term;
     sigaction(SIGCHLD, &signal_struct, NULL);
 
-    return;
-
     while(true)
     {
         if(terminated_pid != -1 && terminated_pid >= 0)
         {
-            std::cout << "Process terminated." << std::endl;
             bool found = false;
             for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
             {
                 if(scheduleable_processes[i]->get_process_pid() == terminated_pid)
                 {
+                    std::cout << "Flag3 " << std::to_string(terminated_pid) << std::endl;
                     scheduleable_processes.erase(scheduleable_processes.begin() + i);
                     found = true;
 
@@ -352,29 +344,24 @@ void Scheduler::schedule_FIFO()
             }
         }
 
-        Running_process current_process = *scheduleable_processes[scheduleable_processes.size() - 1];
-        std::cout << "THING: " << std::to_string(current_process.get_process_pid()) << std::endl;
+        Running_process *current_process = scheduleable_processes[scheduleable_processes.size() - 1];
 
+        //std::cout << "HERE??" << std::endl;
         // Currently waiting for the process to finish
-        if(current_process.is_running())
+        if(current_process->is_running())
         {
-            std::cout << "continuing." << std::endl;
+            //std::cout << "RUNNING!" << std::endl;
             usleep(10000);
             continue;
         }
         // The process has not been started.  Start it.  
         else
         {
-            std::cout << "Starting" << std::endl;
-            current_process.start();
-            std::cout << "STATUS: " << current_process.is_running();
-            return;
+            kill(current_process->get_process_pid(), SIGCONT);
+            //current_process->start();
             usleep(10000);
         }
-
-
     }
-
 
     return;
 }

@@ -27,3 +27,14 @@
 *.exe
 *.out
 *.app
+client
+dataserver
+client_solution
+
+#Extraneous Program Output
+output*.txt
+
+#OS X mumbo-jumbo
+*.dSYM
+.DS_Store
+*.*AppleDouble

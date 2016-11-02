@@ -53,7 +53,21 @@
 /*--------------------------------------------------------------------------*/
 
 //DEATH TO GLOBAL VARIABLES!
-struct PARAMS {
+
+/* ---------------------------------------------
+ NEW CLASS, TANZIR-REQUESTED REVISION
+ --------------------------------------------- */
+struct request_params {
+	std::list<std::string> *request_buffer;
+	pthread_mutex_t *req_m;
+	std::string name;
+	int n;
+	int v;
+	request_params(std::list<std::string> *req_buf, pthread_mutex_t *_req_m, std::string _name, int _n, int verbosity) :
+		request_buffer(req_buf), req_m(_req_m), name(_name), n(_n), v(verbosity) {};
+};
+
+struct worker_params {
     RequestChannel* workerChannel;
     std::list<std::string> *request_buffer;
     std::vector<int> *john_frequency_count;
@@ -63,7 +77,7 @@ struct PARAMS {
     pthread_mutex_t *john_m;
     pthread_mutex_t *jane_m;
     pthread_mutex_t *joe_m;
-    PARAMS(RequestChannel *wc, std::list<std::string> *req_buf,
+    worker_params(RequestChannel *wc, std::list<std::string> *req_buf,
            std::vector<int> *john_fc, std::vector<int> *jane_fc, std::vector<int> *joe_fc,
            pthread_mutex_t *_req_m, pthread_mutex_t *_john_m, pthread_mutex_t *_jane_m,
            pthread_mutex_t *_joe_m) {
@@ -90,7 +104,7 @@ class atomic_standard_output {
 public:
     atomic_standard_output() { pthread_mutex_init(&console_lock, NULL); }
     ~atomic_standard_output() { pthread_mutex_destroy(&console_lock); }
-    void print(std::string s){
+    void println(std::string s){
         pthread_mutex_lock(&console_lock);
         std::cout << s << std::endl;
         pthread_mutex_unlock(&console_lock);
@@ -111,32 +125,51 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
     return results;
 }
 
+/* ---------------------------------------------
+ NEW FUNCTION, TANZIR-REQUESTED REVISION
+ --------------------------------------------- */
+void* request_thread_function(void* arg) {
+	request_params rp = *(request_params*)arg;
+	if(rp.v >= VERBOSITY_DEBUG) {
+		threadsafe_standard_output.println("Inside request thread function for " + rp.name + "...");
+	}
+	for(int i = 0; i < rp.n; ++i) {
+		pthread_mutex_lock(rp.req_m);
+		rp.request_buffer->push_back(std::string("data " + rp.name));
+		pthread_mutex_unlock(rp.req_m);
+	}
+	if(rp.v >= VERBOSITY_DEBUG) {
+		threadsafe_standard_output.println("Exiting request thread function for " + rp.name + "...");
+	}
+
+}
+
 void* worker_thread_function(void* arg) {
-    PARAMS p = *(PARAMS*)arg;
+    worker_params wp = *(worker_params*)arg;
     while(true) {
-        pthread_mutex_lock(p.req_m);
-        std::string request = p.request_buffer->front();
-        p.request_buffer->pop_front();
-        pthread_mutex_unlock(p.req_m);
-        std::string response = p.workerChannel->send_request(request);
+        pthread_mutex_lock(wp.req_m);
+        std::string request = wp.request_buffer->front();
+        wp.request_buffer->pop_front();
+        pthread_mutex_unlock(wp.req_m);
+        std::string response = wp.workerChannel->send_request(request);
 
         if(request == "data John Smith") {
-            pthread_mutex_lock(p.john_m);
-            p.john_frequency_count->at(stoi(response) / 10) += 1;
-            pthread_mutex_unlock(p.john_m);
+            pthread_mutex_lock(wp.john_m);
+            wp.john_frequency_count->at(stoi(response) / 10) += 1;
+            pthread_mutex_unlock(wp.john_m);
         }
         else if(request == "data Jane Smith") {
-            pthread_mutex_lock(p.jane_m);
-            p.jane_frequency_count->at(stoi(response) / 10) += 1;
-            pthread_mutex_unlock(p.jane_m);
+            pthread_mutex_lock(wp.jane_m);
+            wp.jane_frequency_count->at(stoi(response) / 10) += 1;
+            pthread_mutex_unlock(wp.jane_m);
         }
         else if(request == "data Joe Smith") {
-            pthread_mutex_lock(p.joe_m);
-            p.joe_frequency_count->at(stoi(response) / 10) += 1;
-            pthread_mutex_unlock(p.joe_m);
+            pthread_mutex_lock(wp.joe_m);
+            wp.joe_frequency_count->at(stoi(response) / 10) += 1;
+            pthread_mutex_unlock(wp.joe_m);
         }
         else if(request == "quit") {
-            delete p.workerChannel;
+            delete wp.workerChannel;
             break;
         }
     }
@@ -204,9 +237,9 @@ int main(int argc, char * argv[]) {
         if(v >= VERBOSITY_DEFAULT) std::cout << "done." << std::endl;
         
         /*
-            All worker threads will use these,
-            but they are kept on the stack in main
-            and NOT in global scope.
+            All worker and request threads will use,
+            these but they are kept on the stack in
+            main and NOT in global scope.
          */
         std::list<std::string> request_buffer;
         std::vector<int> john_frequency_count(10, 0);
@@ -218,11 +251,18 @@ int main(int argc, char * argv[]) {
         pthread_mutex_init(&jane_m, NULL);
         pthread_mutex_init(&joe_m, NULL);
 
+		/* ---------------------------------------------
+		 	NEW CODE, TANZIR-REQUESTED REVISION
+		--------------------------------------------- */
+		request_params john_req_params(&request_buffer, &req_m, "John Smith", n, v);
+		request_params jane_req_params(&request_buffer, &req_m, "Jane Smith", n, v);
+		request_params joe_req_params(&request_buffer, &req_m, "Joe Smith", n, v);
+		
         /*
-            Failing to initialize these PARAMS properly can
+            Failing to initialize these worker_params properly can
             leads to some pretty nasty bugs.
          */
-        std::vector<PARAMS> params(w, PARAMS(nullptr, &request_buffer, &john_frequency_count,
+        std::vector<worker_params> params(w, worker_params(nullptr, &request_buffer, &john_frequency_count,
                                              &jane_frequency_count, &joe_frequency_count,
                                              &req_m, &john_m, &jane_m, &joe_m));
         
@@ -233,17 +273,33 @@ int main(int argc, char * argv[]) {
             in advance as well, since there's no bounded
             buffer to manage the synchronization.
          */
+		
+		/*
+			TANZIR-REQUESTED-REVISION-RELATED QUESTION:
+		 		Should the request thread execution be timed?
+		 		If so, how? Most importantly, should it be combined
+		 		with the worker thread timing as it is now?
+		 */
         assert(gettimeofday(&start_time, 0) == 0);
 
         if(v >= VERBOSITY_DEBUG) {
-            std::cout << "Populating request buffer... ";
+            std::cout << "Populating request buffer; starting request threads... ";
             fflush(NULL);
         }
-        for(int i = 0; i < n; ++i) {
-            request_buffer.push_back("data John Smith");
-            request_buffer.push_back("data Jane Smith");
-            request_buffer.push_back("data Joe Smith");
-        }
+		
+		/* ---------------------------------------------
+		 NEW CODE, TANZIR-REQUESTED REVISION
+		 --------------------------------------------- */
+		pthread_t john_req_tid, jane_req_tid, joe_req_tid;
+		
+		pthread_create(&john_req_tid, NULL, request_thread_function, (void*) &john_req_params);
+		pthread_create(&jane_req_tid, NULL, request_thread_function, (void*) &jane_req_params);
+		pthread_create(&joe_req_tid, NULL, request_thread_function, (void*) &joe_req_params);
+		
+		pthread_join(john_req_tid, NULL);
+		pthread_join(jane_req_tid, NULL);
+		pthread_join(joe_req_tid, NULL);
+		
         if(v >= VERBOSITY_DEBUG) std::cout << "done." << std::endl;
         
         if(v >= VERBOSITY_DEBUG) {

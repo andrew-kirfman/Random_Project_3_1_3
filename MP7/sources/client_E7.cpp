@@ -55,7 +55,7 @@
 /* DATA STRUCTURES */
 /*--------------------------------------------------------------------------*/
 
-struct PARAMS {
+struct worker_params {
     /*
         This is a helpful struct to have,
         but you can implement the program
@@ -138,7 +138,7 @@ void* worker_thread_function(void* arg) {
         whether you used "new" for it.
      */
     
-    PARAMS p = *(PARAMS*)arg;
+    worker_params p = *(worker_params*)arg;
     while(true) {
         
     }
@@ -248,7 +248,7 @@ int main(int argc, char * argv[]) {
     Most of the changes you make will be
     to this section of code and to the
     worker thread function from earlier, unless
-    you also decide to utilize the PARAMS struct (which is
+    you also decide to utilize the worker_params struct (which is
     *highly* recommended) and then you'll need
     to fill that in as well.
  

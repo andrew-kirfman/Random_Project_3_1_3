@@ -330,8 +330,12 @@ void Scheduler::schedule_FIFO()
     std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Starting FIFO processes in order from 1 to " 
         << std::to_string(scheduleable_processes.size()) << "." << std::endl;
 
+    /* Handler for SIGCHILD */
     struct sigaction signal_struct;
     signal_struct.sa_handler = handle_term;
+
+    // Don't do anything if the sigchild is sent on a stop or resume
+    signal_struct.sa_flags = SA_NOCLDSTOP;
     sigaction(SIGCHLD, &signal_struct, NULL);
 
     while(true)
@@ -348,9 +352,9 @@ void Scheduler::schedule_FIFO()
                      * I have no idea why it makes a difference.  Spent hours trying to figure it out.
                      * Someone should probably figure out the problem someday.  
                      */
-                    std::cout.setstate(std::ios_base::failbit);
-                    std::cout << "Flag3 " << std::to_string(terminated_pid) << std::endl;
-                    std::cout.clear();
+                    //std::cout.setstate(std::ios_base::failbit);
+                    //std::cout << "Flag3 " << std::to_string(terminated_pid) << std::endl;
+                    //std::cout.clear();
 
                     scheduleable_processes.erase(scheduleable_processes.begin() + i);
                     found = true;
@@ -367,6 +371,12 @@ void Scheduler::schedule_FIFO()
             {
                 std::cout << "[ERROR]: Cound not terminate finished process successfully." << std::endl;
             }
+        }
+
+        /* If the process queue is empty, exit! */
+        if(scheduleable_processes.size() == 0)
+        {
+            break;
         }
 
         /* Find the next process */

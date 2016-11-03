@@ -67,5 +67,6 @@ int main()
     int prime_max = 2 << 24;
     runEratosthenesSieve(prime_max);
 
+    std::cout << "DONE!" << std::endl;
     exit(0);
 }

@@ -34,15 +34,10 @@ void tight_loop(int loop_size)
 
 int main()
 {
-    raise(SIGSTOP);
+    kill(getpid(), SIGSTOP);
 
-    std::cout << "STARTING TIGHT LOOP (3)" << std::endl;
     int input_size = 2 << 9;
     tight_loop(input_size);
 
     exit(0);
 }
-
-
-
-

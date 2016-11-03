@@ -505,12 +505,7 @@ int main()
 {
     kill(getpid(), SIGSTOP);
 
-    std::cout << "STARTING CRYPTARITHM SOLVER (5)" << std::endl;
     solve_cpt();
 
     exit(0);
 }
-
-
-
-

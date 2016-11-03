@@ -22,6 +22,7 @@
 #include<errno.h>
 #include<time.h>
 #include<math.h>
+#include<utility>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -106,6 +107,7 @@ class Running_process
         bool is_active);
     void set_remaining_execution_time(double new_exec_time);
     void set_initialized(bool is_initialized);
+    void set_running(bool is_running);
 
     /* Control Methods */
     void start();
@@ -186,6 +188,10 @@ void Running_process::set_initialized(bool is_initialized)
     initialized = is_initialized;
 }
 
+void Running_process::set_running(bool is_running)
+{
+    running = is_running;
+}
 
 /* Control Methods */
 void Running_process::start()
@@ -225,7 +231,8 @@ public:
 
 private:
     int scheduling_policy;
-    std::vector<Running_process*> scheduleable_processes;
+    int processes_scheduled;
+    std::vector<std::pair<int, Running_process*>> scheduleable_processes;
 
     /* Private Scheduling Routines */
     void schedule_RR();
@@ -236,6 +243,7 @@ private:
 /* Constructor */
 Scheduler::Scheduler()
 {
+    processes_scheduled = 0;
     scheduling_policy = NO_POLICY;
 }
 
@@ -243,7 +251,11 @@ Scheduler::Scheduler()
 /* Utility Methods */
 void Scheduler::schedule_process(pid_t process_pid, double expected_run_time = 0.0)
 {
-    Running_process *new_process = new Running_process(process_pid, expected_run_time, false);
+    Running_process *process = new Running_process(process_pid, expected_run_time, false);
+    
+    std::pair<int, Running_process*> new_process(processes_scheduled, process);
+    processes_scheduled += 1;
+
     scheduleable_processes.push_back(new_process);
 }
 
@@ -260,6 +272,9 @@ void Scheduler::set_policy(int policy)
     {
         std::cout << "[ERROR]: Unknown scheduling policy." << std::endl;
     }
+
+    // Also reset the number of processes scheduled
+    processes_scheduled = 0;
 }
 
 
@@ -312,7 +327,8 @@ void Scheduler::schedule_RR()
 
 void Scheduler::schedule_FIFO()
 {
-    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Starting FIFO processes." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Starting FIFO processes in order from 1 to " 
+        << std::to_string(scheduleable_processes.size()) << "." << std::endl;
 
     struct sigaction signal_struct;
     signal_struct.sa_handler = handle_term;
@@ -325,15 +341,24 @@ void Scheduler::schedule_FIFO()
             bool found = false;
             for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
             {
-                if(scheduleable_processes[i]->get_process_pid() == terminated_pid)
+                if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
                 {
+                    /* Note:
+                     * The program does not work without these next three lines of code.  
+                     * I have no idea why it makes a difference.  Spent hours trying to figure it out.
+                     * Someone should probably figure out the problem someday.  
+                     */
+                    std::cout.setstate(std::ios_base::failbit);
                     std::cout << "Flag3 " << std::to_string(terminated_pid) << std::endl;
+                    std::cout.clear();
+
                     scheduleable_processes.erase(scheduleable_processes.begin() + i);
                     found = true;
 
                     terminated_pid = -1;
 
-                    std::cout << "  [SUCCESS]: Proceds_" << std::to_string(i) << " terminated successfully." << std::endl;
+                    std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process_" << 
+                        std::to_string(std::get<0>(scheduleable_processes[i])) << " terminated successfully." << std::endl;
                     break;
                 }
             }
@@ -344,22 +369,21 @@ void Scheduler::schedule_FIFO()
             }
         }
 
-        Running_process *current_process = scheduleable_processes[scheduleable_processes.size() - 1];
+        /* Find the next process */
+        Running_process *current_process = std::get<1>(scheduleable_processes[0]);
 
-        //std::cout << "HERE??" << std::endl;
         // Currently waiting for the process to finish
         if(current_process->is_running())
         {
-            //std::cout << "RUNNING!" << std::endl;
             usleep(10000);
             continue;
         }
         // The process has not been started.  Start it.  
         else
         {
+            current_process->set_running(true);
             kill(current_process->get_process_pid(), SIGCONT);
-            //current_process->start();
-            usleep(10000);
+            sleep(1);
         }
     }
 
@@ -444,6 +468,7 @@ int main()
             }
             else
             {
+                sleep(1);
                 running_processes.push_back(pid);
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
             }

@@ -195,9 +195,8 @@ void Matrix::set_element(int row_pos, int column_pos, int value)
 
 int main()
 {
-    raise(SIGSTOP);
+    kill(getpid(), SIGSTOP);
     
-    std::cout << "STARTING MATRIX MULTIPLICATION (2)" << std::endl;
     Matrix m1(700, 700);
     Matrix m2(700, 700);
     m1.random_populate();

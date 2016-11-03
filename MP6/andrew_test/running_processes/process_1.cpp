@@ -55,13 +55,14 @@ void runEratosthenesSieve(int upperBound)
             }
         }
     }
-
 }
 
 
 int main()
 {
     kill(getpid(), SIGSTOP);
+
+    std::cout << "THINGTHINGTHING" << std::endl;
 
     int prime_max = 2 << 24;
     runEratosthenesSieve(prime_max);

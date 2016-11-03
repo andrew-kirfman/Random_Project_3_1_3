@@ -347,15 +347,6 @@ void Scheduler::schedule_FIFO()
             {
                 if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
                 {
-                    /* Note:
-                     * The program does not work without these next three lines of code.  
-                     * I have no idea why it makes a difference.  Spent hours trying to figure it out.
-                     * Someone should probably figure out the problem someday.  
-                     */
-                    //std::cout.setstate(std::ios_base::failbit);
-                    //std::cout << "Flag3 " << std::to_string(terminated_pid) << std::endl;
-                    //std::cout.clear();
-
                     scheduleable_processes.erase(scheduleable_processes.begin() + i);
                     found = true;
 

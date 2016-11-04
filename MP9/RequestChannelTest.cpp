@@ -477,9 +477,9 @@ int main(int argc, char * argv[]) {
 					threadsafe_console_output.println("MAIN: created new " + channel_type + " request channel [" + new_channel_name + "], starting worker thread [" + std::to_string(i) + "]");
 				}
 				
-				if((errno = pthread_create(&wtps[i].id, NULL, worker_thread_function,(void *) &wtps[i])) != 0) {
+				if((errno = pthread_create(&wtps[i].id, NULL, worker_thread_function, (void *) &wtps[i])) != 0) {
 					threadsafe_console_output.perror("MAIN: pthread_create failed for [" + new_channel_name + "], new " + channel_type + " thread not created");
-					wtps[i].workerChannel = nullptr;
+					wtps[i].workerChannel = nullptr; //This needs to be checked for correctness
 					++THREADS_NOT_CREATED;
 					wtps[i].failed = true;
 				}

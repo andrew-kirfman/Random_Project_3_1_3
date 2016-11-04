@@ -27,12 +27,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <signal.h>
 #include <errno.h>
 
 #include "reqchannel.h"
-
-using namespace std;
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
@@ -57,7 +55,7 @@ using namespace std;
 /*--------------------------------------------------------------------------*/
 
 char * RequestChannel::pipe_name(Mode _mode) {
-  string pname = "fifo_" + my_name;
+  std::string pname = "fifo_" + my_name;
 
   if (my_side == CLIENT_SIDE) {
     if (_mode == READ_MODE) 
@@ -78,82 +76,112 @@ char * RequestChannel::pipe_name(Mode _mode) {
 
 void RequestChannel::open_write_pipe(char * _pipe_name) {
 
-  //  cout << "mkfifo write pipe\n" << flush;
+  std::cout << "mkfifo write pipe\n" << std::flush;
 
-  if (mkfifo(_pipe_name, 0600) < 0) {
-    if (errno != EEXIST) {
-      perror("Error creating pipe for writing; exit program");
-      exit(1);
-    }
-  }
+	if (mkfifo(_pipe_name, 0600) < 0) {
+		if (errno != EEXIST) {
+			int prev_errno = errno;
+			close(rfd);
+			close(wfd);
+			remove(pipe_name(READ_MODE));
+			remove(pipe_name(WRITE_MODE));
+			errno = prev_errno;
+			throw sync_lib_exception("RequestChannel:" + my_name + ":" + side_name + ": error creating pipe for writing");
+		}
+	}
 
-  // cout << "open write pipe\n" << flush;
+ std::cout << "open write pipe\n" << std::flush;
 
-  wfd = open(_pipe_name, O_WRONLY);
-  if (wfd < 0) {
-    perror("Error opening pipe for writing; exit program");
-    exit(1);
-  }
+	wfd = open(_pipe_name, O_WRONLY);
+	if (wfd < 0) {
+		int prev_errno = errno;
+		close(rfd);
+		remove(pipe_name(READ_MODE));
+		remove(pipe_name(WRITE_MODE));
+		errno = prev_errno;
+  		throw sync_lib_exception("RequestChannel:" + my_name + ":" + side_name + ": error opening pipe for writing");
+	}
 
-  //  cout << "done opening write pipe\n" << flush;
-
+  std::cout << "done opening write pipe\n" << std::flush;
+	write_pipe_opened = true;
 }
 
 void RequestChannel::open_read_pipe(char * _pipe_name) {
 
-  //  cout << "mkfifo read pipe\n" << flush;
+  std::cout << "mkfifo read pipe\n" << std::flush;
 
-  if (mkfifo(_pipe_name, 0600) < 0) {
-    if (errno != EEXIST) {
-      perror("Error creating pipe for writing; exit program");
-      exit(1);
-    }
-  }
+	if (mkfifo(_pipe_name, 0600) < 0) {
+		if (errno != EEXIST) {
+			int prev_errno = errno;
+			close(rfd);
+			close(wfd);
+			remove(pipe_name(READ_MODE));
+			remove(pipe_name(WRITE_MODE));
+			errno = prev_errno;
+			throw sync_lib_exception("RequestChanel:" + my_name + ":" + side_name + ": error creating pipe for reading");
+		}
+	}
 
-  //  cout << "open read pipe\n" << flush;
+  std::cout << "open read pipe\n" << std::flush;
 
-  rfd = open(_pipe_name, O_RDONLY);
-  if (rfd < 0) {
-    perror("Error opening pipe for reading; exit program");
-    exit(1);
-  }
+	rfd = open(_pipe_name, O_RDONLY);
+	if (rfd < 0) {
+		int prev_errno = errno;
+		close(wfd);
+		remove(pipe_name(READ_MODE));
+		remove(pipe_name(WRITE_MODE));
+		errno = prev_errno;
+		throw sync_lib_exception("RequestChanel:" + my_name + ":" + side_name + ": error opening pipe for reading");
+	}
 
-  //  cout << "done opening read pipe\n" << flush;
-
+  std::cout << "done opening read pipe\n" << std::flush;
+	read_pipe_opened = true;
 }
 
 /*--------------------------------------------------------------------------*/
 /* CONSTRUCTOR/DESTRUCTOR FOR CLASS   R e q u e s t C h a n n e l  */
 /*--------------------------------------------------------------------------*/
 
-RequestChannel::RequestChannel(const string _name, const Side _side) : my_name(_name), my_side(_side) {
-
-  if (_side == SERVER_SIDE) {
-    open_write_pipe(pipe_name(WRITE_MODE));
-    open_read_pipe(pipe_name(READ_MODE));
-  } else {
-    open_read_pipe(pipe_name(READ_MODE));
-    open_write_pipe(pipe_name(WRITE_MODE));
-  }
-
+RequestChannel::RequestChannel(const std::string _name, const Side _side) :
+my_name(_name), my_side(_side), side_name((_side == RequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT")
+{
+	//Necessary for proper error handling
+	sigset_t sigpipe_set;
+	sigemptyset(&sigpipe_set);
+	if(sigaddset(&sigpipe_set, SIGPIPE) < 0) {
+		throw sync_lib_exception("RequestChannel:" + my_name + ":" + side_name + ": failed on sigaddset(&sigpipe_set, SIGPIPE)");
+	}
+	
+	if((errno = pthread_sigmask(SIG_SETMASK, &sigpipe_set, NULL)) != 0) {
+		throw sync_lib_exception("RequestChannel:" + my_name + ":" + side_name + ": failed on pthread_sigmas(SIG_SETMASK, &sigpipe_set, NULL)");
+	}
+	
+	if (_side == SERVER_SIDE) {
+		open_write_pipe(pipe_name(WRITE_MODE));
+		open_read_pipe(pipe_name(READ_MODE));
+	}
+	else {
+		open_read_pipe(pipe_name(READ_MODE));
+		open_write_pipe(pipe_name(WRITE_MODE));
+	}
 }
 
 RequestChannel::~RequestChannel() {
-  //cout << "close requests channel " << my_name << endl;
+  std::cout << "close requests channel " << my_name << std::endl;
   close(wfd);
   close(rfd);
-  if (my_side == SERVER_SIDE) {
-    //cout << "close IPC mechanisms on server side for channel " << my_name << endl;
+  //if (my_side == SERVER_SIDE) {
+    //std::cout << "close IPC mechanisms on server side for channel " << my_name << std::endl;
     /* Destruct the underlying IPC mechanisms. */
-    if (remove(pipe_name(READ_MODE)) != 0) {
-      perror(string("Request Channel (" + my_name + ") : Error deleting pipe for reading").c_str());
+    if (remove(pipe_name(READ_MODE)) != 0 && errno != ENOENT) {
+      perror(std::string("Request Channel (" + my_name + ") : Error deleting pipe read pipe").c_str());
     }
       
-    if (remove(pipe_name(WRITE_MODE)) != 0) {
-      perror(string("Request Channel (" + my_name + ") : Error deleting pipe for writing").c_str());
+    if (remove(pipe_name(WRITE_MODE)) != 0 && errno != ENOENT) {
+      perror(std::string("Request Channel (" + my_name + ") : Error deleting pipe write pipe").c_str());
     }
-      //cout << "Bye y'all" << flush << endl;
-  }
+      std::cout << "Bye y'all" << std::flush << std::endl;
+  //}
 }
 
 /*--------------------------------------------------------------------------*/
@@ -162,51 +190,82 @@ RequestChannel::~RequestChannel() {
 
 const int MAX_MESSAGE = 255;
 
-string RequestChannel::send_request(string _request) {
+std::string RequestChannel::send_request(std::string _request) {
   cwrite(_request);
-  string s = cread();
+  std::string s = cread();
   return s;
 }
 
-string RequestChannel::cread() {
+std::string RequestChannel::cread() {
 
-  char buf[MAX_MESSAGE];
+	char buf[MAX_MESSAGE];
+	memset(buf, '\0', MAX_MESSAGE);
 
-  if (read(rfd, buf, MAX_MESSAGE) < 0) {
-    perror(string("Request Channel (" + my_name + "): Error reading from pipe!").c_str());
-  }
-  
-  string s = buf;
+	int read_return_value;
+	if ((read_return_value = read(rfd, buf, MAX_MESSAGE)) <= 0) {
+		if(read_return_value < 0) {
+			perror(std::string("RequestChannel:" + my_name + ":" + side_name + ": error reading from pipe").c_str());
+			return "ERROR";
+		}
+		else {
+			perror(std::string(("RequestChannel:" + my_name + ":" + side_name + ": broken/closed pipe detected, exiting thread...")).c_str());
+		}
+		close(rfd);
+		close(wfd);
+		remove(pipe_name(READ_MODE));
+		remove(pipe_name(WRITE_MODE));
+		pthread_exit(NULL);
+	}
 
-  //  cout << "Request Channel (" << my_name << ") reads [" << buf << "]\n";
+	std::string s = buf;
 
-  return s;
+	  std::cout << "Request Channel (" << my_name << ") reads [" << buf << "]\n";
+
+	return s;
 
 }
 
-int RequestChannel::cwrite(string _msg) {
+int RequestChannel::cwrite(std::string _msg) {
 
-  if (_msg.length() >= MAX_MESSAGE) {
-    cerr << "Message too long for Channel!\n";
-    return -1;
-  }
+	if (_msg.length() >= MAX_MESSAGE) {
+		std::cerr << "Message too long for Channel!\n";
+		return -1;
+	}
 
-  //  cout << "Request Channel (" << my_name << ") writing [" << _msg << "]";
+    std::cout << "Request Channel (" << my_name << ") writing [" << _msg << "]";
 
   const char * s = _msg.c_str();
 
-  if (write(wfd, s, strlen(s)+1) < 0) {
-    perror(string("Request Channel (" + my_name + ") : Error writing to pipe!").c_str());
+	int write_return_value;
+  if ((write_return_value = write(wfd, s, strlen(s)+1)) < 0) {
+	  //EPIPE is part of the normal error-handling process for
+	  //RequestChannels that are successfully constructed,
+	  //but that don't have threads enough threads created for them.
+	  
+	  if(errno != EPIPE) {
+		  perror(std::string("RequestChannel:" + my_name + ":" + side_name + ": error writing to pipe").c_str());
+		  return -1;
+	  }
+	  else {
+		  perror(std::string("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": Broken/closed pipe detected, exiting worker thread...").c_str());
+	  }
+	  close(rfd);
+	  close(wfd);
+	  remove(pipe_name(READ_MODE));
+	  remove(pipe_name(WRITE_MODE));
+	  pthread_exit(NULL);
   }
 
-  //  cout << "(" << my_name << ") done writing." << endl;
+    std::cout << "(" << my_name << ") done writing." << std::endl;
+	
+	return write_return_value;
 }
 
 /*--------------------------------------------------------------------------*/
 /* ACCESS THE NAME OF REQUEST CHANNEL  */
 /*--------------------------------------------------------------------------*/
 
-string RequestChannel::name() {
+std::string RequestChannel::name() {
   return my_name;
 }
 

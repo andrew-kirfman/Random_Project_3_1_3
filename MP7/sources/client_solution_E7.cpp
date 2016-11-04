@@ -47,6 +47,8 @@
 #include <numeric>
 #include <list>
 #include <vector>
+#include <exception>
+#include <errno.h>
 
 #include "SafeBuffer.h"
 
@@ -65,8 +67,9 @@ struct PARAMS_REQUEST {
 };
 
 struct PARAMS_WORKER {
-    RequestChannel* workerChannel;
-	SafeBuffer *request_buffer;
+	bool failed = false;
+    RequestChannel* workerChannel = nullptr;
+	SafeBuffer *request_buffer = nullptr;
     std::vector<int> *john_frequency_count;
     std::vector<int> *jane_frequency_count;
     std::vector<int> *joe_frequency_count;
@@ -173,6 +176,7 @@ int main(int argc, char * argv[]) {
     int w = 10; //default number of worker threads
     int v = VERBOSITY_DEFAULT;
     int opt = 0;
+	int THREADS_FAILED = 0;
     
     while ((opt = getopt(argc, argv, "n:w:v:h")) != -1) {
         switch (opt) {
@@ -213,8 +217,8 @@ int main(int argc, char * argv[]) {
         int64_t start_usecs;
         int64_t finish_usecs;
         
-        ofstream ofs;
-        ofs.open("output.txt", ios::out | ios::app);
+		std::ofstream ofs;
+		ofs.open("output.txt", std::ios::out | std::ios::app);
         
         if(v >= VERBOSITY_DEFAULT) std::cout << "n == " << n << std::endl;
         if(v >= VERBOSITY_DEFAULT) std::cout << "w == " << w << std::endl;
@@ -296,14 +300,28 @@ int main(int argc, char * argv[]) {
         
         std::vector<pthread_t> wtids;
         for(int i = 0; i < w; ++i) {
-            std::string s = chan->send_request("newthread");
-            params[i].workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
-            wtids.push_back(0);
-            pthread_create(&wtids[i], NULL, worker_thread_function,(void *) &params[i]);
+			try {
+				std::string s = chan->send_request("newthread");
+				params[i].workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
+				wtids.push_back(0);
+				if((errno = pthread_create(&wtids[i], NULL, worker_thread_function, (void *) &params[i])) != 0) {
+					threadsafe_standard_output.println("MAIN: pthread_create failure for " + params[i].workerChannel->name() + ": " + strerror(errno));
+					delete params[i].workerChannel;
+					params[i].failed = true;
+					++THREADS_FAILED;
+				}
+			}
+			catch (sync_lib_exception sle) {
+				threadsafe_standard_output.println("MAIN: new client-side channel not created: " + std::string(sle.what()) + ": " + strerror(errno));
+				params[i].failed = true;
+				++THREADS_FAILED;
+			}
         }
         
         for(int i = 0; i < w; ++i) {
-            pthread_join(wtids[i], NULL);
+			if(!params[i].failed && (errno = pthread_join(wtids[i], NULL)) != 0) {
+				perror(std::string("MAIN: failed on pthread_join for [" + std::to_string(i) + "]").c_str());
+			}
         }
         
         assert(gettimeofday(&finish_time, 0) == 0);

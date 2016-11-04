@@ -15,6 +15,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<sys/wait.h>
+#include<sys/time.h>
 #include<signal.h>
 #include<unistd.h>
 #include<stdlib.h>
@@ -225,6 +226,7 @@ public:
     
     /* Setter Methods */
     void set_policy(int policy);
+    void set_time_quantum(int time_secs);
 
     /* Public Scheduling Routines */
     void schedule_all();
@@ -232,6 +234,10 @@ public:
 private:
     int scheduling_policy;
     int processes_scheduled;
+    
+    
+    // CHANGE THIS TO A STRUCT TIMEVAL ... timeval.tv_nsec & tv_sec.  
+    int time_quantum;
     std::vector<std::pair<int, Running_process*>> scheduleable_processes;
 
     /* Private Scheduling Routines */
@@ -245,6 +251,9 @@ Scheduler::Scheduler()
 {
     processes_scheduled = 0;
     scheduling_policy = NO_POLICY;
+
+    // Set a default time quantum (10 ms is default)
+    time_quantum = 10000;
 }
 
 
@@ -277,6 +286,17 @@ void Scheduler::set_policy(int policy)
     processes_scheduled = 0;
 }
 
+void Scheduler::set_time_quantum(int time_nsecs)
+{
+    if(time_nsecs >= 10000000)
+    {
+        std::cout << "  [" << BOLDYELLOW << "WARNING" << RESET "]: Long time quantum. Short processes may be starved." 
+            << std::endl;
+    }
+
+    time_quantum = time_nsecs;   
+}
+
 
 /* Public Scheduling Routines */
 void Scheduler::schedule_all()
@@ -295,17 +315,17 @@ void Scheduler::schedule_all()
     }
     else if(scheduling_policy == NO_POLICY)
     {
-
+        std::cout << "  [" << BOLDRED << "ERROR" << "]: No scheduling policy chosen." << std::endl;
     }
 }
 
 /* Global Variables */
-sig_atomic_t signal_flag = 0;
+sig_atomic_t alarm_flag = 0;
 sig_atomic_t terminated_pid = -1;
 
 void handle_RR(int signum)
 {
-    signal_flag = 1;
+    alarm_flag = 1;
 }
 
 void handle_term(int signum)
@@ -317,9 +337,124 @@ void handle_term(int signum)
 /* Private Scheduling Routines */
 void Scheduler::schedule_RR()
 {
-    std::cout << "[INFO]: Starting RR processes." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Starting RR processes." << std::endl;
+
+    /* Handler for time slicing */
+    struct sigaction signal_struct_1;
+    signal_struct_1.sa_handler = handle_RR;
+    sigaction(SIGALRM, &signal_struct_1, NULL);
+    
+    /* Handler for process termination */
+    struct sigaction signal_struct_2;
+    signal_struct_2.sa_handler = handle_term;
+    signal_struct_2.sa_flags = SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &signal_struct_2, NULL);
+
+    // Set the initial alarm plus some time for this process to do management tasks
+    struct itimerval timer_int;
+    struct timeval timer_interval;
+    timer_interval.tv_usec = time_quantum;
+    timer_interval.tv_sec = 0;
+    timer_int.it_interval = timer_interval;
+
+    struct timeval timer_value;
+    timer_value.tv_usec = time_quantum;
+    timer_value.tv_sec = 0;
+    timer_int.it_value = timer_value;
+
+    setitimer(ITIMER_REAL, &timer_int, NULL);
+
+    // Keep track of currently running process
+    int process_pointer = 0;
+    bool term = false;
+
+    // Start the first process!
+    kill(std::get<1>(scheduleable_processes[0])->get_process_pid(), SIGCONT);
+
+    while(true)
+    {
+        if(terminated_pid != -1 && terminated_pid >= 0)
+        {
+            // Deal with terminated process
+            bool found = false;
+            for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
+            {
+                if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
+                {
+                    std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process_" << 
+                        std::to_string(std::get<0>(scheduleable_processes[i]) + 1) << " terminated successfully." << std::endl;
+
+                    // Set appropriate flags
+                    term = true;
+                    found = true;
+                    terminated_pid = -1;
+
+                    scheduleable_processes.erase(scheduleable_processes.begin() + i);
+                    break;
+                }
+            }
+
+            if(found == false)
+            {
+                std::cout << "  [ERROR]: Cound not terminate finished process successfully." << std::endl;
+                break;
+            }
+
+            // Set process_pointer properly
+            if((unsigned int)process_pointer >= scheduleable_processes.size())
+            {
+                process_pointer = scheduleable_processes.size() - 1;
+            }
+        }
+ 
+        /* If the process queue is empty, exit! */
+        if(scheduleable_processes.size() == 0)
+        {
+            std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: All processes terminated.  Exiting Round Robin scheduler"
+                << std::endl;
+            break;
+        }
 
 
+        if(alarm_flag == 1)
+        {
+            if(term == true)
+            {
+                term = false;
+
+                if((unsigned int)process_pointer >= scheduleable_processes.size() - 1)
+                {
+                    process_pointer = 0;
+                }
+
+                pid_t pid_to_start = std::get<1>(scheduleable_processes[process_pointer])->get_process_pid();
+                kill(pid_to_start, SIGCONT);
+            }
+            else
+            {   
+                // Stop currently running process
+                pid_t pid_to_stop = std::get<1>(scheduleable_processes[process_pointer])->get_process_pid();
+                kill(pid_to_stop, SIGSTOP);
+
+                // Adjust process pointer
+                if((unsigned int)process_pointer >= scheduleable_processes.size() - 1)
+                {
+                    process_pointer = 0;
+                }
+                else
+                {
+                    process_pointer += 1;
+                }
+
+                // Start the next process
+                pid_t pid_to_start = std::get<1>(scheduleable_processes[process_pointer])->get_process_pid();
+                kill(pid_to_start, SIGCONT);
+            }
+
+            alarm_flag = 0;
+        }
+
+    }
 
     return;
 }
@@ -327,6 +462,12 @@ void Scheduler::schedule_RR()
 
 void Scheduler::schedule_FIFO()
 {
+    if(scheduleable_processes.size() == 0)
+    {
+        std::cout << "[" << BOLDRED << "ERROR" << RESET << "]: No processes to schedule!" << std::endl;
+        return;
+    }
+
     std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Starting FIFO processes in order from 1 to " 
         << std::to_string(scheduleable_processes.size()) << "." << std::endl;
 
@@ -367,6 +508,8 @@ void Scheduler::schedule_FIFO()
         /* If the process queue is empty, exit! */
         if(scheduleable_processes.size() == 0)
         {
+            std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: All processes terminated.  Exiting FIFO scheduler"
+                << std::endl;
             break;
         }
 
@@ -398,7 +541,7 @@ void Scheduler::schedule_SJF()
 }
 
 
-int main()
+int main(int arcg, char **argv)
 {
     /* Define signal handlers to clean up from exceptions */
     /* 
@@ -442,7 +585,6 @@ int main()
     
     for(unsigned short int i=1; i<=5; i++)
     {
-        // RESTART HERE!!!
         system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
             + std::to_string(i);
         return_val = system(system_string.c_str());
@@ -469,12 +611,14 @@ int main()
             }
             else
             {
-                sleep(1);
                 running_processes.push_back(pid);
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
             }
         }
     }
+
+    // Sleep for visual effect
+    sleep(1);
 
     /* ------------------------------------------------------------------------- */
     /* First In First Out                                                        */
@@ -487,16 +631,130 @@ int main()
     std::cout << std::endl;
 
     /* Instantiate the scheduler class and add the processes to it */
-    Scheduler *process_scheduler = new Scheduler();
+    Scheduler *fifo_scheduler = new Scheduler();
     for(unsigned short int i=0; i<running_processes.size(); i++)
     {
-        process_scheduler->schedule_process(running_processes[i]);
+        fifo_scheduler->schedule_process(running_processes[i]);
     }
-    process_scheduler->set_policy(FIFO);
+    fifo_scheduler->set_policy(FIFO);
 
-    /* Create CPU Bound Processes */
     std::cout << "Starting CPU bound scheduler." << std::endl;
-    process_scheduler->schedule_all();
+    fifo_scheduler->schedule_all();
+    std::cout << std::endl;
+
+    /* Clear running processes vector */
+    running_processes.clear();
+
+    /* ------------------------------------------------------------------------- */
+    /* Round Robbin                                                              */
+    /* ------------------------------------------------------------------------- */
+    
+    std::cout << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* Round Robin                                                                */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << std::endl;
+
+    /* Reinitialize the 5 processes */
+    std::cout << "Restarting processes." << std::endl;
+
+    for(unsigned short int i=1; i<=5; i++)
+    {
+        pid = fork();
+
+        if(pid == 0)
+        {
+            system_string = "./active/process_" + std::to_string(i);
+            return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+        }
+        else if(pid == -1)
+        {
+            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
+                << "    " << strerror(errno) << std::endl;
+            cleanup();
+        }
+        else
+        {
+            running_processes.push_back(pid);
+            std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
+        }
+    }
+    std::cout << std::endl;
+
+    /* Instantiate the scheduler class and add the processes to it */
+    Scheduler *rr_scheduler = new Scheduler();
+    for(unsigned short int i=0; i<running_processes.size(); i++)
+    {
+        rr_scheduler->schedule_process(running_processes[i]);
+    }
+    rr_scheduler->set_policy(ROUND_ROBIN);
+
+    std::cout << "Starting Round Robin scheduler." << std::endl; 
+    rr_scheduler->schedule_all();
+    std::cout << std::endl;
+
+    /* Clear running processes vector */
+    running_processes.clear();
+
+    /* ------------------------------------------------------------------------- */
+    /* Shortest Job First                                                        */
+    /* ------------------------------------------------------------------------- */
+    
+    std::cout << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* Shortest Job First                                                         */" << RESET << std::endl;
+    std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
+    std::cout << std::endl;
+
+    /* Reinitialize the 5 processes */
+    std::cout << "Restarting processes." << std::endl;
+
+    for(unsigned short int i=1; i<=5; i++)
+    {
+        pid = fork();
+
+        if(pid == 0)
+        {
+            system_string = "./active/process_" + std::to_string(i);
+            return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+        }
+        else if(pid == -1)
+        {
+            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
+                << "    " << strerror(errno) << std::endl;
+            cleanup();
+        }
+        else
+        {
+            running_processes.push_back(pid);
+            std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
+        }
+    }
+    std::cout << std::endl;
+
+    /* Instantiate the scheduler class and add the processes to it */
+    Scheduler *sjf_scheduler = new Scheduler();
+
+    /* Note:
+     * The shortest job first sheduler takes an approximate completion time of each process.  
+     * This may need to be recalculated for each machine that this is run on.  It should be
+     * good enough to simply have a relative comparison of completion times (i.e. which 
+     * processes will probably finish before others), but better safe than sorry.  
+     */
+    sjf_scheduler->schedule_process(running_processes[0], 8.3);
+    sjf_scheduler->schedule_process(running_processes[1], 10.9);
+    sjf_scheduler->schedule_process(running_processes[2], 1.92);
+    sjf_scheduler->schedule_process(running_processes[3], 33.2);
+    sjf_scheduler->schedule_process(running_processes[4], 41.7);
+    std::cout << "Starting Shortest Job First scheduler." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process_1 (Sieve of Eratosthenes): Expected run time: 8.3 seconds." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process_2 (Matrix Multiplication): Expected run time: 10.9 seconds." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process_3 (Tight Loop): Expected run time: 1.92 seconds." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process_4 (Bubble Sort): Expected run time: 33.2 seconds." << std::endl;
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process_5 (Cryptarithm Solver): Expected run time: 41.7 seconds." << std::endl;
+
+    // RESTART HERE!!!
+
 
 
     return 0;

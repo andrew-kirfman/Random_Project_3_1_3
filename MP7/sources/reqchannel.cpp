@@ -42,7 +42,7 @@
 /* CONSTANTS */
 /*--------------------------------------------------------------------------*/
 
-    /* -- (none) -- */
+const bool VERBOSE = false;
 
 /*--------------------------------------------------------------------------*/
 /* FORWARDS */
@@ -55,28 +55,29 @@
 /*--------------------------------------------------------------------------*/
 
 char * RequestChannel::pipe_name(Mode _mode) {
-  std::string pname = "fifo_" + my_name;
+	std::string pname = "fifo_" + my_name;
 
-  if (my_side == CLIENT_SIDE) {
-    if (_mode == READ_MODE) 
-      pname += "1";
-    else
-      pname += "2";
-  } else {
-    /* SERVER_SIDE */
-    if (_mode == READ_MODE) 
-      pname += "2";
-    else 
-      pname += "1";
-  }
-  char * result = new char[pname.size()+1];
-  strncpy(result, pname.c_str(), pname.size()+1);
-  return result;
+	if (my_side == CLIENT_SIDE) {
+		if (_mode == READ_MODE)
+			pname += "1";
+		else
+			pname += "2";
+	}
+	else {
+	/* SERVER_SIDE */
+		if (_mode == READ_MODE)
+			pname += "2";
+		else
+			pname += "1";
+	}
+	char * result = new char[pname.size()+1];
+	strncpy(result, pname.c_str(), pname.size()+1);
+	return result;
 }
 
 void RequestChannel::open_write_pipe(char * _pipe_name) {
 
-  std::cout << "mkfifo write pipe\n" << std::flush;
+  if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "mkfifo write pipe\n" << std::flush;
 
 	if (mkfifo(_pipe_name, 0600) < 0) {
 		if (errno != EEXIST) {
@@ -90,7 +91,7 @@ void RequestChannel::open_write_pipe(char * _pipe_name) {
 		}
 	}
 
- std::cout << "open write pipe\n" << std::flush;
+ if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "open write pipe\n" << std::flush;
 
 	wfd = open(_pipe_name, O_WRONLY);
 	if (wfd < 0) {
@@ -102,13 +103,13 @@ void RequestChannel::open_write_pipe(char * _pipe_name) {
   		throw sync_lib_exception("RequestChannel:" + my_name + ":" + side_name + ": error opening pipe for writing");
 	}
 
-  std::cout << "done opening write pipe\n" << std::flush;
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "done opening write pipe\n" << std::flush;
 	write_pipe_opened = true;
 }
 
 void RequestChannel::open_read_pipe(char * _pipe_name) {
 
-  std::cout << "mkfifo read pipe\n" << std::flush;
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "mkfifo read pipe\n" << std::flush;
 
 	if (mkfifo(_pipe_name, 0600) < 0) {
 		if (errno != EEXIST) {
@@ -122,7 +123,7 @@ void RequestChannel::open_read_pipe(char * _pipe_name) {
 		}
 	}
 
-  std::cout << "open read pipe\n" << std::flush;
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "open read pipe\n" << std::flush;
 
 	rfd = open(_pipe_name, O_RDONLY);
 	if (rfd < 0) {
@@ -134,7 +135,7 @@ void RequestChannel::open_read_pipe(char * _pipe_name) {
 		throw sync_lib_exception("RequestChanel:" + my_name + ":" + side_name + ": error opening pipe for reading");
 	}
 
-  std::cout << "done opening read pipe\n" << std::flush;
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "done opening read pipe\n" << std::flush;
 	read_pipe_opened = true;
 }
 
@@ -167,21 +168,21 @@ my_name(_name), my_side(_side), side_name((_side == RequestChannel::SERVER_SIDE)
 }
 
 RequestChannel::~RequestChannel() {
-  std::cout << "close requests channel " << my_name << std::endl;
-  close(wfd);
-  close(rfd);
-  //if (my_side == SERVER_SIDE) {
-    //std::cout << "close IPC mechanisms on server side for channel " << my_name << std::endl;
-    /* Destruct the underlying IPC mechanisms. */
-    if (remove(pipe_name(READ_MODE)) != 0 && errno != ENOENT) {
-      perror(std::string("Request Channel (" + my_name + ") : Error deleting pipe read pipe").c_str());
-    }
-      
-    if (remove(pipe_name(WRITE_MODE)) != 0 && errno != ENOENT) {
-      perror(std::string("Request Channel (" + my_name + ") : Error deleting pipe write pipe").c_str());
-    }
-      std::cout << "Bye y'all" << std::flush << std::endl;
-  //}
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "close requests channel " << my_name << std::endl;
+	close(wfd);
+	close(rfd);
+	//if (my_side == SERVER_SIDE) {
+	//if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "close IPC mechanisms on server side for channel " << my_name << std::endl;
+	/* Destruct the underlying IPC mechanisms. */
+	if (remove(pipe_name(READ_MODE)) != 0 && errno != ENOENT) {
+		perror(std::string("Request Channel (" + my_name + ") : Error deleting pipe read pipe").c_str());
+	}
+
+	if (remove(pipe_name(WRITE_MODE)) != 0 && errno != ENOENT) {
+		perror(std::string("Request Channel (" + my_name + ") : Error deleting pipe write pipe").c_str());
+	}
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "Bye y'all" << std::flush << std::endl;
+	//}
 }
 
 /*--------------------------------------------------------------------------*/
@@ -191,9 +192,9 @@ RequestChannel::~RequestChannel() {
 const int MAX_MESSAGE = 255;
 
 std::string RequestChannel::send_request(std::string _request) {
-  cwrite(_request);
-  std::string s = cread();
-  return s;
+	cwrite(_request);
+	std::string s = cread();
+	return s;
 }
 
 std::string RequestChannel::cread() {
@@ -219,7 +220,7 @@ std::string RequestChannel::cread() {
 
 	std::string s = buf;
 
-	  std::cout << "Request Channel (" << my_name << ") reads [" << buf << "]\n";
+	if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "Request Channel (" << my_name << ") reads [" << buf << "]\n";
 
 	return s;
 
@@ -228,35 +229,35 @@ std::string RequestChannel::cread() {
 int RequestChannel::cwrite(std::string _msg) {
 
 	if (_msg.length() >= MAX_MESSAGE) {
-		std::cerr << "Message too long for Channel!\n";
+		if(VERBOSE) std::cerr << "RequestChannel:" << my_name << ":" << side_name << "Message too long for Channel!\n";
 		return -1;
 	}
 
-    std::cout << "Request Channel (" << my_name << ") writing [" << _msg << "]";
+    if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "Request Channel (" << my_name << ") writing [" << _msg << "]";
 
-  const char * s = _msg.c_str();
+	const char * s = _msg.c_str();
 
 	int write_return_value;
-  if ((write_return_value = write(wfd, s, strlen(s)+1)) < 0) {
-	  //EPIPE is part of the normal error-handling process for
-	  //RequestChannels that are successfully constructed,
-	  //but that don't have threads enough threads created for them.
-	  
-	  if(errno != EPIPE) {
-		  perror(std::string("RequestChannel:" + my_name + ":" + side_name + ": error writing to pipe").c_str());
-		  return -1;
-	  }
-	  else {
-		  perror(std::string("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": Broken/closed pipe detected, exiting worker thread...").c_str());
-	  }
-	  close(rfd);
-	  close(wfd);
-	  remove(pipe_name(READ_MODE));
-	  remove(pipe_name(WRITE_MODE));
-	  pthread_exit(NULL);
-  }
+	if ((write_return_value = write(wfd, s, strlen(s)+1)) < 0) {
+		//EPIPE is part of the normal error-handling process for
+		//RequestChannels that are successfully constructed,
+		//but that don't have threads enough threads created for them.
 
-    std::cout << "(" << my_name << ") done writing." << std::endl;
+		if(errno != EPIPE) {
+			perror(std::string("RequestChannel:" + my_name + ":" + side_name + ": error writing to pipe").c_str());
+			return -1;
+		}
+		else {
+			perror(std::string("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": Broken/closed pipe detected, exiting worker thread...").c_str());
+		}
+		close(rfd);
+		close(wfd);
+		remove(pipe_name(READ_MODE));
+		remove(pipe_name(WRITE_MODE));
+		pthread_exit(NULL);
+	}
+
+    if(VERBOSE) std::cout << "RequestChannel:" << my_name << ":" << side_name << "(" << my_name << ") done writing." << std::endl;
 	
 	return write_return_value;
 }
@@ -266,7 +267,7 @@ int RequestChannel::cwrite(std::string _msg) {
 /*--------------------------------------------------------------------------*/
 
 std::string RequestChannel::name() {
-  return my_name;
+	return my_name;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -274,11 +275,11 @@ std::string RequestChannel::name() {
 /*--------------------------------------------------------------------------*/
 
 int RequestChannel::read_fd() {
-  return rfd;
+	return rfd;
 }
 
 int RequestChannel::write_fd() {
-  return wfd;
+	return wfd;
 }
 
 

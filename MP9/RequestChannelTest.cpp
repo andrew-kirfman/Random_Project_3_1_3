@@ -479,9 +479,9 @@ int main(int argc, char * argv[]) {
 				
 				if((errno = pthread_create(&wtps[i].id, NULL, worker_thread_function, (void *) &wtps[i])) != 0) {
 					threadsafe_console_output.perror("MAIN: pthread_create failed for [" + new_channel_name + "], new " + channel_type + " thread not created");
-					wtps[i].workerChannel = nullptr; //This needs to be checked for correctness
-					++THREADS_NOT_CREATED;
+					delete wtps[i].workerChannel;
 					wtps[i].failed = true;
+					++THREADS_NOT_CREATED;
 				}
 			}
 			catch (sync_lib_exception sle) {
@@ -513,6 +513,10 @@ int main(int argc, char * argv[]) {
 					delete joe_smith;
 					throw sync_lib_exception("MAIN: all worker threads failed, no point in continuing.");
 				}
+			}
+			catch (std::bad_alloc ba) {
+				threadsafe_console_output.println("MAIN: caught std::bad_alloc in worker thread loop");
+				throw;
 			}
 		}
 		

@@ -316,6 +316,10 @@ int main(int argc, char * argv[]) {
 				params[i].failed = true;
 				++THREADS_FAILED;
 			}
+			catch (std::bad_alloc ba) {
+				threadsafe_standard_output.println("MAIN: caught std:bad_alloc in worker thread loop");
+				throw;
+			}
         }
         
         for(int i = 0; i < w; ++i) {

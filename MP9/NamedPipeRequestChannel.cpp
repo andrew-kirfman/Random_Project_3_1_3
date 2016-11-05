@@ -44,7 +44,7 @@ int NamedPipeRequestChannel::write_fd() {
 	return wfd;
 }
 
-char * NamedPipeRequestChannel::pipe_name(Mode _mode) {
+std::string NamedPipeRequestChannel::pipe_name(Mode _mode) {
 	std::string pname = "fifo_" + my_name;
 
 	if (my_side == CLIENT_SIDE) {
@@ -59,53 +59,60 @@ char * NamedPipeRequestChannel::pipe_name(Mode _mode) {
 	else 
 		pname += "a";
 	}
-	char * result = new char[pname.size()+1];
-	strncpy(result, pname.c_str(), pname.size()+1);
-	return result;
+	
+	return pname;
 }
 
-void NamedPipeRequestChannel::open_write_pipe(char * _pipe_name) {
+void NamedPipeRequestChannel::open_write_pipe(const char * _pipe_name) {
 
 	if(VERBOSE_DEBUG) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": mkfifo write pipe");
 	if (mkfifo(_pipe_name, 0600) < 0) {
 		if (errno != EEXIST) {
+			int prev_errno = errno;
 			if(read_pipe_opened) close(rfd);
 			if(write_pipe_opened) close(wfd);
-			remove(pipe_name(READ_MODE));
-			remove(pipe_name(WRITE_MODE));
+			remove(pipe_name(READ_MODE).c_str());
+			remove(pipe_name(WRITE_MODE).c_str());
+			errno = prev_errno;
 			throw sync_lib_exception("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error creating pipe for writing");
 		}
 	}
 	if(VERBOSE_DEBUG) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": open write pipe");
 	wfd = open(_pipe_name, O_WRONLY);
 	if (wfd < 0) {
+		int prev_errno = errno;
 		if(read_pipe_opened) close(rfd);
-		remove(pipe_name(READ_MODE));
-		remove(pipe_name(WRITE_MODE));
+		remove(pipe_name(READ_MODE).c_str());
+		remove(pipe_name(WRITE_MODE).c_str());
+		errno = prev_errno;
 		throw sync_lib_exception("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error opening pipe for writing");
 	}
 	if(VERBOSE) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": done opening write pipe");
 	write_pipe_opened = true;
 }
 
-void NamedPipeRequestChannel::open_read_pipe(char * _pipe_name) {
+void NamedPipeRequestChannel::open_read_pipe(const char * _pipe_name) {
 
 	if(VERBOSE_DEBUG) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": mkfifo read pipe");
 	if (mkfifo(_pipe_name, 0600) < 0) {
 		if (errno != EEXIST) {
+			int prev_errno = errno;
 			if(read_pipe_opened) close(rfd);
 			if(write_pipe_opened) close(wfd);
-			remove(pipe_name(READ_MODE));
-			remove(pipe_name(WRITE_MODE));
+			remove(pipe_name(READ_MODE).c_str());
+			remove(pipe_name(WRITE_MODE).c_str());
+			errno = prev_errno;
 			throw sync_lib_exception("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error creating pipe for reading");
 		}
 	}
 	if(VERBOSE_DEBUG) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": open read pipe");
 	rfd = open(_pipe_name, O_RDONLY);
 	if (rfd < 0) {
+		int prev_errno = errno;
 		if(write_pipe_opened) close(wfd);
-		remove(pipe_name(READ_MODE));
-		remove(pipe_name(WRITE_MODE));
+		remove(pipe_name(READ_MODE).c_str());
+		remove(pipe_name(WRITE_MODE).c_str());
+		errno = prev_errno;
 		throw sync_lib_exception("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error opening pipe for reading");
 	}
 	if(VERBOSE) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": done opening read pipe");
@@ -133,12 +140,12 @@ side_name((my_side == RequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT")
 	}
 	
 	if (_side == SERVER_SIDE) {
-		open_write_pipe(pipe_name(WRITE_MODE));
-		open_read_pipe(pipe_name(READ_MODE));
+		open_write_pipe(pipe_name(WRITE_MODE).c_str());
+		open_read_pipe(pipe_name(READ_MODE).c_str());
 	}
 	else {
-		open_read_pipe(pipe_name(READ_MODE));
-		open_write_pipe(pipe_name(WRITE_MODE));
+		open_read_pipe(pipe_name(READ_MODE).c_str());
+		open_write_pipe(pipe_name(WRITE_MODE).c_str());
 	}
 }
 
@@ -146,16 +153,17 @@ NamedPipeRequestChannel::~NamedPipeRequestChannel() {
 	if(VERBOSE_DEBUG) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": destructing");
 	close(wfd);
 	close(rfd);
-	
-	if(VERBOSE) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": close IPC mechanisms for channel " + my_name);
-	
-	/* Destruct the underlying IPC mechanisms. */
-	if (remove(pipe_name(READ_MODE)) < 0 && errno != ENOENT) {
-		threadsafe_console_output.perror("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error deleting pipe for reading");
-	}
-	
-	if (remove(pipe_name(WRITE_MODE)) < 0 && errno != ENOENT) {
-		threadsafe_console_output.perror("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error deleting pipe for writing");
+	if(my_side == RequestChannel::SERVER_SIDE) {
+		if(VERBOSE) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": close IPC mechanisms for channel " + my_name);
+		
+		/* Destruct the underlying IPC mechanisms. */
+		if (remove(pipe_name(READ_MODE).c_str()) < 0 && errno != ENOENT) {
+			threadsafe_console_output.perror("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error deleting pipe for reading");
+		}
+		
+		if (remove(pipe_name(WRITE_MODE).c_str()) < 0 && errno != ENOENT) {
+			threadsafe_console_output.perror("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error deleting pipe for writing");
+		}
 	}
 }
 
@@ -188,8 +196,8 @@ std::string NamedPipeRequestChannel::cread() {
 		}
 		close(rfd);
 		close(wfd);
-		remove(pipe_name(READ_MODE));
-		remove(pipe_name(WRITE_MODE));
+		remove(pipe_name(READ_MODE).c_str());
+		remove(pipe_name(WRITE_MODE).c_str());
 		pthread_exit(NULL);
 	}
 
@@ -228,8 +236,8 @@ int NamedPipeRequestChannel::cwrite(std::string _msg) {
 		}
 		close(rfd);
 		close(wfd);
-		remove(pipe_name(READ_MODE));
-		remove(pipe_name(WRITE_MODE));
+		remove(pipe_name(READ_MODE).c_str());
+		remove(pipe_name(WRITE_MODE).c_str());
 		pthread_exit(NULL);
 	}
 

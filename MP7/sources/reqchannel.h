@@ -70,9 +70,9 @@ private:
 	int wfd;
 	int rfd;
 
-	char * pipe_name(Mode _mode);
-	void open_read_pipe(char * _pipe_name);
-	void open_write_pipe(char * _pipe_name);
+	std::string pipe_name(Mode _mode);
+	void open_read_pipe(const char * _pipe_name);
+	void open_write_pipe(const char * _pipe_name);
 	bool read_pipe_opened = false;
 	bool write_pipe_opened = false;
 

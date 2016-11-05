@@ -64,15 +64,15 @@
     All *_params structs are optional,
     but they might help.
  */
-struct request_thread_params {
+struct PARAMS_request {
     
 };
 
-struct worker_thread_params {
+struct PARAMS_WORKER {
     
 };
 
-struct stat_thread_params {
+struct PARAMS_STAT {
     
 };
 
@@ -175,9 +175,9 @@ int main(int argc, char * argv[]) {
         struct timeval finish_time;
         int64_t start_usecs;
         int64_t finish_usecs;
-        ofstream ofs;
-        if(USE_ALTERNATE_FILE_OUTPUT) ofs.open("output2.txt", ios::out | ios::app);
-        else ofs.open("output.txt", ios::out | ios::app);
+        std::ofstream ofs;
+        if(USE_ALTERNATE_FILE_OUTPUT) ofs.open("output2.txt", std::ios::out | std::ios::app);
+        else ofs.open("output.txt", std::ios::out | std::ios::app);
         
         std::cout << "n == " << n << std::endl;
         std::cout << "b == " << b << std::endl;

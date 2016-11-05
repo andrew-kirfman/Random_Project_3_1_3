@@ -61,7 +61,7 @@ struct PARAMS_REQUEST {
 	SafeBuffer *request_buffer;
 	std::string name;
 	int n;
-	int v = 0;
+	int v = VERBOSITY_DEFAULT;
 	PARAMS_REQUEST(SafeBuffer *req_buf, std::string _name, int _n, int verbosity) :
 		request_buffer(req_buf), name(_name), n(_n), v(verbosity) {};
 };
@@ -76,7 +76,7 @@ struct PARAMS_WORKER {
     pthread_mutex_t *john_m;
     pthread_mutex_t *jane_m;
     pthread_mutex_t *joe_m;
-	int v = 0;
+	int v = VERBOSITY_DEFAULT;
     PARAMS_WORKER(RequestChannel *wc, SafeBuffer *req_buf, std::vector<int> *john_fc,
 				  std::vector<int> *jane_fc, std::vector<int> *joe_fc, pthread_mutex_t *_john_m,
 				  pthread_mutex_t *_jane_m, pthread_mutex_t *_joe_m, int verbosity) :
@@ -251,7 +251,7 @@ int main(int argc, char * argv[]) {
             Failing to initialize these properly can
             leads to some pretty nasty bugs.
          */
-        std::vector<PARAMS_WORKER> params(w, PARAMS_WORKER(nullptr, &request_buffer, &john_frequency_count,
+        std::vector<PARAMS_WORKER> wtps(w, PARAMS_WORKER(nullptr, &request_buffer, &john_frequency_count,
                                              &jane_frequency_count, &joe_frequency_count,
                                              &john_m, &jane_m, &joe_m, v));
         
@@ -263,13 +263,7 @@ int main(int argc, char * argv[]) {
             buffer to manage the synchronization.
          */
 		
-		/*
-			TANZIR-REQUESTED-REVISION-RELATED QUESTION:
-		 		Should the request thread execution be timed?
-		 		If so, how? Most importantly, should it be combined
-		 		with the worker thread timing as it is now?
-		 */
-        assert(gettimeofday(&start_time, 0) == 0);
+        //assert(gettimeofday(&start_time, 0) == 0);
 
         if(v >= VERBOSITY_DEBUG) {
             std::cout << "Populating request buffer; starting request threads... ";
@@ -297,23 +291,32 @@ int main(int argc, char * argv[]) {
             request_buffer.push_back("quit");
         }
         if(v >= VERBOSITY_DEBUG) std::cout << "done." << std::endl;
-        
+		
+		/*
+			TANZIR-REQUESTED-REVISION-RELATED QUESTION:
+		 		Should the request thread execution be timed?
+				If so, how? Most importantly, should it be combined
+		 		with the worker thread timing as it was earlier?
+		 */
+		assert(gettimeofday(&start_time, 0) == 0);
+
+		
         std::vector<pthread_t> wtids;
         for(int i = 0; i < w; ++i) {
 			try {
 				std::string s = chan->send_request("newthread");
-				params[i].workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
+				wtps[i].workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
 				wtids.push_back(0);
-				if((errno = pthread_create(&wtids[i], NULL, worker_thread_function, (void *) &params[i])) != 0) {
-					threadsafe_standard_output.println("MAIN: pthread_create failure for " + params[i].workerChannel->name() + ": " + strerror(errno));
-					delete params[i].workerChannel;
-					params[i].failed = true;
+				if((errno = pthread_create(&wtids[i], NULL, worker_thread_function, (void *) &wtps[i])) != 0) {
+					threadsafe_standard_output.println("MAIN: pthread_create failure for " + wtps[i].workerChannel->name() + ": " + strerror(errno));
+					delete wtps[i].workerChannel;
+					wtps[i].failed = true;
 					++THREADS_FAILED;
 				}
 			}
 			catch (sync_lib_exception sle) {
 				threadsafe_standard_output.println("MAIN: new client-side channel not created: " + std::string(sle.what()) + ": " + strerror(errno));
-				params[i].failed = true;
+				wtps[i].failed = true;
 				++THREADS_FAILED;
 			}
 			catch (std::bad_alloc ba) {
@@ -323,7 +326,7 @@ int main(int argc, char * argv[]) {
         }
         
         for(int i = 0; i < w; ++i) {
-			if(!params[i].failed && (errno = pthread_join(wtids[i], NULL)) != 0) {
+			if(!wtps[i].failed && (errno = pthread_join(wtids[i], NULL)) != 0) {
 				perror(std::string("MAIN: failed on pthread_join for [" + std::to_string(i) + "]").c_str());
 			}
         }

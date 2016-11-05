@@ -30,6 +30,7 @@
 client
 dataserver
 client_solution
+reqchannel_test
 
 #Extraneous Program Output
 output*.txt

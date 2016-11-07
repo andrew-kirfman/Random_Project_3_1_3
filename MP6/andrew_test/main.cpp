@@ -652,6 +652,59 @@ void Scheduler::schedule_SJF()
 
 void Scheduler::schedule_interactive_RR()
 {
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Enter commands to schedule them." << std::endl;
+
+    fd_set read_fds;
+
+    std::cout << "  --> ";
+
+    while(true)
+    {
+        FD_ZERO(&read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+
+        result = select(STDIN_FILENO + 1, &read_fds, NULL, NULL, NULL);
+        if(result == -1 && errno != EINTR)
+        {
+            // Problems.  Maybe should do something
+        }
+        else if(result == -1 && errno == EINTR)
+        {
+            // Received an interrupt.  Do something about this.  
+        }
+        else
+        {
+            if(FD_ISSET(STDIN_FILENO, &read_fds))
+            {
+                // Do stuff here!!!
+            }
+        }
+
+        std::string command_to_execute = "";
+        std::cout << "  --> ";
+        std::getline(std::cin, input_command, '\n');
+
+
+
+        if(command_to_execute == "exit")
+        {
+            return;
+        }
+
+        int return_val = shell(command_to_execute);
+        if(return_val != -1)
+        {
+            std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process " << return_val << " started." << std::endl;
+            schedule_process(return_val);
+        }
+        else
+        {   
+            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not execute command." << std::endl;
+        }  
+        // RETURN HERE!!!
+
+    }
+
 
 }
 
@@ -669,11 +722,6 @@ void Scheduler::schedule_interactive_SJF()
 
 int main(int arcg, char **argv)
 {
-
-    pid_t result = process_shell("ls");
-    std::cout << "Hello World!" << std::endl;
-    return 0;
-
     /* Define signal handlers to clean up from exceptions */
     /* 
      * Note: It would disastrous for any of the cpu intensive processes to 
@@ -902,6 +950,14 @@ int main(int arcg, char **argv)
     std::cout << BOLDGREEN << "/* Interactive First In First Out                                             */" << RESET << std::endl;
     std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
     std::cout << std::endl;
+
+    /* Instantiate the scheduler class */
+    Scheduler *interactive_rr_scheduler = new Scheduler();
+    
+    /* Start scheduler running */
+    interactive_rr_scheduler->set_policy(INTERACTIVE_ROUND_ROBIN);
+    interactive_rr_scheduler->schedule_all();
+
 
 
     cleanup();

@@ -11,8 +11,14 @@ STD=-std=c++11
 CFLAGS=-O3 -Wall -g
 
 
-all: main.cpp
-	$(CC) $(CFLAGS) $(STD) main.cpp -o scheduler
+all: 
+	$(CC) $(CFLAGS) $(STD) main.cpp shell.cpp -o scheduler
+	
+main.o: main.cpp
+	$(CC) $(CFLAGS) $(STD) -c main.cpp 
+
+shell.o: shell.cpp
+	$(CC) $(CFLAGS) $(STD) -c shell.cpp
 
 clean:
 	rm -rf scheduler

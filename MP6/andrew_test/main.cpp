@@ -31,6 +31,7 @@
 /* --------------------------------------------------------------------------- */
 
 #include "utility.h"
+#include "shell.h"
 
 /* --------------------------------------------------------------------------- */
 /* Global Variables                                                            */
@@ -214,6 +215,9 @@ void Running_process::stop()
 #define ROUND_ROBIN 1
 #define FIFO 2
 #define SJF 3
+#define INTERACTIVE_ROUND_ROBIN 4
+#define INTERACTIVE_FIFO 5
+#define INTERACTIVE_SJF 6
 
 class Scheduler
 {
@@ -245,6 +249,10 @@ private:
     void schedule_RR();
     void schedule_FIFO();
     void schedule_SJF();
+    
+    void schedule_interactive_RR();
+    void schedule_interactive_FIFO();
+    void schedule_interactive_SJF();
 };
 
 /* Constructor */
@@ -274,7 +282,10 @@ void Scheduler::schedule_process(pid_t process_pid, double expected_run_time = 0
 void Scheduler::set_policy(int policy)
 {
     if(policy == NO_POLICY || policy == ROUND_ROBIN
-        || policy == FIFO || policy == SJF)
+        || policy == FIFO || policy == SJF
+        || policy == INTERACTIVE_ROUND_ROBIN
+        || policy == INTERACTIVE_FIFO
+        || policy == INTERACTIVE_SJF)
     {
         scheduling_policy = policy;
     }
@@ -313,6 +324,18 @@ void Scheduler::schedule_all()
     else if(scheduling_policy == SJF)
     {
         schedule_SJF();
+    }
+    else if(scheduling_policy == INTERACTIVE_ROUND_ROBIN)
+    {
+        schedule_interactive_RR();
+    }
+    else if(scheduling_policy == INTERACTIVE_FIFO)
+    {
+        schedule_interactive_FIFO();
+    }
+    else if(scheduling_policy == INTERACTIVE_SJF)
+    {
+        schedule_interactive_SJF();
     }
     else if(scheduling_policy == NO_POLICY)
     {
@@ -627,9 +650,30 @@ void Scheduler::schedule_SJF()
     return;
 }
 
+void Scheduler::schedule_interactive_RR()
+{
+
+}
+
+void Scheduler::schedule_interactive_FIFO()
+{
+
+}
+
+void Scheduler::schedule_interactive_SJF()
+{
+
+}
+
+
 
 int main(int arcg, char **argv)
 {
+
+    pid_t result = process_shell("ls");
+    std::cout << "Hello World!" << std::endl;
+    return 0;
+
     /* Define signal handlers to clean up from exceptions */
     /* 
      * Note: It would disastrous for any of the cpu intensive processes to 

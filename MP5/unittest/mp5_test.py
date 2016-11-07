@@ -32,7 +32,7 @@ def call_shell_output():
 
 def main(argv):
     global executable_name
-    
+
     sys.stdout.write("Enter the name of the student's executable to test: ")
     executable_name = sys.stdin.readline().strip()
 
@@ -59,7 +59,7 @@ class TestHandlers(unittest.TestCase):
 
         command1 = "ls"
         command1_shell = "echo \"ls\" | %s -t" % executable_name
-    
+
         cmd1_test = check_output(command1, shell=True)
         cmd1_shell = check_output(command1_shell, shell=True)
 
@@ -84,7 +84,7 @@ class TestHandlers(unittest.TestCase):
 
         cmd3_test = check_output(command3, shell=True)
         cmd3_shell = check_output(command3_shell, shell=True)
-        
+
         self.assertEqual(cmd3_test, cmd3_shell)
 
     def test_simple_arguments_2(self):
@@ -119,7 +119,7 @@ class TestHandlers(unittest.TestCase):
         global executable_name
 
         check_output("echo \"Hello World\" > temp_shell", shell=True)
-        
+
         command7_shell = "echo \"tar -c -v -f temp.tar temp_shell\" | %s -t" % executable_name
 
         check_output(command7_shell, shell=True)
@@ -140,7 +140,7 @@ class TestHandlers(unittest.TestCase):
 
         command9 = "ls | cat"
         command9_shell = "echo \"ls | cat\" | %s -t" % executable_name
-        
+
         cmd9_test = check_output(command9, shell=True)
         cmd9_shell = check_output(command9_shell, shell=True)
 

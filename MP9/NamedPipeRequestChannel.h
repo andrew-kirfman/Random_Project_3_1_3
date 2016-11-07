@@ -29,11 +29,11 @@ private:
 	int rfd = 0;
 	
 	/*  Generates a name for a pipe                             */
-	char * pipe_name(Mode _mode);
+	std::string pipe_name(Mode _mode);
 	
 	/*  Open named pipes for reading and writing                */
-	void open_read_pipe(char * _pipe_name);
-	void open_write_pipe(char * _pipe_name);
+	void open_read_pipe(const char * _pipe_name);
+	void open_write_pipe(const char * _pipe_name);
 	bool read_pipe_opened = false;
 	bool write_pipe_opened = false;
 	

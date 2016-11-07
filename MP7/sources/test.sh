@@ -107,5 +107,4 @@ echo "Test 49, w = 245:" >> output.txt
 ./client -n 10000 -w 245
 echo "Test 50, w = 250:" >> output.txt
 ./client -n 10000 -w 250
-#note that actual maximum appears to be 251
 echo "Finished!"

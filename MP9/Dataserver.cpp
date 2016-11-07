@@ -116,15 +116,12 @@ void Dataserver::process_newthread(RequestChannel & _channel, const std::string 
 		if(VERBOSE) threadsafe_console_output.println("DATASERVER:" + _channel.name() + ": starting new " + channel_type + " thread " + std::to_string(nthreads));
 		if ((errno = pthread_create(& thread_id, NULL, handle_data_requests, data_channel)) != 0) {
 			threadsafe_console_output.perror("DATASERVER:" + _channel.name() + ": pthread_create failure, new " + channel_type + " thread not created");
-			
 			delete data_channel;
-			--nthreads;
 		}
 	}
 	catch (sync_lib_exception sle) {
 		threadsafe_console_output.perror("DATASERVER:" + std::string(sle.what()));
-		--nthreads;
-	}	
+	}
 	
 }
 

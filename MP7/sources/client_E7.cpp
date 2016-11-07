@@ -86,10 +86,10 @@ struct PARAMS_WORKER {
     from other threads.
     For example:
     thread A {
-        atomic_standard_output.print("Hello ");
+        atomic_standard_output.println("Hello ");
     }
     thread B {
-        atomic_standard_output.print("World!\n");
+        atomic_standard_output.println("World!\n");
     }
     The output could be:
     Hello World!
@@ -111,7 +111,7 @@ class atomic_standard_output {
     pthread_mutex_t console_lock;
 public:
     atomic_standard_output() { pthread_mutex_init(&console_lock, NULL); }
-    void print(std::string s){
+    void println(std::string s){
         pthread_mutex_lock(&console_lock);
         std::cout << s << std::endl;
         pthread_mutex_unlock(&console_lock);
@@ -237,10 +237,6 @@ int main(int argc, char * argv[]) {
         std::vector<int> john_frequency_count(10, 0);
         std::vector<int> jane_frequency_count(10, 0);
         std::vector<int> joe_frequency_count(10, 0);
-        
-        /*-------------------------------------------*/
-        /* START TIMER HERE */
-        /*-------------------------------------------*/
 		
 /*--------------------------------------------------------------------------*/
 /*  BEGIN CRITICAL SECTION  */
@@ -286,6 +282,10 @@ int main(int argc, char * argv[]) {
             request_buffer.push_back("quit");
         }
         std::cout << "done." << std::endl;
+		
+		/*-------------------------------------------*/
+		/* START TIMER HERE */
+		/*-------------------------------------------*/
 		
         std::string s = chan->send_request("newthread");
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);

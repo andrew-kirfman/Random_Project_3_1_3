@@ -164,6 +164,10 @@ int process_shell(std::string input_command)
 
 	if(pid == 0)
 	{
+        int fd = open("/dev/null", O_WRONLY);
+        close(STDOUT_FILENO);
+        dup(fd);
+
 		execvp(arg_array[0], arg_array);
 
         // Something bad happened

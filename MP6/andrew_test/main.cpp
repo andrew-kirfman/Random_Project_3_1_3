@@ -656,14 +656,122 @@ void Scheduler::schedule_interactive_RR()
 
     fd_set read_fds;
 
+    /* Handler for time slicing */
+    struct sigaction signal_struct_1;
+    signal_struct_1.sa_handler = handle_RR;
+    sigaction(SIGALRM, &signal_struct_1, NULL);
+    
+    /* Handler for process termination */
+    struct sigaction signal_struct_2;
+    signal_struct_2.sa_handler = handle_term;
+    signal_struct_2.sa_flags = SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &signal_struct_2, NULL);
+
+    // Set the initial alarm plus some time for this process to do management tasks
+    struct itimerval timer_int;
+    struct timeval timer_interval;
+    timer_interval.tv_usec = time_quantum;
+    timer_interval.tv_sec = 0;
+    timer_int.it_interval = timer_interval;
+
+    struct timeval timer_value;
+    timer_value.tv_usec = time_quantum;
+    timer_value.tv_sec = 0;
+    timer_int.it_value = timer_value;
+
+    setitimer(ITIMER_REAL, &timer_int, NULL);
+
+    // Keep track of currently running process
+    int process_pointer = 0;
+    bool term = false;
+
+    bool first = true;
     std::cout << "  --> ";
+    std::cout.flush();
+
+    bool hang_prompt = true;
 
     while(true)
     {
+        /* Redefine the signal handler each iteration */
+        // Don't know if this is a necessary action.  However, I did have issues
+        // with the handler being "forgotten"
+        sigaction(SIGALRM, &signal_struct_1, NULL);
+
+        std::string command_to_execute = "";
+        if(first == true)
+        {
+            first = false;
+        }
+        else if(hang_prompt == false)
+        {
+            std::cout << "  --> ";
+            std::cout.flush();
+            hang_prompt = true;
+        }
+
+        if(terminated_pid != -1 && terminated_pid >= 0)
+        {
+            // Deal with terminated process
+            bool found = false;
+            for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
+            {
+                if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
+                {
+                    std::cout << "\b\b\b\b\b\b";
+                    std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process_" << 
+                        std::to_string(std::get<0>(scheduleable_processes[i]) + 1) << " terminated successfully." << std::endl;
+                    hang_prompt = false;
+
+                    // Set appropriate flags
+                    term = true;
+                    found = true;
+                    terminated_pid = -1;
+
+                    scheduleable_processes.erase(scheduleable_processes.begin() + i);
+                    break;
+                }
+            }
+
+            if(found == false)
+            {
+                std::cout << "  [ERROR]: Cound not terminate finished process successfully." << std::endl;
+            }
+
+            // Set process_pointer properly
+            if((unsigned int)process_pointer >= scheduleable_processes.size())
+            {
+                process_pointer = scheduleable_processes.size() - 1;
+            }
+
+            terminated_pid = -1;
+        }
+/*
+        std::string command_to_execute = "";
+        if(first == true)
+        {
+            first = false;
+        }
+        else if(hang_prompt == false)
+        {
+            std::cout << "  --> ";
+            std::cout.flush();
+            hang_prompt = true;
+        }*/
+
         FD_ZERO(&read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
 
-        result = select(STDIN_FILENO + 1, &read_fds, NULL, NULL, NULL);
+        struct timespec timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_nsec = 0;
+
+        sigset_t new_sigmask;
+        sigemptyset(&new_sigmask);
+        sigaddset(&new_sigmask, SIGALRM);
+        sigaddset(&new_sigmask, SIGINT);
+
+        int result = pselect(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout, &new_sigmask);
         if(result == -1 && errno != EINTR)
         {
             // Problems.  Maybe should do something
@@ -676,36 +784,82 @@ void Scheduler::schedule_interactive_RR()
         {
             if(FD_ISSET(STDIN_FILENO, &read_fds))
             {
-                // Do stuff here!!!
+                std::getline(std::cin, command_to_execute, '\n');
+                hang_prompt = false;
+
+                if(command_to_execute == "exit")
+                {
+                    return;
+                }
+                else if(command_to_execute == "" || command_to_execute == "\n")
+                {
+                    continue;
+                }
+
+                int return_val = process_shell(command_to_execute);
+                if(return_val != -1)
+                {
+                    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process " << return_val << " started." << std::endl;
+                    schedule_process(return_val);
+                    kill(return_val, SIGCONT);
+                    // Was sleep 2.  Changed to sleep 1
+                    sleep(1);
+                }
+                else
+                {      
+                    std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not execute command." << std::endl;
+                }  
+                // RETURN HERE!!!
             }
         }
 
-        std::string command_to_execute = "";
-        std::cout << "  --> ";
-        std::getline(std::cin, input_command, '\n');
-
-
-
-        if(command_to_execute == "exit")
+        // Keep going if there's nothing to schedule
+        if(scheduleable_processes.size() == 0)
         {
-            return;
+            continue;
         }
-
-        int return_val = shell(command_to_execute);
-        if(return_val != -1)
+ 
+        if(alarm_flag == 1)
         {
-            std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process " << return_val << " started." << std::endl;
-            schedule_process(return_val);
-        }
-        else
-        {   
-            std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not execute command." << std::endl;
-        }  
-        // RETURN HERE!!!
+            if(term == true)
+            {
+                term = false;
 
+                if((unsigned int)process_pointer >= scheduleable_processes.size() - 1)
+                {
+                    process_pointer = 0;
+                }
+
+                pid_t pid_to_start = std::get<1>(scheduleable_processes[process_pointer])->get_process_pid();
+                kill(pid_to_start, SIGCONT);
+            }
+            else
+            {   
+                // Stop currently running process
+                pid_t pid_to_stop = std::get<1>(scheduleable_processes[process_pointer])->get_process_pid();
+                kill(pid_to_stop, SIGSTOP);
+
+                // Adjust process pointer
+                if((unsigned int)process_pointer >= scheduleable_processes.size() - 1)
+                {
+                    process_pointer = 0;
+                }
+                else if(scheduleable_processes.size() > 1)
+                {
+                    process_pointer += 1;
+                }
+                else
+                {
+                    process_pointer = 0;
+                }
+
+                // Start the next process
+                pid_t pid_to_start = std::get<1>(scheduleable_processes[process_pointer])->get_process_pid();
+                kill(pid_to_start, SIGCONT);
+            }
+            alarm_flag = 0;
+        }
     }
-
-
 }
 
 void Scheduler::schedule_interactive_FIFO()
@@ -780,7 +934,7 @@ int main(int arcg, char **argv)
             if(pid == 0)
             {
                 system_string = "./active/process_" + std::to_string(i);
-                return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+//                return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
                 exit(0);
             }
             else if(pid == -1)
@@ -791,6 +945,7 @@ int main(int arcg, char **argv)
             }
             else
             {
+                wait(NULL);
                 running_processes.push_back(pid);
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
             }
@@ -819,7 +974,7 @@ int main(int arcg, char **argv)
     fifo_scheduler->set_policy(FIFO);
 
     std::cout << "Starting CPU bound scheduler." << std::endl;
-    fifo_scheduler->schedule_all();
+//    fifo_scheduler->schedule_all();
     std::cout << std::endl;
 
     /* Clear running processes vector */
@@ -845,7 +1000,7 @@ int main(int arcg, char **argv)
         if(pid == 0)
         {
             system_string = "./active/process_" + std::to_string(i);
-            return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+//            return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
             exit(0);
         }
         else if(pid == -1)
@@ -856,6 +1011,7 @@ int main(int arcg, char **argv)
         }
         else
         {
+            wait(NULL);
             running_processes.push_back(pid);
             std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
         }
@@ -871,7 +1027,7 @@ int main(int arcg, char **argv)
     rr_scheduler->set_policy(ROUND_ROBIN);
 
     std::cout << "Starting Round Robin scheduler." << std::endl; 
-    rr_scheduler->schedule_all();
+//    rr_scheduler->schedule_all();
     std::cout << std::endl;
 
     /* Clear running processes vector */
@@ -897,7 +1053,8 @@ int main(int arcg, char **argv)
         if(pid == 0)
         {
             system_string = "./active/process_" + std::to_string(i);
-            return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+//            return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+            exit(0);
         }
         else if(pid == -1)
         {
@@ -907,6 +1064,7 @@ int main(int arcg, char **argv)
         }
         else
         {
+            wait(NULL);
             running_processes.push_back(pid);
             std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
         }
@@ -935,7 +1093,7 @@ int main(int arcg, char **argv)
     std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process_5 (Cryptarithm Solver): Expected run time: 41.7 seconds." << std::endl;
 
     sjf_scheduler->set_policy(SJF);
-    sjf_scheduler->schedule_all();
+//    sjf_scheduler->schedule_all();
     std::cout << std::endl;
 
     /* Clear the running process vector */

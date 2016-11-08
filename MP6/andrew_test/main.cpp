@@ -354,7 +354,6 @@ void handle_RR(int signum)
 
 void handle_term(int signum)
 {
-    std::cout << "THING!" << std::endl;
     terminated_pid = waitpid(-1, NULL, 0);
 }
 
@@ -699,6 +698,18 @@ void Scheduler::schedule_interactive_RR()
         // with the handler being "forgotten"
         sigaction(SIGALRM, &signal_struct_1, NULL);
 
+        std::string command_to_execute = "";
+        if(first == true)
+        {
+            first = false;
+        }
+        else if(hang_prompt == false)
+        {
+            std::cout << "  --> ";
+            std::cout.flush();
+            hang_prompt = true;
+        }
+
         if(terminated_pid != -1 && terminated_pid >= 0)
         {
             // Deal with terminated process
@@ -707,8 +718,10 @@ void Scheduler::schedule_interactive_RR()
             {
                 if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
                 {
+                    std::cout << "\b\b\b\b\b\b";
                     std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process_" << 
                         std::to_string(std::get<0>(scheduleable_processes[i]) + 1) << " terminated successfully." << std::endl;
+                    hang_prompt = false;
 
                     // Set appropriate flags
                     term = true;
@@ -733,7 +746,7 @@ void Scheduler::schedule_interactive_RR()
 
             terminated_pid = -1;
         }
-
+/*
         std::string command_to_execute = "";
         if(first == true)
         {
@@ -744,7 +757,7 @@ void Scheduler::schedule_interactive_RR()
             std::cout << "  --> ";
             std::cout.flush();
             hang_prompt = true;
-        }
+        }*/
 
         FD_ZERO(&read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
@@ -789,7 +802,8 @@ void Scheduler::schedule_interactive_RR()
                     std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process " << return_val << " started." << std::endl;
                     schedule_process(return_val);
                     kill(return_val, SIGCONT);
-                    sleep(2);
+                    // Was sleep 2.  Changed to sleep 1
+                    sleep(1);
                 }
                 else
                 {      
@@ -804,7 +818,7 @@ void Scheduler::schedule_interactive_RR()
         {
             continue;
         }
-/* 
+ 
         if(alarm_flag == 1)
         {
             if(term == true)
@@ -845,7 +859,6 @@ void Scheduler::schedule_interactive_RR()
             }
             alarm_flag = 0;
         }
-    */
     }
 }
 

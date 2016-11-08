@@ -171,6 +171,9 @@ int process_shell(std::string input_command)
 	}
 	else
 	{
+        
+
+
         kill(pid, SIGSTOP);
         return pid;
     }

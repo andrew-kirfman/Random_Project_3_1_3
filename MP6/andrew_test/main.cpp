@@ -1013,10 +1013,183 @@ void Scheduler::schedule_interactive_FIFO()
 
 void Scheduler::schedule_interactive_SJF()
 {
+    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Enter commands followed by an execution time to schedule them." \
+        << std::endl;
+
+    fd_set read_fds;
+
+    /* Handler for process termination */
+    struct sigaction signal_struct_2;
+    signal_struct_2.sa_handler = handle_term;
+    signal_struct_2.sa_flags = SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &signal_struct_2, NULL);
+
+    // Keep track of currently running process
+    int process_pointer = 0;
+    bool term = false;
+
+    bool first = true;
+    std::cout << "  --> ";
+    std::cout.flush();
+
+    bool hang_prompt = true;
+
+    pid_t current_pid = -1;
+
+    while(true)
+    {
+        std::string command_to_execute = "";
+
+        if(first == true)
+        {
+            first = false;
+        }
+        else if(hang_prompt == false)
+        {
+            std::cout << "  --> ";
+            std::cout.flush();
+            hang_prompt = true;
+        }
+
+        if(terminated_pid != -1 && terminated_pid >= 0)
+        {
+            // Deal with terminated process
+            bool found = false;
+            for(unsigned short int i=0; i<scheduleable_processes.size(); i++)
+            {
+                if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
+                {
+                    if(current_pid == terminated_pid)
+                    {
+                        current_pid == -1;
+                    }
+
+
+                    std::cout << "\b\b\b\b\b\b";
+                    std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process_" << 
+                        std::to_string(std::get<0>(scheduleable_processes[i]) + 1) << " terminated successfully." << std::endl;
+                    hang_prompt = false;
+
+                    // Set appropriate flags
+                    term = true;
+                    found = true;
+                    terminated_pid = -1;
+
+                    scheduleable_processes.erase(scheduleable_processes.begin() + i);
+                    break;
+                }
+            }
+
+            if(found == false)
+            {
+                std::cout << "  [ERROR]: Cound not terminate finished process successfully." << std::endl;
+            }
+
+            // Set process_pointer properly
+            if((unsigned int)process_pointer >= scheduleable_processes.size())
+            {
+                process_pointer = scheduleable_processes.size() - 1;
+            }
+
+            terminated_pid = -1;
+        }
+
+        FD_ZERO(&read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+
+        struct timespec timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_nsec = 0;
+
+        sigset_t new_sigmask;
+        sigemptyset(&new_sigmask);
+        sigaddset(&new_sigmask, SIGALRM);
+        sigaddset(&new_sigmask, SIGINT);
+
+        int result = pselect(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout, &new_sigmask);
+        if(result == -1 && errno != EINTR)
+        {
+            // Problems.  Maybe should do something
+        }
+        else if(result == -1 && errno == EINTR)
+        {
+            // Received an interrupt.  Do something about this.  
+        }
+        else
+        {
+            if(FD_ISSET(STDIN_FILENO, &read_fds))
+            {
+                std::getline(std::cin, command_to_execute, '\n');
+                
+                int space_pos = 0;
+                for(int i=command_to_execute.length()-1; i>=0; i--)
+                {
+                    if(command_to_execute[i] == ' ')
+                    {
+                        space_pos = i;
+                        break;
+                    }
+                }
+
+                string time_string = command_to_execute.substr(i + 1, (command_to_execute.length() - (i + 1)));
+                double entered_time = stod(time_string);
+
+                hang_prompt = false;
+
+                if(command_to_execute == "exit")
+                {
+                    return;
+                }
+                else if(command_to_execute == "" || command_to_execute == "\n")
+                {
+                    continue;
+                }
+
+                int return_val = process_shell(command_to_execute);
+                if(return_val != -1)
+                {
+                    std::cout << "  [" << BOLDWHITE << "INFO" << RESET << "]: Process " << return_val << " started." << std::endl;
+
+                    schedule_process(return_val, entered_time);
+                }
+                else
+                {      
+                    std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not execute command." << std::endl;
+                }  
+            }
+        }
+
+        // Keep going if there's nothing to schedule
+        if(scheduleable_processes.size() == 0)
+        {
+            continue;
+        }
+
+
+        // CODE TO CHOOSE NEXT PROCESS HERE!!!
+        int min_pos = 0;
+        double min_expected_time = 999999.99;
+
+        for(unsigned short int i=0; i<schdeuleable_processes.size(); i++)
+        {
+            double r_execution = std::get<1>(scheduleable_processes[i])->get_remaining_execution_time();
+            
+            if(r_execution < min_expected_time)
+            {
+                min_expected_time = r_execution;
+                min_pos = i;
+            }
+        }
+
+        pid_t to_start = std::get<1>(scheduleable_processes[min_pos])->get_process_pid();
+
+
+
+    }
+
+    return;
 
 }
-
-
 
 int main(int arcg, char **argv)
 {
@@ -1052,11 +1225,6 @@ int main(int arcg, char **argv)
     mkdir("./active", S_IRWXU | S_IRWXG | S_IRWXO);
 
     /* Policy selection menu */
-    while(true)
-    {
-        system("clear");
-        std::cout << "Choose a scheduling policy to test: " << std::endl;
-
 
 
 

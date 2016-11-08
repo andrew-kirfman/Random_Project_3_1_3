@@ -694,6 +694,11 @@ void Scheduler::schedule_interactive_RR()
 
     while(true)
     {
+        /* Redefine the signal handler each iteration */
+        // Don't know if this is a necessary action.  However, I did have issues
+        // with the handler being "forgotten"
+        sigaction(SIGALRM, &signal_struct_1, NULL);
+
         if(terminated_pid != -1 && terminated_pid >= 0)
         {
             // Deal with terminated process
@@ -737,19 +742,23 @@ void Scheduler::schedule_interactive_RR()
         else if(hang_prompt == false)
         {
             std::cout << "  --> ";
-            std::cout << std::endl;
             std::cout.flush();
+            hang_prompt = true;
         }
-        
-        continue;
 
         FD_ZERO(&read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
 
-        struct timeval timeout;
+        struct timespec timeout;
         timeout.tv_sec = 0;
-        timeout.tv_usec = 0;
-        int result = select(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout);
+        timeout.tv_nsec = 0;
+
+        sigset_t new_sigmask;
+        sigemptyset(&new_sigmask);
+        sigaddset(&new_sigmask, SIGALRM);
+        sigaddset(&new_sigmask, SIGINT);
+
+        int result = pselect(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout, &new_sigmask);
         if(result == -1 && errno != EINTR)
         {
             // Problems.  Maybe should do something
@@ -923,6 +932,7 @@ int main(int arcg, char **argv)
             }
             else
             {
+                wait(NULL);
                 running_processes.push_back(pid);
                 std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
             }
@@ -988,6 +998,7 @@ int main(int arcg, char **argv)
         }
         else
         {
+            wait(NULL);
             running_processes.push_back(pid);
             std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
         }
@@ -1040,6 +1051,7 @@ int main(int arcg, char **argv)
         }
         else
         {
+            wait(NULL);
             running_processes.push_back(pid);
             std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
         }

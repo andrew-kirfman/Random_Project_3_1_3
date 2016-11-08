@@ -217,9 +217,6 @@ int main(int argc, char * argv[]) {
         int64_t start_usecs;
         int64_t finish_usecs;
         
-		std::ofstream ofs;
-		ofs.open("output.txt", std::ios::out | std::ios::app);
-        
         if(v >= VERBOSITY_DEFAULT) std::cout << "n == " << n << std::endl;
         if(v >= VERBOSITY_DEFAULT) std::cout << "w == " << w << std::endl;
         
@@ -353,15 +350,6 @@ int main(int argc, char * argv[]) {
         if(v >= VERBOSITY_DEBUG) std::cout << jane_results << std::endl;
         if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
         if(v >= VERBOSITY_DEBUG) std::cout << joe_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
-        if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
-        ofs.close();
         
         if(v >= VERBOSITY_DEFAULT) std::cout << "Sleeping..." << std::endl;
         usleep(10000);
@@ -374,6 +362,19 @@ int main(int argc, char * argv[]) {
         std::string finale = chan->send_request("quit");
         if(v >= VERBOSITY_DEFAULT) std::cout << "Finale: " << finale << std::endl;
         delete chan;
+		
+		std::ofstream ofs;
+		ofs.open("output.txt", std::ios::out | std::ios::app);
+		
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
+		if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
+		if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
+		if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
+		if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
+		ofs.close();
     }
     else if(pid != 0) execl("dataserver", NULL);
 }

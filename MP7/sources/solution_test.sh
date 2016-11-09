@@ -6,15 +6,15 @@ echo "Cleaning and compiling..."
 make clean
 make
 echo "Running tests..."
-#echo "Test 0, w = 1:" >> output.txt
-#./client_solution -v 2 -n 10000 -w 1
-#echo "Test 1, w = 5:" >> output.txt
-#./client_solution -v 2 -n 10000 -w 5
-#echo "Test 2, w = 10:" >> output.txt
-#./client_solution -v 2 -n 10000 -w 10
-#echo "Test 3, w = 15:" >> output.txt
-#./client_solution -v 2 -n 10000 -w 15
-#echo "Test 4, w = 20:" >> output.txt
+echo "Test 0, w = 1:" >> output.txt
+./client_solution -v 2 -n 10000 -w 1
+echo "Test 1, w = 5:" >> output.txt
+./client_solution -v 2 -n 10000 -w 5
+echo "Test 2, w = 10:" >> output.txt
+./client_solution -v 2 -n 10000 -w 10
+echo "Test 3, w = 15:" >> output.txt
+./client_solution -v 2 -n 10000 -w 15
+echo "Test 4, w = 20:" >> output.txt
 ./client_solution -v 2 -n 10000 -w 20
 echo "Test 5, w = 25:" >> output.txt
 ./client_solution -v 2 -n 10000 -w 25
@@ -110,39 +110,39 @@ echo "Test 50, w = 250:" >> output.txt
 ./client_solution -v 2 -n 10000 -w 250
 
 #Tests after this point have only been run on Mac, in root mode to modify per-process fd limits
-./client_solution -v 2 -n 10000 -w 300
-./client_solution -v 2 -n 10000 -w 400
-./client_solution -v 2 -n 10000 -w 500
-./client_solution -v 2 -n 10000 -w 600
-./client_solution -v 2 -n 10000 -w 700
-./client_solution -v 2 -n 10000 -w 800
-./client_solution -v 2 -n 10000 -w 900
-./client_solution -v 2 -n 10000 -w 1000
-./client_solution -v 2 -n 10000 -w 1100
-./client_solution -v 2 -n 10000 -w 1200
-./client_solution -v 2 -n 10000 -w 1300
-./client_solution -v 2 -n 10000 -w 1400
-./client_solution -v 2 -n 10000 -w 1500
-./client_solution -v 2 -n 10000 -w 1600
-./client_solution -v 2 -n 10000 -w 1700
-./client_solution -v 2 -n 10000 -w 1800
-./client_solution -v 2 -n 10000 -w 1900
-./client_solution -v 2 -n 1000000 -w 250
-./client_solution -v 2 -n 1000000 -w 300
-./client_solution -v 2 -n 1000000 -w 400
-./client_solution -v 2 -n 1000000 -w 500
-./client_solution -v 2 -n 1000000 -w 600
-./client_solution -v 2 -n 1000000 -w 700
-./client_solution -v 2 -n 1000000 -w 800
-./client_solution -v 2 -n 1000000 -w 900
-./client_solution -v 2 -n 1000000 -w 1000
-./client_solution -v 2 -n 1000000 -w 1100
-./client_solution -v 2 -n 1000000 -w 1200
-./client_solution -v 2 -n 1000000 -w 1300
-./client_solution -v 2 -n 1000000 -w 1400
-./client_solution -v 2 -n 1000000 -w 1500
-./client_solution -v 2 -n 1000000 -w 1600
-./client_solution -v 2 -n 1000000 -w 1700
-./client_solution -v 2 -n 1000000 -w 1800
-./client_solution -v 2 -n 1000000 -w 1900
+#./client_solution -v 2 -n 10000 -w 300
+#./client_solution -v 2 -n 10000 -w 400
+#./client_solution -v 2 -n 10000 -w 500
+#./client_solution -v 2 -n 10000 -w 600
+#./client_solution -v 2 -n 10000 -w 700
+#./client_solution -v 2 -n 10000 -w 800
+#./client_solution -v 2 -n 10000 -w 900
+#./client_solution -v 2 -n 10000 -w 1000
+#./client_solution -v 2 -n 10000 -w 1100
+#./client_solution -v 2 -n 10000 -w 1200
+#./client_solution -v 2 -n 10000 -w 1300
+#./client_solution -v 2 -n 10000 -w 1400
+#./client_solution -v 2 -n 10000 -w 1500
+#./client_solution -v 2 -n 10000 -w 1600
+#./client_solution -v 2 -n 10000 -w 1700
+#./client_solution -v 2 -n 10000 -w 1800
+#./client_solution -v 2 -n 10000 -w 1900
+#./client_solution -v 2 -n 1000000 -w 250
+#./client_solution -v 2 -n 1000000 -w 300
+#./client_solution -v 2 -n 1000000 -w 400
+#./client_solution -v 2 -n 1000000 -w 500
+#./client_solution -v 2 -n 1000000 -w 600
+#./client_solution -v 2 -n 1000000 -w 700
+#./client_solution -v 2 -n 1000000 -w 800
+#./client_solution -v 2 -n 1000000 -w 900
+#./client_solution -v 2 -n 1000000 -w 1000
+#./client_solution -v 2 -n 1000000 -w 1100
+#./client_solution -v 2 -n 1000000 -w 1200
+#./client_solution -v 2 -n 1000000 -w 1300
+#./client_solution -v 2 -n 1000000 -w 1400
+#./client_solution -v 2 -n 1000000 -w 1500
+#./client_solution -v 2 -n 1000000 -w 1600
+#./client_solution -v 2 -n 1000000 -w 1700
+#./client_solution -v 2 -n 1000000 -w 1800
+#./client_solution -v 2 -n 1000000 -w 1900
 echo "Finished!"

@@ -149,18 +149,24 @@
 	In large systems, it is quite possible that the number of requests could grow exponentially.  Websites like Amazon receive around 80 million requests daily.  Other companies such as Google and Youtube, receive requests numbering in the hundreds of millions.  No single process will ever be able to this volume of traffic.  So, how do the worlds largest businesses handle it in stride?  Instead of making one process do all of the work, multiple processes handle data requests concurrently.  In doing so, it is possible to handle large quantities of data since one can continue to add more cores/process threads to the system as load increases.  
 	
 	\ \\
-	In this assignment, you are to increase the efficiency of the client-server program given to you by using multithreading.  You must add a command line option, -w, which allows users to enter a number.  This number will define how many worker threads your program will utilize.  Your program must spawn that many worker threads successfully, and these threads must work together to handle all of the requests provided to it.  
+	In this assignment, you are to increase the efficiency of the client-server program given to you by using multithreading.  You must add a command line option, -w, which allows users to enter a number.  This number will define how many worker threads your program will utilize.  Your program must spawn that many worker threads successfully, and these threads must work together to handle all of the requests provided to it.
+	
+	\ \\
+	Multithreading often requires the use of specialized "thread-safe" data structures. In order to facilitate multithreading, you will code a thread-safe class called SafeBuffer (see the commented-out line client\_E7.cpp, "//SafeBuffer request\_buffer;"). SafeBuffer can simply wrap around an STL data structure (we recommend std::list or std::queue), but must have a constructor and destructor as well as the operations push\_back and retrieve\_front (if you want the provided make\_histogram function to work, also include a size function). push\_back adds an element to the back of the buffer and retrieve\_front removes an element from the front so that items are added and removed in FIFO order (see requirements below). Both functions must use locks (see Advanced Concepts section) to ensure that the buffer can be modified concurrently at either end (concurrent modification at \emph{both} ends requires \emph{semaphores}, which we will tackle in the next assignment).
+	
+	\ \\
+	In addition to processing the requests using multithreading, and coding a specialized data structure for that purpose, the request buffer must also be initially populated using multithreading. However, writing the code for request threads will be much easier than the worker threads: you will only ever have 3 request threads, one for each user (John, Jane, and Joe from earlier), and each one simply pushes n requests (corresponding to its respective user) to request\_buffer. Furthermore, the request threads do not have to run concurrently with the worker threads (and in fact \emph{must} not), which means that the only lines of request-thread-related code in main (apart from setting up the thread parameters) will be three pthread\_create calls followed by thread pthread\_join function calls. Simple enough, right? \emph{:)}
 	
 	\ \\
 	Aside from multithreading, your program should have the following characteristics and satisfy the following requirements:
 	\begin{itemize}
 	    \setlength\itemsep{-0.1em}
 	    
-	    \item The program should function correctly for any number of threads. Practically speaking, this means that if the thread creation function call fails (see Synchronization under Advanced Concepts), or the RequestChannel constructor fails (it will throw an exception if it does), your program must recover and finish correctly (if such errors prevent any worker threads from being started, report the problem and exit). Check the return value of of the thread creation function call (also check errno for valuable debug information, man 3 errno), and catch any exceptions thrown by the RequestChannel constructor, "cleaning up" as required. Further error-handling than that should not be needed. Note that failures to create threads or construct RequestChannels do not always (at least, not in and of themselves) indicate a programming error, but may be due to OS limitations such as maximum threads per process or available file descriptors (both of which vary greatly among operating systems).
+	    \item The program should function correctly for any number of threads. Practically speaking, this means that if the pthread\_create function call fails (see Synchronization under Advanced Concepts), or the RequestChannel constructor fails (it will throw an exception if it does), your program must recover and finish correctly (if such errors prevent any worker threads from being started, report the problem and exit). Check the return value of of the pthread\_create function call (also check errno for valuable debug information, man 3 errno) and catch any exceptions thrown by the RequestChannel constructor, in both cases "cleaning up" as required. Further error-handling should not be needed. Note that failures to create threads or construct RequestChannels do not always (at least, not in and of themselves) indicate a programming error but may be due to OS limitations such as maximum threads per process or available file descriptors, both of which vary greatly among operating systems.
 	    \item No fifo files should remain after running the client program with any number of threads.  
 	    \item The client program should not take an unreasonably long time to execute.  Generally, the execution should be quicker than the single threaded version.  You can use the sample code as a performance baseline.  
-	    \item All requests for the program are handled correctly.  The histogram should report the correct number of requests and should NOT drop any requests.  
-	    \item Your code may not make use of any global variables, as they (in most circumstances) exemplify poor programming practice. Appropriately-named storage structs have been provided to be used in their place, although you will need to fill them in before they can be used.
+	    \item All requests for the program are handled correctly, which includes being processed in FIFO order.  The histogram should report the correct number of requests and should NOT drop any requests.  
+	    \item Your code may not make use of \emph{any} global variables, as they (in most circumstances) exemplify poor programming practice. Appropriately-named storage structs have been provided to be used in their place, although you will need to fill in their code before using them.
 	    
 	\end{itemize}
 
@@ -189,7 +195,7 @@
         \begin{enumerate}
         
             \item Describe what your code does and how it differs from the code that was initially given to you.  
-            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints starting at 1 and going to the highest number that will run on your OS.  After making the graph, Describe the behavior of the client program is w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given.  
+            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints starting at 1 and going to the highest number that will run (\emph{without} reporting some kind of error) on your OS.  After making the graph, Describe the behavior of the client program is w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given.  
             \begin{itemize}
                 \setlength\itemsep{-0.1em}
                 
@@ -201,7 +207,7 @@
             \begin{itemize}
                 \setlength\itemsep{-0.1em}
                 
-                \item What is the maximum number of threads that the host machine will allow your client program to create before throwing an error?
+                \item What is the maximum number of threads that the host machine will allow your client program to create before reporting an error? What error is reported?
                 \item What does the operating system do when your client program tries to create more threads than allowed?
                 \item How does your client program behave in response?
                 

@@ -37,6 +37,12 @@ private:
 	bool read_pipe_opened = false;
 	bool write_pipe_opened = false;
 	
+	/*	Locks used to keep the dataserver from dropping requests.	*/
+	pthread_mutex_t read_lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_t write_lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutexattr_t srl_attr;
+	pthread_mutex_t send_request_lock;
+	
 	/*  Return the read file descriptor and
 	 write file descriptor respectively                      */
 	int read_fd();

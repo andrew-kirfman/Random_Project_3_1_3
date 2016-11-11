@@ -342,7 +342,7 @@ UnnamedPipeRequestChannel::~UnnamedPipeRequestChannel() {
 	pthread_mutexattr_destroy(&srl_attr);
 	pthread_mutex_destroy(&read_lock);
 	pthread_mutex_destroy(&write_lock);
-	pthread_mutex_destory(&send_request_lock);
+	pthread_mutex_destroy(&send_request_lock);
 	close(wfd);
 	close(rfd);
 	

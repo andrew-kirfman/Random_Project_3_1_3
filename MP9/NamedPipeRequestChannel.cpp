@@ -139,6 +139,19 @@ side_name((my_side == RequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT")
 		throw sync_lib_exception("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": failed on pthread_sigmas(SIG_SETMASK, &sigpipe_set, NULL)");
 	}
 	
+	if((errno = pthread_mutexattr_init(&srl_attr)) != 0) {
+		throw sync_lib_exception(my_name + ":" + side_name + ": failed on pthread_mutexattr_init");
+	}
+	if((errno = pthread_mutexattr_setrobust(&srl_attr, PTHREAD_MUTEX_ROBUST)) != 0) {
+		throw sync_lib_exception(my_name + ":" + side_name + ": failed on pthread_mutexattr_setrobust");
+	}
+	if((errno = pthread_mutexattr_setpshared(&srl_attr, PTHREAD_PROCESS_SHARED)) != 0) {
+		throw sync_lib_exception(my_name + ":" + side_name + ": failed on pthread_mutexattr_setpshared");
+	}
+	if((errno = pthread_mutex_init(&send_request_lock, &srl_attr)) != 0) {
+		throw sync_lib_exception(my_name + ":" + side_name + ": failed on pthread_mutex_init");
+	}
+	
 	if (_side == SERVER_SIDE) {
 		open_write_pipe(pipe_name(WRITE_MODE).c_str());
 		open_read_pipe(pipe_name(READ_MODE).c_str());
@@ -151,6 +164,10 @@ side_name((my_side == RequestChannel::SERVER_SIDE) ? "SERVER" : "CLIENT")
 
 NamedPipeRequestChannel::~NamedPipeRequestChannel() {
 	if(VERBOSE_DEBUG) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": destructing");
+	pthread_mutexattr_destroy(&srl_attr);
+	pthread_mutex_destroy(&read_lock);
+	pthread_mutex_destroy(&write_lock);
+	pthread_mutex_destory(&send_request_lock);
 	close(wfd);
 	close(rfd);
 	if(my_side == RequestChannel::SERVER_SIDE) {
@@ -172,12 +189,19 @@ NamedPipeRequestChannel::~NamedPipeRequestChannel() {
 /*--------------------------------------------------------------------------*/
 
 std::string NamedPipeRequestChannel::send_request(std::string _request) {
-  cwrite(_request);
-  std::string s = cread();
-  return s;
+	pthread_mutex_lock(&send_request_lock);
+	if(cwrite(_request) < 0) {
+		pthread_mutex_unlock(&send_request_lock);
+		return "ERROR";
+	}
+	std::string s = cread();
+	pthread_mutex_unlock(&send_request_lock);
+	return s;
 }
 
 std::string NamedPipeRequestChannel::cread() {
+	
+	pthread_mutex_lock(&read_lock);
 	
 	char read_buf[MAX_MESSAGE];
 	memset(read_buf, '\0', MAX_MESSAGE);
@@ -189,6 +213,7 @@ std::string NamedPipeRequestChannel::cread() {
 	if (read_return_value <= 0) {
 		if(read_return_value < 0) {
 			threadsafe_console_output.perror("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error reading from pipe");
+			pthread_mutex_unlock(&read_lock);
 			return "ERROR";
 		}
 		else {
@@ -198,8 +223,11 @@ std::string NamedPipeRequestChannel::cread() {
 		close(wfd);
 		remove(pipe_name(READ_MODE).c_str());
 		remove(pipe_name(WRITE_MODE).c_str());
+		pthread_mutex_unlock(&send_request_lock);
+		pthread_mutex_unlock(&read_lock);
 		pthread_exit(NULL);
 	}
+	pthread_mutex_unlock(&read_lock);
 
 	std::string read_result = read_buf;
 
@@ -214,6 +242,8 @@ int NamedPipeRequestChannel::cwrite(std::string _msg) {
 		return -1;
 	}
 
+	pthread_mutex_lock(&write_lock);
+	
 	if(VERBOSE) threadsafe_console_output.println("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": writing [" + _msg + "]");
 	
 	const char * write_buf = _msg.c_str();
@@ -229,6 +259,7 @@ int NamedPipeRequestChannel::cwrite(std::string _msg) {
 		
 		if(errno != EPIPE) {
 			threadsafe_console_output.perror("NAMED_PIPE_REQUEST_CHANNEL:" + my_name + ":" + side_name + ": error writing to pipe");
+			pthread_mutex_unlock(&write_lock);
 			return -1;
 		}
 		else {
@@ -238,8 +269,11 @@ int NamedPipeRequestChannel::cwrite(std::string _msg) {
 		close(wfd);
 		remove(pipe_name(READ_MODE).c_str());
 		remove(pipe_name(WRITE_MODE).c_str());
+		pthread_mutex_unlock(&send_request_lock);
+		pthread_mutex_unlock(&write_lock);
 		pthread_exit(NULL);
 	}
+	pthread_mutex_unlock(&write_lock);
 
 	return write_return_value;
 }

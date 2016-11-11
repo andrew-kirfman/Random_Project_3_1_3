@@ -1,0 +1,456 @@
+Results for n == 10000, w == 20, v == 2
+Time to completion: 6227032 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 5, w = 25:
+Results for n == 10000, w == 25, v == 2
+Time to completion: 4984267 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 6, w = 30:
+Results for n == 10000, w == 30, v == 2
+Time to completion: 4154714 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 7, w = 35:
+Results for n == 10000, w == 35, v == 2
+Time to completion: 3587760 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 8, w = 40:
+Results for n == 10000, w == 40, v == 2
+Time to completion: 3146142 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 9, w = 45:
+Results for n == 10000, w == 45, v == 2
+Time to completion: 2822256 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 10, w = 50:
+Results for n == 10000, w == 50, v == 2
+Time to completion: 2550766 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 11, w = 55:
+Results for n == 10000, w == 55, v == 2
+Time to completion: 2303931 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 12, w = 60:
+Results for n == 10000, w == 60, v == 2
+Time to completion: 2115760 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 13, w = 65:
+Results for n == 10000, w == 65, v == 2
+Time to completion: 1958458 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 14, w = 70:
+Results for n == 10000, w == 70, v == 2
+Time to completion: 1821863 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 15, w = 75:
+Results for n == 10000, w == 75, v == 2
+Time to completion: 1705560 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 16, w = 80:
+Results for n == 10000, w == 80, v == 2
+Time to completion: 1598997 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 17, w = 85:
+Results for n == 10000, w == 85, v == 2
+Time to completion: 1511727 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 18, w = 90:
+Results for n == 10000, w == 90, v == 2
+Time to completion: 1427361 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 19, w = 95:
+Results for n == 10000, w == 95, v == 2
+Time to completion: 1356797 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 20, w = 100:
+Results for n == 10000, w == 100, v == 2
+Time to completion: 1284811 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 21, w = 105:
+Results for n == 10000, w == 105, v == 2
+Time to completion: 1228262 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 22, w = 110:
+Results for n == 10000, w == 110, v == 2
+Time to completion: 1169654 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 23, w = 115:
+Results for n == 10000, w == 115, v == 2
+Time to completion: 1121278 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 24, w = 120:
+Results for n == 10000, w == 120, v == 2
+Time to completion: 1081317 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 25, w = 125:
+Results for n == 10000, w == 125, v == 2
+Time to completion: 1040008 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 26, w = 130:
+Results for n == 10000, w == 130, v == 2
+Time to completion: 1006671 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 27, w = 135:
+Results for n == 10000, w == 135, v == 2
+Time to completion: 962837 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 28, w = 140:
+Results for n == 10000, w == 140, v == 2
+Time to completion: 925167 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 29, w = 145:
+Results for n == 10000, w == 145, v == 2
+Time to completion: 895679 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 30, w = 150:
+Results for n == 10000, w == 150, v == 2
+Time to completion: 871183 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 31, w = 155:
+Results for n == 10000, w == 155, v == 2
+Time to completion: 847787 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 32, w = 160:
+Results for n == 10000, w == 160, v == 2
+Time to completion: 832181 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 33, w = 165:
+Results for n == 10000, w == 165, v == 2
+Time to completion: 792484 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 34, w = 170:
+Results for n == 10000, w == 170, v == 2
+Time to completion: 768953 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 35, w = 175:
+Results for n == 10000, w == 175, v == 2
+Time to completion: 744501 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 36, w = 180:
+Results for n == 10000, w == 180, v == 2
+Time to completion: 726273 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 37, w = 185:
+Results for n == 10000, w == 185, v == 2
+Time to completion: 708575 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 38, w = 190:
+Results for n == 10000, w == 190, v == 2
+Time to completion: 692679 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 39, w = 195:
+Results for n == 10000, w == 195, v == 2
+Time to completion: 678567 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 40, w = 200:
+Results for n == 10000, w == 200, v == 2
+Time to completion: 706424 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 41, w = 205:
+Results for n == 10000, w == 205, v == 2
+Time to completion: 661261 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 42, w = 210:
+Results for n == 10000, w == 210, v == 2
+Time to completion: 651291 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 43, w = 215:
+Results for n == 10000, w == 215, v == 2
+Time to completion: 623957 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 44, w = 220:
+Results for n == 10000, w == 220, v == 2
+Time to completion: 608975 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 45, w = 225:
+Results for n == 10000, w == 225, v == 2
+Time to completion: 597934 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 46, w = 230:
+Results for n == 10000, w == 230, v == 2
+Time to completion: 609772 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 47, w = 235:
+Results for n == 10000, w == 235, v == 2
+Time to completion: 578803 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 48, w = 240:
+Results for n == 10000, w == 240, v == 2
+Time to completion: 606318 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 49, w = 245:
+Results for n == 10000, w == 245, v == 2
+Time to completion: 581887 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Test 50, w = 250:
+Results for n == 10000, w == 250, v == 2
+Time to completion: 547820 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 300, v == 2
+Time to completion: 538680 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 400, v == 2
+Time to completion: 594374 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 500, v == 2
+Time to completion: 700618 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 600, v == 2
+Time to completion: 748922 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 700, v == 2
+Time to completion: 787258 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 800, v == 2
+Time to completion: 726860 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 900, v == 2
+Time to completion: 903822 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1000, v == 2
+Time to completion: 821859 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1100, v == 2
+Time to completion: 839192 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1200, v == 2
+Time to completion: 886371 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1300, v == 2
+Time to completion: 898255 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1400, v == 2
+Time to completion: 958942 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1500, v == 2
+Time to completion: 1077546 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1600, v == 2
+Time to completion: 1020523 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1700, v == 2
+Time to completion: 1060130 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1800, v == 2
+Time to completion: 1049812 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 10000, w == 1900, v == 2
+Time to completion: 19229150 usecs
+John Smith total: 10000
+Jane Smith total: 10000
+Joe Smith total: 10000
+Results for n == 1000000, w == 250, v == 2
+Time to completion: 53660907 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 300, v == 2
+Time to completion: 51616757 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 400, v == 2
+Time to completion: 55841829 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 500, v == 2
+Time to completion: 60691013 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 600, v == 2
+Time to completion: 68124012 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 700, v == 2
+Time to completion: 76890145 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 800, v == 2
+Time to completion: 81064485 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 900, v == 2
+Time to completion: 95047786 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1000, v == 2
+Time to completion: 101386946 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1100, v == 2
+Time to completion: 113549489 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1200, v == 2
+Time to completion: 124261428 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1300, v == 2
+Time to completion: 142548539 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1400, v == 2
+Time to completion: 151409769 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1500, v == 2
+Time to completion: 154775561 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1600, v == 2
+Time to completion: 174516167 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1700, v == 2
+Time to completion: 203934531 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1800, v == 2
+Time to completion: 212519924 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000
+Results for n == 1000000, w == 1900, v == 2
+Time to completion: 239580104 usecs
+John Smith total: 1000000
+Jane Smith total: 1000000
+Joe Smith total: 1000000

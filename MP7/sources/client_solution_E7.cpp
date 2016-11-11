@@ -69,6 +69,7 @@ struct PARAMS_REQUEST {
 struct PARAMS_WORKER {
 	bool failed = false;
     RequestChannel* workerChannel = nullptr;
+//	RequestChannel * controlChannel = nullptr; //only used in newthread requests are parallel
 	SafeBuffer *request_buffer = nullptr;
     std::vector<int> *john_frequency_count;
     std::vector<int> *jane_frequency_count;
@@ -100,9 +101,14 @@ public:
         std::cout << s << std::endl;
         pthread_mutex_unlock(&console_lock);
     }
+	void perror(std::string s){
+		pthread_mutex_lock(&console_lock);
+		std::cerr << s << ": " << strerror(errno) << std::endl;
+		pthread_mutex_unlock(&console_lock);
+	}
 };
 
-atomic_standard_output threadsafe_standard_output;
+atomic_standard_output threadsafe_console_output;
 
 /*--------------------------------------------------------------------------*/
 /* HELPER FUNCTIONS */
@@ -119,29 +125,47 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
 void* request_thread_function(void* arg) {
 	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
 	if(rp.v >= VERBOSITY_HYPER) {
-		threadsafe_standard_output.println("Inside request thread function for " + rp.name + "...");
+		threadsafe_console_output.println("Inside request thread function for " + rp.name + "...");
 	}
 	for(int i = 0; i < rp.n; ++i) {
 		rp.request_buffer->push_back(std::string("data " + rp.name));
 	}
 	if(rp.v >= VERBOSITY_HYPER) {
-		threadsafe_standard_output.println("Exiting request thread function for " + rp.name + "...");
+		threadsafe_console_output.println("Exiting request thread function for " + rp.name + "...");
 	}
 }
 
 void* worker_thread_function(void* arg) {
     PARAMS_WORKER wp = *(PARAMS_WORKER*)arg;
+	
+//	std::string s = wp.controlChannel->send_request("newthread");
+//	if(s == "ERROR") {
+//		threadsafe_console_output.perror("wthread[***] failed on newthread request");
+//		pthread_exit(NULL);
+//	}
+//	try {
+//		wp.workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
+//	}
+//	catch (sync_lib_exception sle) {
+//		threadsafe_console_output.perror("wthread[" + s + "] new client-side channel not created: " + std::string(sle.what()));
+//		pthread_exit(NULL);
+//	}
+//	catch (std::bad_alloc ba) {
+//		threadsafe_console_output.println("wthread[" + s + "] RequestChannel constructor threw std::bad_alloc");
+//		pthread_exit(NULL);
+//	}
+
     while(true) {
 		if(wp.v >= VERBOSITY_HYPER) {
-			threadsafe_standard_output.println("wthread[" + wp.workerChannel->name() + " retrieving request...");
+			threadsafe_console_output.println("wthread[" + wp.workerChannel->name() + " retrieving request...");
 		}
 		std::string request = wp.request_buffer->retrieve_front();
 		if(wp.v >= VERBOSITY_HYPER) {
-			threadsafe_standard_output.println("wthread[" + wp.workerChannel->name() + " sending request " + request + "...");
+			threadsafe_console_output.println("wthread[" + wp.workerChannel->name() + " sending request " + request + "...");
 		}
         std::string response = wp.workerChannel->send_request(request);
 		if(wp.v >= VERBOSITY_HYPER) {
-			threadsafe_standard_output.println("wthread[" + wp.workerChannel->name() + " received response " + response + " to request " + request + "...");
+			threadsafe_console_output.println("wthread[" + wp.workerChannel->name() + " received response " + response + " to request " + request + "...");
 		}
 		
         if(request == "data John Smith") {
@@ -216,9 +240,6 @@ int main(int argc, char * argv[]) {
         struct timeval finish_time;
         int64_t start_usecs;
         int64_t finish_usecs;
-        
-		std::ofstream ofs;
-		ofs.open("output.txt", std::ios::out | std::ios::app);
         
         if(v >= VERBOSITY_DEFAULT) std::cout << "n == " << n << std::endl;
         if(v >= VERBOSITY_DEFAULT) std::cout << "w == " << w << std::endl;
@@ -300,37 +321,41 @@ int main(int argc, char * argv[]) {
 		 */
 		assert(gettimeofday(&start_time, 0) == 0);
 
-		
         std::vector<pthread_t> wtids;
-        for(int i = 0; i < w; ++i) {
+		for(int i = 0; i < w; ++i) {
 			try {
 				std::string s = chan->send_request("newthread");
 				wtps[i].workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
+//				wtps[i].controlChannel = chan;
 				wtids.push_back(0);
 				if((errno = pthread_create(&wtids[i], NULL, worker_thread_function, (void *) &wtps[i])) != 0) {
-					threadsafe_standard_output.println("MAIN: pthread_create failure for " + wtps[i].workerChannel->name() + ": " + strerror(errno));
+					threadsafe_console_output.perror("MAIN: pthread_create failure for " + wtps[i].workerChannel->name());
+//					threadsafe_console_output.perror("MAIN: pthread_create failure on attempt [" + std::to_string(i) + "]");
+					
 					delete wtps[i].workerChannel;
 					wtps[i].failed = true;
 					++THREADS_FAILED;
 				}
 			}
 			catch (sync_lib_exception sle) {
-				threadsafe_standard_output.println("MAIN: new client-side channel not created: " + std::string(sle.what()) + ": " + strerror(errno));
+				threadsafe_console_output.perror("MAIN: new client-side channel not created: " + std::string(sle.what()));
 				wtps[i].failed = true;
 				++THREADS_FAILED;
 			}
 			catch (std::bad_alloc ba) {
-				threadsafe_standard_output.println("MAIN: caught std:bad_alloc in worker thread loop");
+				threadsafe_console_output.println("MAIN: caught std:bad_alloc in worker thread loop");
 				throw;
 			}
-        }
-        
-        for(int i = 0; i < w; ++i) {
+		}
+		
+		for(int i = 0; i < w; ++i) {
+			if(v >= VERBOSITY_HYPER) threadsafe_console_output.println("MAIN: joining worker thread " + std::to_string(i) + "...");
 			if(!wtps[i].failed && (errno = pthread_join(wtids[i], NULL)) != 0) {
-				perror(std::string("MAIN: failed on pthread_join for [" + std::to_string(i) + "]").c_str());
+				threadsafe_console_output.perror("MAIN: failed on pthread_join for [" + std::to_string(i) + "]");
 			}
-        }
-        
+			if(v >= VERBOSITY_HYPER) threadsafe_console_output.println("MAIN: finished with worker thread " + std::to_string(i) + ".");
+		}
+		
         assert(gettimeofday(&finish_time, 0) == 0);
         
         /*
@@ -353,15 +378,6 @@ int main(int argc, char * argv[]) {
         if(v >= VERBOSITY_DEBUG) std::cout << jane_results << std::endl;
         if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
         if(v >= VERBOSITY_DEBUG) std::cout << joe_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
-        if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
-        ofs.close();
         
         if(v >= VERBOSITY_DEFAULT) std::cout << "Sleeping..." << std::endl;
         usleep(10000);
@@ -372,8 +388,22 @@ int main(int argc, char * argv[]) {
 		 	must be called somehow.
          */
         std::string finale = chan->send_request("quit");
-        if(v >= VERBOSITY_DEFAULT) std::cout << "Finale: " << finale << std::endl;
         delete chan;
+		
+		std::ofstream ofs;
+		ofs.open("output.txt", std::ios::out | std::ios::app);
+		
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
+		if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
+		if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
+		if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
+		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
+		if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
+		ofs.close();
+		
+		if(v >= VERBOSITY_DEFAULT) std::cout << "Finale: " << finale << std::endl;
     }
     else if(pid != 0) execl("dataserver", NULL);
 }

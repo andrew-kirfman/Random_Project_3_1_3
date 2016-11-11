@@ -3,6 +3,7 @@
 #  Created by Joshua Higginbotham on 11/8/15.
 
 echo "Cleaning and compiling..."
+make clean
 make
 echo "Running tests..."
 echo "Test 0, w = 1:" >> output.txt
@@ -107,11 +108,41 @@ echo "Test 49, w = 245:" >> output.txt
 ./client_solution -v 2 -n 10000 -w 245
 echo "Test 50, w = 250:" >> output.txt
 ./client_solution -v 2 -n 10000 -w 250
-echo "Test 51, w = 125 (n = 100000):" >> output.txt
-./client_solution -v 2 -n 100000 -w 125
-echo "Test 52, w = 250 (n = 100000):" >> output.txt
-./client_solution -v 2 -n 100000 -w 250
-echo "Test 53, w = 250 (n = 1000000):" >> output.txt
-./client_solution -v 2 -n 1000000 -w 250
-#note that actual maximum appears to be 251
+
+#Tests after this point have only been run on Mac, in root mode to modify per-process fd limits
+#./client_solution -v 2 -n 10000 -w 300
+#./client_solution -v 2 -n 10000 -w 400
+#./client_solution -v 2 -n 10000 -w 500
+#./client_solution -v 2 -n 10000 -w 600
+#./client_solution -v 2 -n 10000 -w 700
+#./client_solution -v 2 -n 10000 -w 800
+#./client_solution -v 2 -n 10000 -w 900
+#./client_solution -v 2 -n 10000 -w 1000
+#./client_solution -v 2 -n 10000 -w 1100
+#./client_solution -v 2 -n 10000 -w 1200
+#./client_solution -v 2 -n 10000 -w 1300
+#./client_solution -v 2 -n 10000 -w 1400
+#./client_solution -v 2 -n 10000 -w 1500
+#./client_solution -v 2 -n 10000 -w 1600
+#./client_solution -v 2 -n 10000 -w 1700
+#./client_solution -v 2 -n 10000 -w 1800
+#./client_solution -v 2 -n 10000 -w 1900
+#./client_solution -v 2 -n 1000000 -w 250
+#./client_solution -v 2 -n 1000000 -w 300
+#./client_solution -v 2 -n 1000000 -w 400
+#./client_solution -v 2 -n 1000000 -w 500
+#./client_solution -v 2 -n 1000000 -w 600
+#./client_solution -v 2 -n 1000000 -w 700
+#./client_solution -v 2 -n 1000000 -w 800
+#./client_solution -v 2 -n 1000000 -w 900
+#./client_solution -v 2 -n 1000000 -w 1000
+#./client_solution -v 2 -n 1000000 -w 1100
+#./client_solution -v 2 -n 1000000 -w 1200
+#./client_solution -v 2 -n 1000000 -w 1300
+#./client_solution -v 2 -n 1000000 -w 1400
+#./client_solution -v 2 -n 1000000 -w 1500
+#./client_solution -v 2 -n 1000000 -w 1600
+#./client_solution -v 2 -n 1000000 -w 1700
+#./client_solution -v 2 -n 1000000 -w 1800
+#./client_solution -v 2 -n 1000000 -w 1900
 echo "Finished!"

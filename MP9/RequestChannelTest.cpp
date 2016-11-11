@@ -333,11 +333,7 @@ int main(int argc, char * argv[]) {
 		struct timeval finish_time;
 		int64_t start_usecs;
 		int64_t finish_usecs;
-		std::ofstream ofs;
 		RequestChannel * control_channel = nullptr;
-		
-		if(USE_ALTERNATE_FILE_OUTPUT) ofs.open("output2.txt", std::ios::out | std::ios::app);
-		else ofs.open("output.txt", std::ios::out | std::ios::app);
 		
 		/*
 			Using more SignalRequestChannels than can
@@ -576,6 +572,16 @@ int main(int argc, char * argv[]) {
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println(jane_results);
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println("Joe Smith total: " +  std::to_string(accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0)));
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println(joe_results);
+		
+		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Sleeping...");
+		usleep(10000);
+		std::string finale = control_channel->send_request("quit_control");
+		delete control_channel;
+		
+		std::ofstream ofs;
+		if(USE_ALTERNATE_FILE_OUTPUT) ofs.open("output2.txt", std::ios::out | std::ios::app);
+		else ofs.open("output.txt", std::ios::out | std::ios::app);
+		
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", s == " << s << ", w == " << w << ", r == " << channel_type << ", b == " << b << ", m == " << m << std::endl;
 		if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
@@ -586,10 +592,6 @@ int main(int argc, char * argv[]) {
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << joe_results << std::endl;
 		ofs.close();
 		
-		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Sleeping...");
-		usleep(10000);
-		std::string finale = control_channel->send_request("quit_control");
-		delete control_channel;
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Finale: " + finale);
 	}
 	else if(!SEPARATE_WINDOWS && pid == 0) {

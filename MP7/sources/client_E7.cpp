@@ -135,8 +135,7 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
 void* request_thread_function(void* arg) {
 	/*
 		Fill in the loop conditions and body.
-		If you use PARAMS_REQUEST well, the body
-		should require only a single line of code.
+		The body should require only a single line of code.
 		The conditions should be somewhat intuitive.
 	 */
 	
@@ -208,12 +207,7 @@ int main(int argc, char * argv[]) {
     
     int pid = fork();
     if(pid == 0){
-        
-        struct timeval start_time;
-        struct timeval finish_time;
-        int64_t start_usecs;
-        int64_t finish_usecs;
-        
+		
         std::cout << "n == " << n << std::endl;
         std::cout << "w == " << w << std::endl;
         
@@ -262,8 +256,10 @@ int main(int argc, char * argv[]) {
  	threads will run concurrently with worker threads, but request
 	threads will NOT run concurrently with worker threads.
 	
-	Please remember to comment out the output statements
-	while gathering data for your report. They throw off the timer.
+	While gathering data for your report, remember to comment
+ 	out all the output operations occurring between when you
+ 	start the timer and when you end the timer. Output operations
+ 	are notoriously time-intensive and will skew your results.
 */
 /*--------------------------------------------------------------------------*/
         
@@ -331,8 +327,7 @@ int main(int argc, char * argv[]) {
             to assemble the timing data from different iterations
             of the program.
          */
-        start_usecs = (start_time.tv_sec * 1e6) + start_time.tv_usec;
-        finish_usecs = (finish_time.tv_sec * 1e6) + finish_time.tv_usec;
+		
         std::cout << "Finished!" << std::endl;
         
         std::string john_results = make_histogram("John Smith", &john_frequency_count);
@@ -340,7 +335,11 @@ int main(int argc, char * argv[]) {
         std::string joe_results = make_histogram("Joe Smith", &joe_frequency_count);
         
         std::cout << "Results for n == " << n << ", w == " << w << std::endl;
-        std::cout << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
+		
+		/*
+		 	This is a good place to output your timing data.
+		 */
+		
         std::cout << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
         std::cout << john_results << std::endl;
         std::cout << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;

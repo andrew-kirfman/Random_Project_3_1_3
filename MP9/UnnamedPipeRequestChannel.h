@@ -37,6 +37,12 @@ private:
 	int wfd = -1;
 	int rfd = -1;
 	
+	/*	Locks used to keep the dataserver from dropping requests.	*/
+	pthread_mutex_t read_lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_t write_lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutexattr_t srl_attr;
+	pthread_mutex_t send_request_lock;
+	
 	ProcessSharedSemaphore sock_listening;
 	ProcessSharedSemaphore fds_received;
 	

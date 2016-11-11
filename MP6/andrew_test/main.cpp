@@ -1,5 +1,3 @@
-/* --------------------------------------------------------------------------- */
-/* Developer: Andrew Kirfman                                                   */
 /* Project: CSCE-313 Machine Problem #1                                        */
 /*                                                                             */
 /* File: ./MP6/main.cpp                                                        */
@@ -100,15 +98,6 @@ void handle_signals(int signum)
     cleanup();
 }
 
-
-
-sig_atomic_t time_quantum_expired = 0;
-void sigalarm_handler(int signum)
-{
-    time_quantum_expired = 1;
-}
-
-
 class Running_process
 {
     public:
@@ -129,10 +118,6 @@ class Running_process
     void set_initialized(bool is_initialized);
     void set_running(bool is_running);
     void set_time_structure(struct timespec t1);
-
-    /* Control Methods */
-    void start();
-    void stop();
 
     /* Methods for SJF  */
     void recalculate_remaining_time();
@@ -222,19 +207,6 @@ void Running_process::set_initialized(bool is_initialized)
 void Running_process::set_running(bool is_running)
 {
     running = is_running;
-}
-
-/* Control Methods */
-void Running_process::start()
-{
-    running = true;
-    kill(process_pid, SIGCONT);
-}
-
-void Running_process::stop()
-{
-    running = false;
-    kill(process_pid, SIGSTOP);
 }
 
 /* Methods for SJF  */
@@ -398,6 +370,8 @@ void Scheduler::schedule_all()
     {
         std::cout << "  [" << BOLDRED << "ERROR" << "]: No scheduling policy chosen." << std::endl;
     }
+
+    return;
 }
 
 /* Global Variables */
@@ -1265,9 +1239,6 @@ void Scheduler::schedule_interactive_SJF()
 
             double r_execution = std::get<1>(scheduleable_processes[i])->get_remaining_execution_time();
 
-            //std::cout.precision(17);
-            //std::cout << "THING: " << i << " " << double(r_execution) << std::endl;
-
             if(r_execution < min_expected_time)
             {
                 min_expected_time = r_execution;
@@ -1357,7 +1328,7 @@ int main(int arcg, char **argv)
     std::string choice = "";
     getline(std::cin, choice);
 
-    for(int i=0; i<choice.length(); i++)
+    for(unsigned short int i=0; i<choice.length(); i++)
     {
         if(choice[i] == ' ')
         {

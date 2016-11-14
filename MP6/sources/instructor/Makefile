@@ -11,14 +11,20 @@ STD=-std=c++11
 CFLAGS=-O3 -Wall -g
 
 
-all: 
-	$(CC) $(CFLAGS) $(STD) main.cpp shell.cpp -o scheduler
-	
-main.o: main.cpp
-	$(CC) $(CFLAGS) $(STD) -c main.cpp 
+all: Running_process.o Scheduler.o shell.o main.o
+	$(CC) $(CFLAGS) $(STD) -o scheduler Running_process.o Scheduler.o shell.o main.o
 
-shell.o: shell.cpp
-	$(CC) $(CFLAGS) $(STD) -c shell.cpp
+main.o: main.cpp 
+	$(CC) $(CFLAGS) $(STD) -c main.cpp
+
+shell.o: shell.cpp shell.h
+	$(CC) $(CFLAGS) $(STD) -c shell.cpp shell.h
+
+Scheduler.o: Scheduler.cpp Scheduler.h Running_process.o
+	$(CC) $(CFLAGS) $(STD) -c Scheduler.cpp Scheduler.h
+
+Running_process.o: Running_process.cpp Running_process.h
+	$(CC) $(CFLAGS) $(STD) -c Running_process.cpp Running_process.h
 
 clean:
-	rm -rf scheduler
+	rm -rf scheduler *.o

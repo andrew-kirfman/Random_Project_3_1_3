@@ -30,9 +30,7 @@
 /* --------------------------------------------------------------------------- */
 
 #include "utility.h"
-#include "shell.h"
 #include "Scheduler.h"
-#include "Running_process.h"
 
 /* --------------------------------------------------------------------------- */
 /* Global Variables                                                            */
@@ -170,6 +168,7 @@ int main(int arcg, char **argv)
         std::cout << BOLDGREEN << "/* -------------------------------------------------------------------------- */" << RESET << std::endl;
         std::cout << std::endl;
 
+        std::cout << "Starting processes." << std::endl;
         for(unsigned short int i=1; i<=5; i++)
         {
             system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
@@ -204,6 +203,7 @@ int main(int arcg, char **argv)
                 }
             }
         }
+        std::cout << std::endl;
 
         /* Instantiate the scheduler class and add the processes to it */
         Scheduler *fifo_scheduler = new Scheduler();
@@ -236,7 +236,7 @@ int main(int arcg, char **argv)
         std::cout << std::endl;
 
         /* Reinitialize the 5 processes */
-        std::cout << "Restarting processes." << std::endl;
+        std::cout << "Starting processes." << std::endl;
 
         for(unsigned short int i=1; i<=5; i++)
         {
@@ -292,7 +292,7 @@ int main(int arcg, char **argv)
         std::cout << std::endl;
 
         /* Reinitialize the 5 processes */
-        std::cout << "Restarting processes." << std::endl;
+        std::cout << "Starting processes." << std::endl;
 
         for(unsigned short int i=1; i<=5; i++)
         {

@@ -43,7 +43,18 @@ Scheduler::Scheduler()
 
 
 /* Utility Methods */
-void Scheduler::schedule_process(pid_t process_pid, double expected_run_time = 0.0)
+void Scheduler::schedule_process(pid_t process_pid)
+{
+    Running_process *process = new Running_process(process_pid, 0.0, false);
+    
+    std::pair<int, Running_process*> new_process(processes_scheduled, process);
+    processes_scheduled += 1;
+
+    scheduleable_processes.push_back(new_process);
+}
+
+
+void Scheduler::schedule_process(pid_t process_pid, double expected_run_time)
 {
     Running_process *process = new Running_process(process_pid, expected_run_time, false);
     

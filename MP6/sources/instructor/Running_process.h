@@ -5,6 +5,9 @@
 /* File: ./MP6/Running_process.h                                               */
 /* --------------------------------------------------------------------------- */
 
+#ifndef _RUNNING_PROCESS_H_
+#define _RUNNING_PROCESS_H_
+
 /* --------------------------------------------------------------------------- */
 /* Standard Library Includes                                                   */
 /* --------------------------------------------------------------------------- */
@@ -24,23 +27,6 @@
 #include<math.h>
 #include<utility>
 #include<float.h>
-
-timespec diff(timespec start, timespec end)
-{
-    timespec temp;
-    if ((end.tv_nsec-start.tv_nsec)<0) 
-    {
-        temp.tv_sec = end.tv_sec-start.tv_sec-1;
-        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
-    } 
-    else 
-    {
-        temp.tv_sec = end.tv_sec-start.tv_sec;
-        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
-    }
-    
-    return temp;
-}
 
 class Running_process
 {
@@ -73,3 +59,5 @@ private:
     bool initialized;
     struct timespec last_start_time;
 };
+
+#endif

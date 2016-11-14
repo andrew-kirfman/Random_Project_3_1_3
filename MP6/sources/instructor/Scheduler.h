@@ -5,6 +5,9 @@
 /* File: ./MP6/Scheduler.h                                                     */
 /* --------------------------------------------------------------------------- */
 
+#ifndef _SCHEDULER_H_
+#define _SCHEDULER_H_
+
 /* --------------------------------------------------------------------------- */
 /* Standard Library Includes                                                   */
 /* --------------------------------------------------------------------------- */
@@ -25,6 +28,14 @@
 #include<utility>
 #include<float.h>
 
+/* --------------------------------------------------------------------------- */
+/* User Defined Includes                                                       */
+/* --------------------------------------------------------------------------- */
+
+#include "utility.h"
+#include "Running_process.h"
+#include "shell.h"
+
 
 // Defines to specify the type of scheduling policy to be used
 #define NO_POLICY 0
@@ -43,6 +54,7 @@ public:
     Scheduler();
 
     /* Utility methods */
+    void schedule_process(pid_t process_pid);
     void schedule_process(pid_t process_pid, double expected_run_time);
     
     /* Setter Methods */
@@ -68,3 +80,5 @@ private:
     void schedule_interactive_FIFO();
     void schedule_interactive_SJF();
 };
+
+#endif

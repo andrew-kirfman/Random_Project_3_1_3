@@ -16,7 +16,36 @@
 int process_shell(std::string input_command)
 {
     // Strip leading and trailing spaces
-    input_command = std::regex_replace(input_command, std::regex("^ +| +$|( ) +"), "");
+    int start_position = 0;
+    int end_position = input_command.length() - 1;
+
+    for(unsigned short int i=0; i<input_command.length(); i++)
+    {   
+        if(input_command[i] == ' ')
+        {
+            start_position++;
+            continue;
+        }
+        else
+        {
+            break;    
+        }
+    }
+
+    for(int i=input_command.length() - 1; i>=0; i--)
+    {
+        if(input_command[i] == ' ')
+        {
+            start_position--;
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    input_command = input_command.substr(start_position, end_position - start_position + 1);
 
     /* Tokenize input command */
     std::vector<std::string> tokens;

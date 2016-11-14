@@ -27,4 +27,4 @@ Running_process.o: Running_process.cpp Running_process.h
 	$(CC) $(CFLAGS) $(STD) -c Running_process.cpp Running_process.h
 
 clean:
-	rm -rf scheduler *.o
+	rm -rf scheduler *.o *.gch

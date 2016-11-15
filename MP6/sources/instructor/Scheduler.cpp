@@ -387,14 +387,14 @@ void Scheduler::schedule_SJF()
             {
                 if(std::get<1>(scheduleable_processes[i])->get_process_pid() == terminated_pid)
                 {
-					int terminated_pid = std::get<0>(scheduleable_processes[i]);
+					int terminated_number = std::get<0>(scheduleable_processes[i]);
                     scheduleable_processes.erase(scheduleable_processes.begin() + i);
                     found = true;
 
                     terminated_pid = -1;
 
                     std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Process_" << 
-                        std::to_string(terminated_pid + 1) << " terminated successfully." << std::endl;
+                        std::to_string(terminated_number + 1) << " terminated successfully." << std::endl;
                     break;
                 }
             }

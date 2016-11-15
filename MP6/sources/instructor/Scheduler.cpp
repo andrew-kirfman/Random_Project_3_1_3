@@ -137,7 +137,11 @@ sig_atomic_t alarm_flag = 0;
 sig_atomic_t terminated_pid = -1;
 
 void handle_RR(int signum)
-{
+{	
+    struct sigaction signal_struct_1;
+    signal_struct_1.sa_handler = handle_RR;
+    sigaction(SIGALRM, &signal_struct_1, NULL);
+	
     alarm_flag = 1;
 }
 

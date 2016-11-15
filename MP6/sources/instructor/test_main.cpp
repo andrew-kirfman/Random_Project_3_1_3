@@ -157,6 +157,19 @@ int main(int argc, char **argv)
     /* Make a directory to write executable files to */
     mkdir("./active", S_IRWXU | S_IRWXG | S_IRWXO);
 
+        for(unsigned short int i=1; i<=5; i++)
+        {
+            system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
+                + std::to_string(i);
+            return_val = system(system_string.c_str());
+            if(return_val == -1)
+            {
+                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
+                    << "    " << strerror(errno) << std::endl;
+                cleanup();
+            }
+		}
+
     /* ------------------------------------------------------------------------- */
     /* First In First Out                                                        */
     /* ------------------------------------------------------------------------- */
@@ -172,37 +185,25 @@ int main(int argc, char **argv)
         std::cout << "Starting processes." << std::endl;
         for(unsigned short int i=1; i<=5; i++)
         {
-            system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
-                + std::to_string(i);
-            return_val = system(system_string.c_str());
-            if(return_val == -1)
-            {
-                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
-                    << "    " << strerror(errno) << std::endl;
-                cleanup();
-            }
-            else
-            {
-                pid = fork();
+			pid = fork();
 
-                if(pid == 0)
-                {
-                    system_string = "./active/process_" + std::to_string(i);
-                    return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
-                    exit(0);
-                }
-                else if(pid == -1)
-                {
-                    std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
-                        << "    " << strerror(errno) << std::endl;
-                    cleanup();
-                }
-                else
-                {
-                    running_processes.push_back(pid);
-                    std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
-                }
-            }
+			if(pid == 0)
+			{
+				system_string = "./active/process_" + std::to_string(i);
+				return_val = execlp(system_string.c_str(), system_string.c_str(), NULL);
+				exit(0);
+			}
+			else if(pid == -1)
+			{
+				std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
+					<< "    " << strerror(errno) << std::endl;
+				cleanup();
+			}
+			else
+			{
+				running_processes.push_back(pid);
+				std::cout << "  [" << BOLDBLUE << "SUCCESS" << RESET << "]: Created Process_" << std::to_string(i) << std::endl;
+			}
         }
         std::cout << std::endl;
 

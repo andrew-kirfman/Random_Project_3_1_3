@@ -14,6 +14,12 @@ CFLAGS=-O3 -Wall -g
 all: Running_process.o Scheduler.o shell.o main.o
 	$(CC) $(CFLAGS) $(STD) -o scheduler Running_process.o Scheduler.o shell.o main.o
 
+test: Running_process.o Scheduler.o shell.o test_main.o
+	$(CC) $(CFLAGS) $(STD) -o test_scheduler Running_process.o Scheduler.o shell.o test_main.o
+
+test_main.o: test_main.cpp
+	$(CC) $(CFLAGS) $(STD) -c test_main.cpp
+
 main.o: main.cpp 
 	$(CC) $(CFLAGS) $(STD) -c main.cpp
 

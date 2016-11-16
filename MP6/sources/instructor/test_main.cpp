@@ -157,18 +157,18 @@ int main(int argc, char **argv)
     /* Make a directory to write executable files to */
     mkdir("./active", S_IRWXU | S_IRWXG | S_IRWXO);
 
-        for(unsigned short int i=1; i<=5; i++)
-        {
-            system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
-                + std::to_string(i);
-            return_val = system(system_string.c_str());
-            if(return_val == -1)
-            {
-                std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
-                    << "    " << strerror(errno) << std::endl;
-                cleanup();
-            }
+	for(unsigned short int i=1; i<=5; i++)
+	{
+		system_string = "g++ -std=c++11 ./running_processes/process_" + std::to_string(i) + ".cpp -o ./active/process_" 
+			+ std::to_string(i);
+		return_val = system(system_string.c_str());
+		if(return_val == -1)
+		{
+			std::cout << "  [" << BOLDRED << "ERROR" << RESET << "]: Could not create Process_" << std::to_string(i) << std::endl
+				<< "    " << strerror(errno) << std::endl;
+			cleanup();
 		}
+	}
 
     /* ------------------------------------------------------------------------- */
     /* First In First Out                                                        */

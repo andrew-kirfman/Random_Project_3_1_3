@@ -657,6 +657,7 @@ fi
 # ---------------------------------------------------------------------------- #
 
 IS_SIGCONT=$(cat Scheduler.cpp | grep -E "kill(.*,.*SIGCONT)")
+echo "SIGCONT $IS_SIGCONT"
 SIGNAL_POINTS=0
 
 if [ "$IS_SIGCONT" != "" ]; then
@@ -667,13 +668,17 @@ else
 fi
 
 IS_SIGSTOP=$(cat Scheduler.cpp | grep -E "kill(.*,.*SIGSTOP)")
+echo "SIGSTOP $IS_SIGSTOP"
+
 
 if [ "$IS_SIGSTOP" != "" ]; then
 	echo "Testing proper use of SIGSTOP   ... Passed [5/5]" >> $vocareumReportFile
-	
+	let "SIGNAL_POINTS=$SIGNAL_POINTS+5"
 else
 	echo "Testing proper use of SIGSTOP   ... Failed [0/5]" >> $vocareumReportFile
 fi
+
+echo "Proper Use of Signals,$SIGNAL_POINTS" >> $vocareumGradeFile
 
 # ---------------------------------------------------------------------------- #
 # FIFO Scheduler                                                               #
@@ -684,7 +689,7 @@ command_output=$(./scheduler -f)
 # Use grep -E (essentialy egrep) to see if the processes terminated in the correct order
 # Note that egrep does not match across newlines, have to combine it all into one string.  
 command_output=$(echo $command_output | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/ /g')
-echo $command_output | grep -E 'Process_1 terminated .* Process_2 terminated .* Process_3 terminated .* Process_4 terminated .* Process_5 terminated' > /dev/null
+echo $command_output | grep -E '[Pp]rocess[ _]1 terminated.*[Pp]rocess[ _]2 terminated.*[Pp]rocess[ _]3 terminated.*[Pp]rocess[ _]4 terminated.*[Pp]rocess[ _]5 terminated' > /dev/null
 
 if [ $? == 0 ]; then
 	echo "FIFO Scheduler,20" >> $vocareumGradeFile
@@ -735,3 +740,11 @@ fi
 mv saved_main.cpp main.cpp
 
 # Submit final grading things
+# The interactive portions need to be graded manually.  
+echo "Interactive FIFO (Bonus),0" >> $vocareumGradeFile
+echo "Interactive RR (Bonus),0" >> $vocareumGradeFile
+echo "Interactive SJF (Bonus),0" >> $vocareumGradeFile
+
+echo "Interactive FIFO      ...  Must be Graded Manually [00/20]" >> $vocareumReportFile
+echo "Interactive RR        ...  Must be Graded Manually [00/20]" >> $vocareumReportFile
+echo "Interactive SJF       ...  Must be Graded Manually [00/20]" >> $vocareumReportFile

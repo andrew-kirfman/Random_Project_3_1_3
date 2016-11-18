@@ -19,6 +19,19 @@
 
 #include "linked_list2.h"
 
+linked_list2::linked_list2()
+{
+	head_pointer = NULL;
+	front_pointer = NULL;
+	free_pointer = NULL;
+	free_data_pointer = NULL;
+	
+	block_size = 0;
+	mem_size = 0;
+	max_data_size = 0;
+	num_tiers = 0;
+	initialized = false;
+}
 
 void linked_list2::Init(int M, int b, int t)
 {
@@ -491,6 +504,98 @@ int linked_list2::Find_tier(int key)
 
     }
     return -1;
+}
+
+/* Getter Functions */
+char** linked_list2::getHeadPointer()
+{
+	return head_pointer;
+}
+
+node** linked_list2::getFrontPointer()
+{
+	return front_pointer;
+}
+
+node** linked_list2::getFreePointer()
+{
+	return free_pointer;
+}
+
+node** linked_list2::getFreeDataPointer()
+{
+	return free_data_pointer;
+}
+
+int linked_list2::getBlockSize()
+{
+	return block_size;
+}
+
+int linked_list2::getMemSize()
+{
+	return mem_size;
+}
+
+int linked_list2::getMaxDataSize()
+{
+	return max_data_size;
+}
+
+int linked_list2::getNumTiers()
+{
+	return num_tiers;
+}
+
+int linked_list2::getInitialized()
+{
+	return initialized;
+}
+
+/* Setter Functions */
+void linked_list2::setHeadPointer(char** new_head_pointer)
+{
+	head_pointer = new_head_pointer;
+}
+
+void linked_list2::setFrontPointer(node** new_front_pointer)
+{
+	front_pointer = new_front_pointer;
+}
+
+void linked_list2::setFreePointer(node** new_free_pointer)
+{
+	free_pointer = new_free_pointer;
+}
+
+void linked_list2::setFreeDataPointer(node** new_free_data_pointer)
+{
+	free_data_pointer = new_free_data_pointer;
+}
+
+void linked_list2::setBlockSize(int new_block_size)
+{
+	block_size = new_block_size;
+}
+
+void linked_list2::setMemSize(int new_mem_size)
+{
+	mem_size = new_mem_size;
+}
+
+void linked_list2::setMaxDataSize(int new_max_data_size)
+{
+	max_data_size = new_max_data_size;
+}
+
+void linked_list2::setNumTiers(int new_num_tiers)
+{
+	num_tiers = new_num_tiers;
+}
+
+void linked_list2::setInitialized(bool new_initialized)
+{
+	initialized = new_initialized;
 }
 
 /* Prints a pretty string corresponding to the command line usage of the program */

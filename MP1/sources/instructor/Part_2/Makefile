@@ -1,14 +1,22 @@
-all: 
-	g++ -std=c++11 main.cpp linked_list2.cpp -o List_2
+# ---------------------------------------------------------------------------- #
+# Developer: Andrew Kirfman, Margaret Baxter                                   #
+# Project: CSCE-313 Machine Problem #1                                         #
+#                                                                              #
+# File: ./MP1/Part_2/Makefile                                                  #
+# ---------------------------------------------------------------------------- #
 
-List_2: main.o linked_list2.o
-	g++ -std=c++11 main.o linked_list2.o -o List_2
+CC=g++
+STD=-std=c++11
+CFLAGS=
+
+all: main.o linked_list2.o
+	$(CC) $(STD) -o List_2 main.o linked_list2.o
 	
 main.o: main.cpp
-	g++ -std=c++11 -c main.cpp
+	$(CC) $(STD) -c main.cpp
 	
-linked_list2.o: linked_list2.cpp
-	g++ -std=c++11 -c linked_list2.cpp
+linked_list2.o: linked_list2.cpp linked_list2.h
+	$(CC) $(STD) -c linked_list2.cpp linked_list2.h
 	
 clean:
-	rm -rf *o List_2
+	rm -rf *.o List_2 *.gch

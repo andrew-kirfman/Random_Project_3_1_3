@@ -60,10 +60,36 @@ void linked_list::PrintList()
 	 * Your print list function should be written as a while loop that prints
 	 * the following three lines exactly for each node and nothing else.  If
 	 * you have any difficulties, talk to your TA and he will explain it further.  
+	 * 
+	 * The output lines that you should use are provided so that you will know
+	 * exactly what you should output.  
 	 */ 
 	//std::cout << "Node: " << std::endl;
 	//std::cout << " - Key: " << <KEY GOES HERE!> << std::endl;
 	//std::cout << " - Data: " << <KEY GOES HERE!> << std::endl;
+	
+	/* Short example:
+	 *   - Assume that you have a list with 4 elements.  
+	 *     Your output should appear as follows
+	 * 
+	 * Node:
+	 *  - Key: 1
+	 *  - Data: Hello
+	 * Node:
+	 *  - Key: 2
+	 *  - Data: World!
+	 * Node:
+	 *  - Key: 3
+	 *  - Data: Hello
+	 * Node:
+	 *  - Key: 4
+	 *  - Data: World!
+	 * 
+	 * ^^ Your output needs to exactly match this model to be counted as correct.  
+	 * (With the exception that the values for key and data will be different 
+	 * depending on what insertions you perform into your list.  The values provided
+	 * here are for pedagogical purposes only)
+	 */
 }
 
 /* Getter Functions */

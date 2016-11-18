@@ -6,18 +6,25 @@
 /* --------------------------------------------------------------------------- */
 
 /* --------------------------------------------------------------------------- */
-/* Standard Library Includes                                                   */
-/* --------------------------------------------------------------------------- */
-
-#include <iostream>
-#include <string.h>
-#include <climits>
-
-/* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
 /* --------------------------------------------------------------------------- */
 
 #include "linked_list.h"
+
+
+/* Constructor */
+void linked_list::linked_list()
+{
+	head_pointer = NULL;
+	front_pointer = NULL;
+	free_pointer = NULL;
+	free_data_pointer = NULL;
+	
+	block_size = 0;
+	mem_size = 0;
+	max_data_size = 0;
+	initialied = false;
+}
 
 
 void linked_list::Init(int M, int b)
@@ -151,6 +158,10 @@ void linked_list::Destroy()
     front_pointer = NULL;
     free_pointer = NULL;
     free_data_pointer = NULL;
+
+    block_size = 0;
+    mem_size = 0;
+    max_data_size = 0;
     initialized = false;
 } 
 
@@ -405,6 +416,88 @@ void linked_list::PrintList()
         }
         iteration_pointer = iteration_pointer->next;
     }
+}
+
+/* Getter Functions */
+char* linked_list::getHeadPointer()
+{
+	return head_pointer;
+}
+
+node* linked_list::getFrontPointer()
+{
+	return front_pointer;
+}
+
+node* linked_list::getFreePointer()
+{
+	return free_pointer;
+}
+
+node* linked_list::getFreeDataPointer()
+{
+	return free_data_pointer;
+}
+
+int linked_list::getBlockSize()
+{
+	return block_size;
+}
+
+int linked_list::getMemSize()
+{
+	return mem_size;
+}
+
+int linked_list::getMaxDataSize()
+{
+	return max_data_size;
+}
+
+bool linked_list::getInitialized()
+{
+	return initialized;
+}
+
+/* Setter Functions */
+void linked_list::setHeadPointer(char *new_pointer)
+{
+	head_pointer = new_pointer;
+}
+
+void linked_list::setFrontPointer(node* new_pointer)
+{
+	front_pointer = new_pointer;
+}
+
+void linked_list::setFreePointer(node* new_pointer)
+{
+	free_pointer = new_pointer;
+}
+
+void linked_list::setFreeDataPointer(node* new_pointer)
+{
+	free_data_pointer = new_pointer;
+}
+
+void linked_list::setBlockSize(int new_block_size)
+{
+	block_size = new_block_size;
+}
+
+void linked_list::setMemSize(int new_mem_size)
+{
+	mem_size = new_mem_size;
+}
+
+void linked_list::setMaxDataSize(int new_max_data_size)
+{
+	max_data_size = new_max_data_size;
+}
+
+void linked_list::setInitialized(bool new_initialized)
+{
+	initialized = new_initialized;
 }
 
 /* Prints a pretty string corresponding to the command line usage of the program */

@@ -657,7 +657,6 @@ fi
 # ---------------------------------------------------------------------------- #
 
 IS_SIGCONT=$(cat Scheduler.cpp | grep -E "kill(.*,.*SIGCONT)")
-echo "SIGCONT $IS_SIGCONT"
 SIGNAL_POINTS=0
 
 if [ "$IS_SIGCONT" != "" ]; then
@@ -668,8 +667,6 @@ else
 fi
 
 IS_SIGSTOP=$(cat Scheduler.cpp | grep -E "kill(.*,.*SIGSTOP)")
-echo "SIGSTOP $IS_SIGSTOP"
-
 
 if [ "$IS_SIGSTOP" != "" ]; then
 	echo "Testing proper use of SIGSTOP   ... Passed [5/5]" >> $vocareumReportFile

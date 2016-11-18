@@ -39,14 +39,14 @@ int main(int argc, char ** argv)
 	test_list->PrintList ();
 	
 	// a sample lookup operations that should return null, because it is looking up a non-existent number
-	char* kv = test_list->Lookup (3);
+	node* kv = test_list->Lookup (3);
 	if (kv)
     {
 		printf ("Key = %d, Value Len = %d\n", *(int *) kv, *(int *) (kv+4));
     }
 
 	// this look up  should succeed and print the string "a sample message"
-	kv = Lookup (13);
+	kv = test_list->Lookup (13);
 	if (kv)
     {
 		printf ("Key = %d, Value Len = %d, Value = %s\n", *(int *) kv, *(int *) (kv+4), kv + 8);

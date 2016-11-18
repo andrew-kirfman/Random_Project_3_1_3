@@ -120,6 +120,4 @@ public:
     void setInitialized(bool new_initialized);
 };
 
-std::string print_usage();
-
 #endif

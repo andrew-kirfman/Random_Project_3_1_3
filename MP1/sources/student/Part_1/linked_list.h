@@ -70,7 +70,7 @@ private:
     int block_size;
     int mem_size;
     int max_data_size;
-    bool initialized = false;
+    bool initialized;
 
 public:
 	/* Constructor */
@@ -83,7 +83,7 @@ public:
     /* Destroys the linked list and frees all used resources */
     void Destroy(); 		 
     
-    /* Inserts the key and copies the value to the payload */
+    /* Inserts thea key and copies the value to the payload */
     void Insert(int key,char * value_ptr, int value_len);
     
     /* Delete the whole block containing a particular key                 */

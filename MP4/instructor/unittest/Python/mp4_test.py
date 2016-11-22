@@ -16,6 +16,7 @@ import unittest
 import sys
 import re
 from subprocess import check_output, CalledProcessError
+sys.path.append(".")
 from proctest import Proctest
 
 # --------------------------------------------------------------------------- #

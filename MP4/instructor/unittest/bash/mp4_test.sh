@@ -803,7 +803,7 @@ then
     echo "    ${BOLDCYAN}File${NORMAL} test ${MAGENTA}permission denied!${NORMAL}"
     let TOTAL_CORRECTNESS_TESTS=$TOTAL_CORRECTNESS_TESTS-1
 else
-    if [ "$(getfiles)" == "Files" ]
+    if [ "$(getfiles)" == "$Files" ]
     then
         echo "    ${BOLDCYAN}File${NORMAL} test ${WHITE}succeeded!${NORMAL}"
         let SUCCESSFUL_CORRECTNESS_TESTS=$SUCCESSFUL_CORRECTNESS_TESTS+1
@@ -869,8 +869,7 @@ then
     echo "    ${BOLDCYAN}Memory Map${NORMAL} test ${MAGENTA}permission denied!${NORMAL}"
 else
     SUCCESS=true
-    #MEMORY_STRING="$(getmemory_map)"
-    MEMORY_STRING=""
+    MEMORY_STRING="$(getmemory_map)"
     for item in $MEM_ARRAY
     do
         echo "   $item"

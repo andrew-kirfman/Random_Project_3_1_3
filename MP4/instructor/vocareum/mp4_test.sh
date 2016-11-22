@@ -288,7 +288,7 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
 		echo "getegid,5" >> $vocareumGradeFile
 	else
 		echo "getegid       ...   Failed [0/5]" >> $vocareumReportFile
-		echo "getegid,0" >> $vocareumReportFile
+		echo "getegid,0" >> $vocareumGradeFile
 
 	fi
 
@@ -583,7 +583,7 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
 		echo "getallowed_cpus,5" >> $vocareumGradeFile
 	else
 		echo "getallowed    ...   Failed [0/5]" >> $vocareumReportFile
-		echo "getallowed_cpus,5" >> $vocareumGradeFile
+		echo "getallowed_cpus,0" >> $vocareumGradeFile
 	fi
 
 	# ---------------------------------------------------------------------------- #
@@ -597,18 +597,18 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
 
 	SUCCESS=true
     MEMORY_STRING="$(getmemory_map)"
+
     for item in $MEM_ARRAY
     do
         if [[ ${MEMORY_STRING} != *"$item"* ]]
         then
-            echo "THINGTHINGTHINGTHINGTHINGTHINGTHING"
             # Variable scope problem here, need to rework so there is a way to pass values
             # back to the primary shell.  
             SUCCESS=false
         fi
     done
-    if [ $SUCCESS ]
-    then
+	
+    if [ "$SUCCESS" == "true" ]; then
 		echo "getmemory     ...   Passed [20/20]" >> $vocareumReportFile
 		echo "getmemory_map,20" >> $vocareumGradeFile
 	else

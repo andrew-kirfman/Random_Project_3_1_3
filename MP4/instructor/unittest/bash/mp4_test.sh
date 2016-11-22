@@ -881,8 +881,7 @@ else
             SUCCESS=false
         fi
     done
-    if [ $SUCCESS ]
-    then
+    if [ "$SUCCESS" == "true" ]; then
         echo "    ${BOLDCYAN}Memory Map${NORMAL} test ${WHITE}succeeded!${NORMAL}"
     else
         echo "    ${BOLDCYAN}Memory Map${NORMAL} test ${RED}failed!${NORMAL}"

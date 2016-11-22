@@ -8,23 +8,21 @@
 
 CHOSEN_LANGUAGE=""
 
-cat proctest.sh
+cat proctest.sh &> /dev/null
 
-if [ "$?" != "0" ]; then
+if [ "$?" == "0" ]; then
 	CHOSEN_LANGUAGE="BASH"
 fi
 
+cat proctest.cpp &> /dev/null
 
-cat proctest.cpp
-
-if [ "$?" != "0" ]; then
+if [ "$?" == "0" ]; then
 	CHOSEN_LANGUAGE="C++"
 fi
 
+cat proctest.py &> /dev/null
 
-cat proctest.py
-
-if [ "$?" != "0" ]; then
+if [ "$?" == "0" ]; then
 	CHOSEN_LANGHAGE="Python"
 fi
 
@@ -221,10 +219,7 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
         FILES=$(ls -la "/proc/$PID/fd" | wc -l)
         if [ $? -eq 0 ]
         then
-            FILES=$(($OUTPUT - 3))
-            printf "$OUTPUT"
-        else
-            printf "ERROR"
+            FILES=$(($FILES - 3))
         fi
     fi
     VOLUNTARY=$(grep "voluntary" "/proc/$PID/status" | grep -v "non" | sed 's/voluntary_ctxt_switches:\t//')
@@ -262,7 +257,7 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
 
 	if [ "$TEST_PPID" == "$STUDENT_PPID" ]; then
     	echo "getppid       ...   Passed [5/5]" >> $vocareumReportFile
-		echo "getppid,0" >> $vocareumGradeFile
+		echo "getppid,5" >> $vocareumGradeFile
 	else
 		echo "getppid       ...   Failed [0/5]" >> $vocareumReportFile
 		echo "getppid,0" >> $vocareumGradeFile
@@ -529,7 +524,7 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
 
 	if [ "$FILES" == "$STUDENT_FILES" ]; then
 		echo "getfiles      ...   Passed [5/5]" >> $vocareumReportFile
-		echo "getfiles,5" >> $vocareumGradeFile
+		echo "getfiles,20" >> $vocareumGradeFile
 	else
 		echo "getfiles      ...   Failed [0/5]" >> $vocareumReportFile
 		echo "getfiles,0" >> $vocareumGradeFile
@@ -604,7 +599,6 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
     MEMORY_STRING="$(getmemory_map)"
     for item in $MEM_ARRAY
     do
-        echo "   $item"
         if [[ ${MEMORY_STRING} != *"$item"* ]]
         then
             echo "THINGTHINGTHINGTHINGTHINGTHINGTHING"
@@ -756,7 +750,7 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
 	#include<signal.h>
 
 	// Attempt to include student's executable
-	#include "./proctest.h"
+	#include \"./proctest.h\"
 
 	/* ------------------------------------------------------------------------- */
 	/* User Defined Includes                                                     */
@@ -1813,91 +1807,91 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
         }
         else
         {
-			std::cout << "getesp Failed" << std::endl;
+			std::cout << \"getesp Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* geteip */
         if(testeip())
         {
-			std::cout << "geteip Succeeded" << std::endl;
+			std::cout << \"geteip Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << "geteip Failed" << std::endl;
+			std::cout << \"geteip Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getfiles */
         if(testfiles())
         {
-			std::cout << "getfiles Succeeded" << std::endl;
+			std::cout << \"getfiles Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << "getfiles Failed" << std::endl;
+			std::cout << \"getfiles Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getvoluntary_context_switches */
         if(testvoluntary_context_switches())
         {
-			std::cout << "getvoluntary_context_switches Succeeded" << std::endl;
+			std::cout << \"getvoluntary_context_switches Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << "getvoluntary_context_switches Failed" << std::endl;
+			std::cout << \"getvoluntary_context_switches Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getnonvoluntary_context_switches */
         if(testnonvoluntary_context_switches())
         {
-			std::cout << "getnonvoluntary_context_switches Succeeded" << std::endl;
+			std::cout << \"getnonvoluntary_context_switches Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << "getnonvoluntary_context_switches Failed" << std::endl;
+			std::cout << \"getnonvoluntary_context_switches Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getlast_cpu */
         if(testlast_cpu())
         {
-            std::cout << "getlast_cpu Succeeded" << std::endl;
+            std::cout << \"getlast_cpu Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-            std::cout << "getlast_cpu Failed" << std::endl;
+            std::cout << \"getlast_cpu Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getallowed_cpus */
         if(testallowed_cpus())
         {
-            std::cout << "getallowed_cpus Succeeded" << std::endl;
+            std::cout << \"getallowed_cpus Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << "getallowed_cpus Failed" << std::endl;
+			std::cout << \"getallowed_cpus Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getmemory_map */
         if(testmemory_map())
         {
-			std::cout << "getmemory_map Succeeded" << std::endl;
+			std::cout << \"getmemory_map Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << "getmemory_map Failed" << std::endl;
+			std::cout << \"getmemory_map Failed\" << std::endl;
             m_failed_tests += 1;
         }
     }
@@ -1905,7 +1899,7 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
                                       
     int main()
     {
-    	MP4_Test *test_unit = new MP$_Test;
+    	MP4_Test *test_unit = new MP4_Test;
         
         test_unit->testall()                            
                     
@@ -1938,13 +1932,13 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
         $(CC) $(STD) $(CFLAGS) -c proctest.cpp proctest.h
     
     clean:
-        rm -rf proctest *.o                             
+        rm -rf proctest *.o *.gch                         
 	" >> Makefile
 
     make
                                       
     if [ "$?" != "0" ]; then
-   	
+		echo "Problem Compiling Test File"
     fi                                  
                                       
                                       
@@ -1955,10 +1949,3 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
 
 	exit 0
 fi
-
-
-
-
-
-
-

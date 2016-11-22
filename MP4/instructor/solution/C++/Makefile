@@ -20,4 +20,4 @@ proctest.o: proctest.h proctest.cpp
 	$(CC) $(STD) $(CFLAGS) -c proctest.h proctest.cpp
 
 clean:
-	rm -rf proctest
+	rm -rf proctest *.o *.gch

@@ -2287,7 +2287,7 @@ clean:
 	# getallowed_cpus                                                              # 
 	# ---------------------------------------------------------------------------- # 	
 	
-	IS_GETALLOWED_CPUS="$(echo $proctest_output | grep 'getallowed_cpus')"
+	IS_GETALLOWED_CPUS="$(echo $proctest_output | grep 'getallowed_cpus Succeeded')"
 	
 	if [ "$IS_GETALLOWED_CPUS" != "" ]; then
     	echo "getallowed_cp ...   Passed [5/5]" >> $vocareumReportFile
@@ -2301,7 +2301,7 @@ clean:
 	# getmemory_map                                                                # 
 	# ---------------------------------------------------------------------------- # 	
 	
-	IS_GETMEMORY_MAP="$(echo $proctest_output | grep 'getmemory_map')"
+	IS_GETMEMORY_MAP="$(echo $proctest_output | grep 'getmemory_map Succeeded')"
 	
 	if [ "$IS_GETMEMORY_MAP" != "" ]; then
     	echo "getmemory_map ...   Passed [20/20]" >> $vocareumReportFile

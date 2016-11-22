@@ -1839,24 +1839,24 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
         /* getvoluntary_context_switches */
         if(testvoluntary_context_switches())
         {
-			std::cout << \"getvoluntary_context_switches Succeeded\" << std::endl;
+			std::cout << \"getvoluntary Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << \"getvoluntary_context_switches Failed\" << std::endl;
+			std::cout << \"getvoluntary Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
         /* getnonvoluntary_context_switches */
         if(testnonvoluntary_context_switches())
         {
-			std::cout << \"getnonvoluntary_context_switches Succeeded\" << std::endl;
+			std::cout << \"getnonvoluntary Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << \"getnonvoluntary_context_switches Failed\" << std::endl;
+			std::cout << \"getnonvoluntary Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
@@ -1993,106 +1993,323 @@ clean:
 	# getegid                                                                      # 
 	# ---------------------------------------------------------------------------- # 
 	
+	IS_GETEGID="$(echo $proctest_output | grep 'getegid Succeeded')"
+	
+	if [ "$IS_GETEGID" != "" ]; then
+    	echo "getegid       ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getegid,5" >> $vocareumGradeFile	
+	else
+		echo "getegid       ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getegid,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getruid                                                                      # 
 	# ---------------------------------------------------------------------------- # 
+	
+	IS_GETRUID="$(echo $proctest_output | grep 'getruid Succeeded')"
+	
+	if [ "$IS_GETRUID" != "" ]; then
+    	echo "getruid       ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getruid,5" >> $vocareumGradeFile
+	else
+		echo "getruid       ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getruid,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getrgid                                                                      # 
 	# ---------------------------------------------------------------------------- # 
 	
+	IS_GETRGID="$(echo $proctest_output | grep 'getrgid Succeeded')"
+	
+	if [ "$IS_GETRGID" != "" ]; then
+		echo "getrgid       ...   Passed [5/5]" >> $vocareumReportFile
+		echo "getrgid,5" >> $vocareumGradeFile
+	else
+		echo "getrgid       ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getrgid,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getfsuid                                                                     # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETFSUID="$(echo $proctest_output | grep 'getfsuid Succeeded')"
+	
+	if [ "$IS_GETFSUID" != "" ]; then
+    	echo "getfsuid      ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getfsuid,5" >> $vocareumGradeFile
+	else
+		echo "getfsuid      ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getfsuid,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getfsgid                                                                     # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETFSGID="$(echo $proctest_output | grep 'getfsgid Succeeded')"
+	
+	if [ "$IS_GETFSGID" != "" ]; then
+    	echo "getfsgid      ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getfsgid,5" >> $vocareumGradeFile
+	else
+		echo "getfsgid      ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getfsgid,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getstate                                                                     # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETSTATE="$(echo $proctest_output | grep 'getstate Succeeded')"
+	
+	if [ "$IS_GETSTATE" != "" ]; then
+    	echo "getstate      ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getstate,5" >> $vocareumGradeFile
+	else
+		echo "getstate      ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getstate,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getthread_count                                                              # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETTHREAD_COUNT="$(echo $proctest_output | grep 'getthread_count Succeeded')"
+	
+	if [ "$IS_GETTHREAD_COUNT" != "" ]; then
+    	echo "getthread     ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getthread_count,5" >> $vocareumGradeFile	
+	else
+		echo "getthread     ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getthread_count,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getpriority                                                                  # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETPRIORITY="$(echo $proctest_output | grep 'getpriority Succeeded')"
+	
+	if [ "$IS_GETPRIORITY" != "" ]; then
+    	echo "getpriority   ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getpriority,5" >> $vocareumGradeFile
+	else
+		echo "getpriority   ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getpriority,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getniceness                                                                  # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETNICENESS="$(echo $proctest_output | grep 'getniceness Succeeded')"
+	
+	if [ "$IS_GETNICENESS" != "" ]; then
+    	echo "getniceness   ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getniceness,5" >> $vocareumGradeFile
+	else
+		echo "getniceness   ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getniceness,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getstime                                                                     # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETSTIME="$(echo $proctest_output | grep 'getstime Succeeded')"
+	
+	if [ "$IS_GETSTIME" != "" ]; then
+    	echo "getstime      ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getstime,5" >> $vocareumGradeFile
+	else
+		echo "getstime      ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getstime,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getutime                                                                     # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETUTIME="$(echo $proctest_output | grep 'getutime Succeeded')"
+	
+	if [ "$IS_GETUTIME" != "" ]; then
+    	echo "getutime      ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getutime,5" >> $vocareumGradeFile
+	else
+		echo "getutime      ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getutime,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getcstime                                                                    # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETCSTIME="$(echo $proctest_output | grep 'getcstime Succeeded')"
+	
+	if [ "$IS_GETCSTIME" != "" ]; then
+    	echo "getcstime     ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getcstime,5" >> $vocareumGradeFile
+	else
+		echo "getcstime     ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getcstime,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getcutime                                                                    # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETCUTIME="$(echo $proctest_output | grep 'getcutime Succeeded')"
+	
+	if [ "$IS_GETCUTIME" != "" ]; then
+    	echo "getcutime     ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getcutime,5" >> $vocareumGradeFile
+	else
+		echo "getcutime     ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getcutime,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getstartcode                                                                 # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETSTARTCODE="$(echo $proctest_output | grep 'getstartcode Succeeded')"
+	
+	if [ "$IS_GETSTARTCODE" != "" ]; then
+    	echo "getstartcode  ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getstartcode,5" >> $vocareumGradeFile
+	else
+		echo "getstartcode  ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getetartcode,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getendcode                                                                   # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETENDCODE="$(echo $proctest_output | grep 'getendcode Succeeded')"
+	
+	if [ "$IS_GETENDCODE" != "" ]; then
+    	echo "getendcode    ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "geteuid,5" >> $vocareumGradeFile
+	else
+		echo "getendcode    ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getendcode,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getesp                                                                       # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETESP="$(echo $proctest_output | grep 'getesp Succeeded')"
+	
+	if [ "$IS_GETESP" != "" ]; then
+    	echo "getesp        ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getesp,5" >> $vocareumGradeFile
+	else
+		echo "getesp        ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getesp,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# geteip                                                                       # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETEIP="$(echo $proctest_output | grep 'geteip Succeeded')"
+	
+	if [ "$IS_GETEIP" != "" ]; then
+    	echo "geteip        ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "geteip,5" >> $vocareumGradeFile
+	else
+		echo "geteip        ...   Failed [0/5]" >> $vocareumReportFile
+		echo "geteip,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getfiles                                                                     # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETFILES="$(echo $proctest_output | grep 'getfiles Succeeded')"
+	
+	if [ "$IS_GETFILES" != "" ]; then
+    	echo "getfiles      ...   Passed [20/20]" >> $vocareumReportFile
+   		echo "getfiles,20" >> $vocareumGradeFile
+	else
+		echo "getfiles      ...   Failed [0/20]" >> $vocareumReportFile
+		echo "getfiles,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getvoluntary_context_switches                                                # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETVOLUNTARY="$(echo $proctest_output | grep 'getvoluntary Succeeded')"
+	
+	if [ "$IS_GETVOLUNTARY" != "" ]; then
+    	echo "getvoluntary  ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getvoluntary,5" >> $vocareumGradeFile
+	else
+		echo "getvoluntary  ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getvoluntary,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getnonvoluntary_context_switches                                             # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETNONVOL="$(echo $proctest_output | grep 'getnonvol Succeeded')"
+	
+	if [ "$IS_GETNONVOL" != "" ]; then
+    	echo "getnonvol     ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getnonvol,5" >> $vocareumGradeFile
+	else
+		echo "getnonvol     ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getnonvol,0" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getlast_cpu                                                                  # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETLAST_CPU="$(echo $proctest_output | grep 'getlast_cpu Succeeded')"
+	
+	if [ "$IS_GETLAST_CPU" != "" ]; then
+    	echo "getlast_cpu   ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getlast_cpu,5" >> $vocareumGradeFile
+	else
+		echo "getlast_cpu   ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getlast_cpu,0" >> $vocareumGradeFile
+	fi
+	
 	# ---------------------------------------------------------------------------- #
 	# getallowed_cpus                                                              # 
 	# ---------------------------------------------------------------------------- # 	
+	
+	IS_GETALLOWED_CPUS="$(echo $proctest_output | grep 'getallowed_cpus')"
+	
+	if [ "$IS_GETALLOWED_CPUS" != "" ]; then
+    	echo "getallowed_cp ...   Passed [5/5]" >> $vocareumReportFile
+   		echo "getallowed_cpus,5" >> $vocareumGradeFile
+	else
+		echo "getallowed_cp ...   Failed [0/5]" >> $vocareumReportFile
+		echo "getallowed_cpus,5" >> $vocareumGradeFile
+	fi
 	
 	# ---------------------------------------------------------------------------- #
 	# getmemory_map                                                                # 
 	# ---------------------------------------------------------------------------- # 	
 	
+	IS_GETMEMORY_MAP="$(echo $proctest_output | grep 'getmemory_map')"
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	if [ "$IS_GETMEMORY_MAP" != "" ]; then
+    	echo "getmemory_map ...   Passed [20/20]" >> $vocareumReportFile
+   		echo "getmemory_map,20" >> $vocareumGradeFile
+	else
+		echo "getmemory_map ...   Failed [0/20]" >> $vocareumReportFile
+		echo "getmemory_map,0" >> $vocareumGradeFile
+	fi
 	
 	if [ "$MAKEFILE_NAME" != "" ]; then
 		mv student_makefile Makefile

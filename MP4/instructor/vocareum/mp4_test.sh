@@ -624,7 +624,6 @@ fi
 # ---------------------------------------------------------------------------- #
 
 if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
-	echo "Flag2"
 
 	# ---------------------------------------------------------------------------- #
 	# Check Student's Source Files                                                 # 
@@ -1486,9 +1485,9 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
     }
     
     bool MP4_Test::testvoluntary_context_switches()
-    {
+    {                                      
         std::string student_voluntary_context_switches =
-            student_executable->getnonvoluntary_context_switches();
+            student_executable->getvoluntary_context_switches();
         std::string test_voluntary_context_switches = \"\";
     
         int location1 = -1;
@@ -1502,6 +1501,7 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
                 test_voluntary_context_switches = m_status_array[i][1];
             }
         }
+                                      
     
         return (student_voluntary_context_switches == test_voluntary_context_switches);
     }
@@ -1851,12 +1851,12 @@ if [ "$CHOSEN_LANGUAGE" == "C++" ]; then
         /* getnonvoluntary_context_switches */
         if(testnonvoluntary_context_switches())
         {
-			std::cout << \"getnonvoluntary Succeeded\" << std::endl;
+			std::cout << \"getnonvol Succeeded\" << std::endl;
             m_successful_tests += 1;
         }
         else
         {
-			std::cout << \"getnonvoluntary Failed\" << std::endl;
+			std::cout << \"getnonvol Failed\" << std::endl;
             m_failed_tests += 1;
         }
     
@@ -1935,7 +1935,7 @@ clean:
 	rm -rf proctest *.o *.gch
 " > Makefile
                                       
-    make
+    make > /dev/null
                                       
     if [ "$?" != "0" ]; then
 		echo "Problem Compiling Test File"
@@ -1945,8 +1945,8 @@ clean:
 	# Run Proctest Program                                                         # 
 	# ---------------------------------------------------------------------------- #                                    
            
-	protest_output="$(./proctest)"
-    
+	proctest_output="$(./proctest)"                                      
+                                      
 	# ---------------------------------------------------------------------------- #
 	# getpid                                                                       # 
 	# ---------------------------------------------------------------------------- #        
@@ -2182,7 +2182,7 @@ clean:
    		echo "getstartcode,5" >> $vocareumGradeFile
 	else
 		echo "getstartcode  ...   Failed [0/5]" >> $vocareumReportFile
-		echo "getetartcode,0" >> $vocareumGradeFile
+		echo "getstartcode,0" >> $vocareumGradeFile
 	fi
 	
 	# ---------------------------------------------------------------------------- #
@@ -2193,7 +2193,7 @@ clean:
 	
 	if [ "$IS_GETENDCODE" != "" ]; then
     	echo "getendcode    ...   Passed [5/5]" >> $vocareumReportFile
-   		echo "geteuid,5" >> $vocareumGradeFile
+   		echo "getendcode,5" >> $vocareumGradeFile
 	else
 		echo "getendcode    ...   Failed [0/5]" >> $vocareumReportFile
 		echo "getendcode,0" >> $vocareumGradeFile
@@ -2246,7 +2246,7 @@ clean:
 	# ---------------------------------------------------------------------------- # 	
 	
 	IS_GETVOLUNTARY="$(echo $proctest_output | grep 'getvoluntary Succeeded')"
-	
+                                                                            
 	if [ "$IS_GETVOLUNTARY" != "" ]; then
     	echo "getvoluntary  ...   Passed [5/5]" >> $vocareumReportFile
    		echo "getvoluntary,5" >> $vocareumGradeFile
@@ -2260,7 +2260,7 @@ clean:
 	# ---------------------------------------------------------------------------- # 	
 	
 	IS_GETNONVOL="$(echo $proctest_output | grep 'getnonvol Succeeded')"
-	
+                                                                      
 	if [ "$IS_GETNONVOL" != "" ]; then
     	echo "getnonvol     ...   Passed [5/5]" >> $vocareumReportFile
    		echo "getnonvol,5" >> $vocareumGradeFile
@@ -2294,7 +2294,7 @@ clean:
    		echo "getallowed_cpus,5" >> $vocareumGradeFile
 	else
 		echo "getallowed_cp ...   Failed [0/5]" >> $vocareumReportFile
-		echo "getallowed_cpus,5" >> $vocareumGradeFile
+		echo "getallowed_cpus,0" >> $vocareumGradeFile
 	fi
 	
 	# ---------------------------------------------------------------------------- #

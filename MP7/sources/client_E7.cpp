@@ -95,7 +95,7 @@ struct PARAMS_WORKER {
     Hello World!
     or...
     World!
-    Hello 
+    Hello
     ...but it will NOT be something like:
     HelWorllo d!
  */
@@ -138,11 +138,11 @@ void* request_thread_function(void* arg) {
 		The body should require only a single line of code.
 		The conditions should be somewhat intuitive.
 	 */
-	
+
 	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
-	
+
 	for(;;) {
-		
+
 	}
 }
 
@@ -151,7 +151,7 @@ void* worker_thread_function(void* arg) {
         Fill in the loop body. Make sure
         it terminates only when, and not before,
         all the requests have been processed.
-	 
+
         Each thread must have its own dedicated
         RequestChannel. Make sure that if you
         construct a RequestChannel (or any object)
@@ -160,11 +160,11 @@ void* worker_thread_function(void* arg) {
         RequestChannel you construct regardless of
         whether you used "new" for it.
      */
-    
+
     PARAMS_WORKER wp = *(PARAMS_WORKER*)arg;
-	
+
     while(true) {
-        
+
     }
 }
 
@@ -182,6 +182,7 @@ int main(int argc, char * argv[]) {
     int n = 100; //default number of requests per "patient"
     int w = 1; //default number of worker threads
     int opt = 0;
+	bool REAL_TIME_HIST_DISP = false; //Have to implement real-time histogram displaying before this will do anything
     while ((opt = getopt(argc, argv, "n:w:h")) != -1) {
         switch (opt) {
             case 'n':
@@ -191,6 +192,8 @@ int main(int argc, char * argv[]) {
                 //This won't do a whole lot until you fill in the worker thread function
                 w = atoi(optarg);
                 break;
+			case 'd':
+				REAL_TIME_HIST_DISP = true;
             case 'h':
             default:
                 std::cout << "This program can be invoked with the following flags:" << std::endl;
@@ -204,18 +207,18 @@ int main(int argc, char * argv[]) {
                 exit(0);
         }
     }
-    
+
     int pid = fork();
     if(pid == 0){
-		
+
         std::cout << "n == " << n << std::endl;
         std::cout << "w == " << w << std::endl;
-        
+
         std::cout << "CLIENT STARTED:" << std::endl;
         std::cout << "Establishing control channel... " << std::flush;
         RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE);
         std::cout << "done." << std::endl;
-        
+
         /*
             All worker threads will use these,
             but the current implementation puts
@@ -225,13 +228,13 @@ int main(int argc, char * argv[]) {
 		 	in the end you MUST use SafeBuffer instead
 		 	of std::list for request_buffer.
          */
-		
+
 		//SafeBuffer request_buffer;
 		std::list<std::string> request_buffer;
         std::vector<int> john_frequency_count(10, 0);
         std::vector<int> jane_frequency_count(10, 0);
         std::vector<int> joe_frequency_count(10, 0);
-		
+
 /*--------------------------------------------------------------------------*/
 /*  BEGIN CRITICAL SECTION  */
 /*
@@ -240,29 +243,29 @@ int main(int argc, char * argv[]) {
  	in parallel instead of sequentially in a loop, and likewise
  	to process the request using w worker threads instead of
  	sequentially in a loop.
- 
+
  	Note that in the finished product, as in this initial code,
  	all the requests will be pushed to the request buffer
  	BEFORE the worker threads begin processing them. This means
  	that you will have to ensure that all 3 request threads
  	have terminated before kicking off any worker threads.
- 	In the next machine problem, we'll deal with the 
+ 	In the next machine problem, we'll deal with the
  	synchronization problems that arise from allowing the
  	request threads and worker threads to run in parallel
- 	with each other. 
- 
+ 	with each other.
+
  	Just to be clear: for this machine problem, request
 	threads will run concurrently with request threads, and worker
  	threads will run concurrently with worker threads, but request
 	threads will NOT run concurrently with worker threads.
-	
+
 	While gathering data for your report, remember to comment
  	out all the output operations occurring between when you
  	start the timer and when you end the timer. Output operations
  	are notoriously time-intensive and will skew your results.
 */
 /*--------------------------------------------------------------------------*/
-        
+
         std::cout << "Populating request buffer... ";
         fflush(NULL);
         for(int i = 0; i < n; ++i) {
@@ -271,26 +274,26 @@ int main(int argc, char * argv[]) {
             request_buffer.push_back("data Joe Smith");
         }
         std::cout << "done." << std::endl;
-        
+
         std::cout << "Pushing quit requests... ";
         fflush(NULL);
         for(int i = 0; i < w; ++i) {
             request_buffer.push_back("quit");
         }
         std::cout << "done." << std::endl;
-		
+
 		/*-------------------------------------------*/
 		/* START TIMER HERE */
 		/*-------------------------------------------*/
-		
+
         std::string s = chan->send_request("newthread");
         RequestChannel *workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
-        
+
         while(true) {
             std::string request = request_buffer.front();
             request_buffer.pop_front();
             std::string response = workerChannel->send_request(request);
-            
+
             if(request == "data John Smith") {
                 john_frequency_count.at(stoi(response) / 10) += 1;
             }
@@ -308,7 +311,7 @@ int main(int argc, char * argv[]) {
 /*--------------------------------------------------------------------------*/
 /*  END CRITICAL SECTION    */
 /*--------------------------------------------------------------------------*/
-        
+
         /*
             By the point at which you end the timer,
             all worker threads should have terminated.
@@ -316,40 +319,40 @@ int main(int argc, char * argv[]) {
             are still in scope, so threads can use them
             if they have a pointer to them.
          */
-        
+
         /*-------------------------------------------*/
         /* END TIMER HERE   */
         /*-------------------------------------------*/
-        
+
         /*
             You may want to eventually add file output
             to this section of the code to make it easier
             to assemble the timing data from different iterations
             of the program.
          */
-		
+
         std::cout << "Finished!" << std::endl;
-        
+
         std::string john_results = make_histogram("John Smith", &john_frequency_count);
         std::string jane_results = make_histogram("Jane Smith Smith", &jane_frequency_count);
         std::string joe_results = make_histogram("Joe Smith", &joe_frequency_count);
-        
+
         std::cout << "Results for n == " << n << ", w == " << w << std::endl;
-		
+
 		/*
 		 	This is a good place to output your timing data.
 		 */
-		
+
         std::cout << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
         std::cout << john_results << std::endl;
         std::cout << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
         std::cout << jane_results << std::endl;
         std::cout << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
         std::cout << joe_results << std::endl;
-        
+
         std::cout << "Sleeping..." << std::endl;
         usleep(10000);
-        
+
         /*
             EVERY RequestChannel must send a "quit"
             request before program termination, and

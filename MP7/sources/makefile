@@ -11,13 +11,13 @@ SafeBuffer.o: SafeBuffer.h SafeBuffer.cpp
 	g++ -std=c++11 -c -g SafeBuffer.cpp
 
 dataserver: dataserver.cpp reqchannel.o 
-	g++ -std=c++11 -g -o dataserver dataserver.cpp reqchannel.o -lpthread
+	g++ -std=c++11 -g -o dataserver dataserver.cpp reqchannel.o -lpthread -lrt
 
 client: client_E7.cpp reqchannel.o SafeBuffer.o
-	g++ -std=c++11 -g -o client client_E7.cpp reqchannel.o SafeBuffer.o -lpthread
+	g++ -std=c++11 -g -o client client_E7.cpp reqchannel.o SafeBuffer.o -lpthread -lrt
 
 client_solution: client_solution_E7.cpp reqchannel.o SafeBuffer.o
-	g++ -std=c++11 -g -o client_solution client_solution_E7.cpp reqchannel.o SafeBuffer.o -lpthread
+	g++ -std=c++11 -g -o client_solution client_solution_E7.cpp reqchannel.o SafeBuffer.o -lpthread -lrt
 
 clean:
 	rm -rf *.o fifo* *.DS_Store dataserver client client_solution output*

@@ -23,7 +23,7 @@ fi
 cat proctest.py &> /dev/null
 
 if [ "$?" == "0" ]; then
-	CHOSEN_LANGHAGE="Python"
+	CHOSEN_LANGUAGE="Python"
 fi
 
 if [ "$CHOSEN_LANGUAGE" == "" ]; then
@@ -2339,8 +2339,8 @@ if [ "$CHOSEN_LANGUAGE" == "Python" ]; then
 import unittest
 import sys
 import re
-from subprocess import check_output, CalledProcessError
-sys.path.append(\".\")
+import os
+from subprocess import check_output, CalledProcessError, Popen
 from proctest import Proctest
 
 # --------------------------------------------------------------------------- #
@@ -2358,45 +2358,15 @@ def main():
 	global process_pid, process_data, stat_array, status_array,\
 		num_fds, mem_array
 
-	sys.stdout.write(\"Enter a pid to test: \")
-	sys.stdout.flush()
-	process_pid = sys.stdin.readline()
+	test_process = Popen(\"sleep 100\", shell=True)
+	process_pid = int(test_process.pid)
+	os.system(\"kill -19 %s\" % process_pid)
 
-	stat_fname = \"\"
-	status_fname = \"\"
+	stat_fname = \"/proc/%s/stat\" % (process_pid)
+	status_fname = \"/proc/%s/status\" % (process_pid)
 	stat_file = None
 
-	while True:
-		try:
-			process_pid = int(process_pid)
-			break
-		except ValueError:
-			pass
-
-		sys.stdout.write(\"[ERROR]: PID is not an integer.  Try again: \")
-		sys.stdout.flush()
-		process_pid = sys.stdin.readline()
-
-	while True:
-		stat_fname = \"/proc/%s/stat\" % (process_pid)
-		status_fname = \"/proc/%s/status\" % (process_pid)
-
-		try:
-			stat_file = open(stat_fname, \"r\")
-			break
-		except IOError:
-			sys.stdout.write(\"[ERROR]: Process does not exist.  Try again: \")
-			sys.stdout.flush()
-			process_pid = sys.stdin.readline()
-
-			while True:
-				try:
-					process_pid = int(process_pid)
-					break
-				except IOError:
-					sys.stdout.write(\"[ERROR]: PID is not an integer.  Try again: \")
-					sys.stdout.flush()
-					process_pid = sys.stdin.readline()
+	stat_file = open(stat_fname, \"r\")
 
 	if stat_file is None:
 		sys.stdout.write(\"[ERROR]: Could not open /proc/%s/stat.\" % process_pid)
@@ -2450,138 +2420,168 @@ def main():
 
 
 	process_data = Proctest(process_pid)
-	unittest.main()
+	
+	os.system(\"kill -9 %s\" % process_pid)
+	
+	test_getpid()
+	test_getppid()
+	test_geteuid()
+	test_getegid()
+	test_getruid()
+	test_getrgid()
+	test_getfsuid()
+	test_getfsgid()
+	test_getstate()
+	test_getthread_count()
+	test_getpriority()
+	test_getniceness()
+	test_getstime()
+	test_getutime()
+	test_getcstime()
+	test_getcutime()
+	test_getstartcode()
+	test_getendcode()
+	test_getesp()
+	test_geteip()
+	test_getfiles()
+	test_getvoluntary_context_switches()
+	test_getnonvoluntary_context_switches()
+	test_getallowed_cpus()
+	test_getlast_cpu()
+	test_getmemory_map()
+
+def test_getpid():
+	student_pid = process_data.getpid()
+	test_pid = stat_array[0]
+	
+	if student_pid == test_pid:
+		print \"getpid Succeeded\"
+
+def test_getppid(self):
+    student_ppid = process_data.getppid()
+    test_ppid = stat_array[3]
+
+    if student_ppid == test_ppid:
+		print \"getppid Succeeded\"
+
+def test_geteuid(self):
+    student_euid = process_data.geteuid()
+    test_euid = \"\"
+
+    for i in range(0, len(status_array)):
+        if \"Uid\" in status_array[i][0]:
+            test_euid = status_array[i][2]
+
+    if student_euid == test_euid:
+		print \"geteuid Succeeded\"
 
 
-class TestHandlers(unittest.TestCase):
-	def setUp(self):
-		pass
+def test_getegid(self):
+    student_egid = process_data.getegid()
+    test_egid = \"\"
+
+    for i in range(0, len(status_array)):
+        if \"Gid\" in status_array[i][0]:
+            test_egid = status_array[i][2]
+
+	if student_egid == test_egid:
+		print \"getegid Succeeded\"
 
 
-	def test_getpid(self):
-		student_pid = process_data.getpid()
-		test_pid = stat_array[0]
+def test_getruid(self):
+    student_ruid = process_data.getruid()
+    test_ruid = \"\"
 
-		if student_pid == test_pid:
-			print \"getpid Succeeded\"
+    for i in range(0, len(status_array)):
+        if \"Uid\" in status_array[i][0]:
+            test_ruid = status_array[i][1]
 
-		self.assertEqual(str(test_pid), str(student_pid))
-
-
-    def test_getppid(self):
-        student_ppid = process_data.getppid()
-        test_ppid = stat_array[3]
-
-        self.assertEqual(str(test_ppid), str(student_ppid))
+	if student_ruid == test_ruid:
+		print \"getruid Succeeded\"
 
 
-    def test_geteuid(self):
-        student_euid = process_data.geteuid()
-        test_euid = \"\"
+def test_getrgid(self):
+    student_rgid = process_data.getrgid()
+    test_rgid = \"\"
 
-        for i in range(0, len(status_array)):
-            if \"Uid\" in status_array[i][0]:
-                test_euid = status_array[i][2]
+    for i in range(0, len(status_array)):
+        if \"Gid\" in status_array[i][0]:
+            test_rgid = status_array[i][1]
 
-        self.assertEqual(str(test_euid), str(student_euid))
-
-
-    def test_getegid(self):
-        student_egid = process_data.getegid()
-        test_egid = \"\"
-
-        for i in range(0, len(status_array)):
-            if \"Gid\" in status_array[i][0]:
-                test_egid = status_array[i][2]
-
-        self.assertEqual(str(test_egid), str(student_egid))
+	if student_rgid == test_rgid:
+		print \"getrgid Succeeded\"
 
 
-    def test_getruid(self):
-        student_ruid = process_data.getruid()
-        test_ruid = \"\"
+def test_getfsuid(self):
+    student_fsuid = process_data.getfsuid()
+    test_fsuid = \"\"
 
-        for i in range(0, len(status_array)):
-            if \"Uid\" in status_array[i][0]:
-                test_ruid = status_array[i][1]
+    for i in range(0, len(status_array)):
+        if \"Uid\" in status_array[i][0]:
+            test_fsuid = status_array[i][4]
 
-        self.assertEqual(str(test_ruid), str(student_ruid))
-
-
-    def test_getrgid(self):
-        student_rgid = process_data.getrgid()
-        test_rgid = \"\"
-
-        for i in range(0, len(status_array)):
-            if \"Gid\" in status_array[i][0]:
-                test_rgid = status_array[i][1]
-
-        self.assertEqual(str(test_rgid), str(student_rgid))
+	if student_gsuid == test_fsuid:
+		print \"getfsuid Succeeded\"
 
 
-    def test_getfsuid(self):
-        student_fsuid = process_data.getfsuid()
-        test_fsuid = \"\"
+def test_getfsgid(self):
+    student_fsgid = process_data.getfsgid()
+    test_fsgid = \"\"
 
-        for i in range(0, len(status_array)):
-            if \"Uid\" in status_array[i][0]:
-                test_fsuid = status_array[i][4]
+    for i in range(0, len(status_array)):
+        if \"Gid\" in status_array[i][0]:
+            test_fsgid = status_array[i][4]
 
-        self.assertEqual(str(test_fsuid), str(student_fsuid))
-
-
-    def test_getfsgid(self):
-        student_fsgid = process_data.getfsgid()
-        test_fsgid = \"\"
-
-        for i in range(0, len(status_array)):
-            if \"Gid\" in status_array[i][0]:
-                test_fsgid = status_array[i][4]
-
-        self.assertEqual(str(test_fsgid), str(student_fsgid))
+	if student_fsgid == test_fsgid:
+		print \"getfsgid Succeeded\"
 
 
-    def test_getstate(self):
-        student_state = process_data.getstate()
-        test_state = stat_array[2]
+def test_getstate(self):
+    student_state = process_data.getstate()
+    test_state = stat_array[2]
 
-        self.assertEqual(str(test_state), str(student_state))
-
-
-    def test_getthread_count(self):
-        student_thread_count = process_data.getthread_count()
-        test_thread_count = stat_array[19]
-
-        self.assertEqual(str(test_thread_count), str(student_thread_count))
+    if student_state == test_state:
+		print \"getstate Succeeded\"
 
 
-    def test_getpriority(self):
-        student_priority = process_data.getpriority()
-        test_priority = stat_array[17]
+def test_getthread_count(self):
+    student_thread_count = process_data.getthread_count()
+    test_thread_count = stat_array[19]
 
-        self.assertEqual(str(test_priority), str(student_priority))
-
-
-    def test_getniceness(self):
-        student_niceness = process_data.getniceness()
-        test_niceness = stat_array[18]
-
-        self.assertEqual(str(test_niceness), str(student_niceness))
+	if student_thread_count == test_thread_count:
+		print \"getthread_count Succeeded\"
 
 
-    def test_getstime(self):
-        student_stime = process_data.getstime()
-        test_stime = stat_array[14]
+def test_getpriority(self):
+	student_priority = process_data.getpriority()
+    test_priority = stat_array[17]
 
-        self.assertEqual(str(test_stime), str(student_stime))
+	if student_priority == test_priority:
+		print \"getpriority Succeeded\"
 
 
-    def test_getutime(self):
-        student_utime = process_data.getutime()
-        test_utime = stat_array[13]
+def test_getniceness(self):
+    student_niceness = process_data.getniceness()
+    test_niceness = stat_array[18]
 
-        self.assertEqual(str(test_utime), str(student_utime))
+	if student_niceness == test_niceness:
+		print \"getniceness Succeeded\"
 
+
+def test_getstime(self):
+    student_stime = process_data.getstime()
+    test_stime = stat_array[14]
+
+	if student_stime == test_stime:
+		print \"getstime Succeeded\"
+
+
+def test_getutime(self):
+    student_utime = process_data.getutime()
+    test_utime = stat_array[13]
+
+	if student_utime == test_utime:
+		print \"getutime Succeeded\"
 
     def test_getcstime(self):
         student_cstime = process_data.getcstime()
@@ -2682,20 +2682,16 @@ class TestHandlers(unittest.TestCase):
             if test_memory[i] not in student_memory:
                 mem_equality = False
 
-        self.assertEqual(mem_equality, True)
-	" > mp4_test.py
+        self.assertEqual(mem_equality, True)\"\"\"
 	
-	chmod +x mp4_test.py
+if __name__ == \"__main__\":
+    main()	
+" > mp4_test.py
 	
-	proctest_output="$(./mp4_test.py)"
+	# Fix problems with whitespace
+	sed -i 's/\t/    /g' mp4_test.py
 	
-
-
-if __name__ == "__main__":
-    main()
-
-
-
+	proctest_output="$(python mp4_test.py)"
 
 
 fi

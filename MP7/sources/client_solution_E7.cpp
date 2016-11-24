@@ -99,18 +99,22 @@ struct PARAMS_WORKER {
 class atomic_standard_output {
     pthread_mutex_t console_lock;
 public:
-    atomic_standard_output() { pthread_mutex_init(&console_lock, NULL); }
-    ~atomic_standard_output() { pthread_mutex_destroy(&console_lock); }
-    void println(std::string s){
-        pthread_mutex_lock(&console_lock);
-        std::cout << s << std::endl;
-        pthread_mutex_unlock(&console_lock);
-    }
-	void perror(std::string s){
-		pthread_mutex_lock(&console_lock);
-		std::cerr << s << ": " << strerror(errno) << std::endl;
-		pthread_mutex_unlock(&console_lock);
-	}
+		atomic_standard_output() {
+			pthread_mutex_init(&console_lock, NULL);
+		}
+		~atomic_standard_output() {
+			pthread_mutex_destroy(&console_lock);
+		}
+		void println(std::string s) {
+			pthread_mutex_lock(&console_lock);
+			std::cout << s << std::endl;
+			pthread_mutex_unlock(&console_lock);
+		}
+		void perror(std::string s) {
+			pthread_mutex_lock(&console_lock);
+			std::cerr << s << ": " << strerror(errno) << std::endl;
+			pthread_mutex_unlock(&console_lock);
+		}
 };
 
 atomic_standard_output threadsafe_console_output;
@@ -232,26 +236,8 @@ void display_histograms(int sig, siginfo_t * si, void * unused) {
 	pthread_mutex_unlock(dhp.jane_m);
 	pthread_mutex_unlock(dhp.joe_m);
 
-//	std::string tmp_john_results = "";
-//	pthread_mutex_lock(dhp.john_m);
-//	tmp_john_results += make_histogram("John Smith", dhp.john_frequency_count);
-//	pthread_mutex_unlock(dhp.john_m);
-//
-//	std::string tmp_jane_results = "";
-//	pthread_mutex_lock(dhp.jane_m);
-//	tmp_jane_results += make_histogram("Jane Smith", dhp.jane_frequency_count);
-//	pthread_mutex_unlock(dhp.jane_m);
-//
-//	std::string tmp_joe_results = "";
-//	pthread_mutex_lock(dhp.joe_m);
-//	tmp_joe_results += make_histogram("Joe Smith", dhp.joe_frequency_count);
-//	pthread_mutex_unlock(dhp.joe_m);
-
 	system("clear");
 	threadsafe_console_output.println(histogram_table);
-//	threadsafe_console_output.println(tmp_john_results);
-//	threadsafe_console_output.println(tmp_jane_results);
-//	threadsafe_console_output.println(tmp_joe_results);
 }
 
 
@@ -286,22 +272,38 @@ int main(int argc, char * argv[]) {
 				break;
             case 'h':
             default:
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "This program can be invoked with the following flags:" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "-n [int]: number of requests per patient" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "-w [int]: number of worker threads" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "-v [0..3]: verbosity - controls how many output messages are displayed" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "Options:" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "\t0: only this help message will be displayed, if asked for" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "\t1: basic execution info and time will be displayed" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "\t2: final histogram totals (not individual bin values) will be displayed" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "\t3: debug: trace and full histograms will be displayed, in addition to all above info" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "-h: print this message and quit" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "Example: ./client_solution -n 10000 -b 50 -w 120 -v 1" << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "If a given flag is not used, or given an invalid value," << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "a default value will be given to the corresponding variable." << std::endl;
-                if(v >= VERBOSITY_HELP_ONLY) std::cout << "If an illegal option is detected, behavior is the same as using the -h flag." << std::endl;
-                exit(0);
-        }
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "This program can be invoked with the following flags:" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "-n [int]: number of requests per patient" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "-w [int]: number of worker threads" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "-v [0..3]: verbosity - controls how many output messages are displayed" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "Options:" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "\t0: only this help message will be displayed, if asked for" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "\t1: basic execution info and time will be displayed" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "\t2: final histogram totals (not individual bin values) will be displayed" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "\t3: debug: trace and full histograms will be displayed, in addition to all above info" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "-d: display histograms in real time using a SIGALRM handler (if implemented)" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "-h: print this message and quit" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "Example: ./client_solution -n 10000 -b 50 -w 120 -v 1" << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "If a given flag is not used, or given an invalid value," << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "a default value will be given to the corresponding variable." << std::endl;
+				if (v >= VERBOSITY_HELP_ONLY)
+					std::cout << "If an illegal option is detected, behavior is the same as using the -h flag." << std::endl;
+				exit(0);
+		}
     }
 
     pid_t pid = fork();
@@ -479,13 +481,6 @@ int main(int argc, char * argv[]) {
 			std::cout << "Finished!" << std::endl;
 		}
 
-//		std::string john_results = make_histogram("John Smith",
-//		        &john_frequency_count);
-//		std::string jane_results = make_histogram("Jane Smith",
-//		        &jane_frequency_count);
-//		std::string joe_results = make_histogram("Joe Smith",
-//		        &joe_frequency_count);
-
 		std::string histogram_table = make_histogram_table("John Smith",
 		        "Jane Smith", "Joe Smith", &john_frequency_count,
 		        &jane_frequency_count, &joe_frequency_count);
@@ -497,12 +492,6 @@ int main(int argc, char * argv[]) {
 			std::cout << "Time to completion: "
 			        << std::to_string(finish_usecs - start_usecs) << " usecs"
 			        << std::endl;
-//		if (v >= VERBOSITY_DEBUG)
-//			std::cout << john_results << std::endl;
-//		if (v >= VERBOSITY_DEBUG)
-//			std::cout << jane_results << std::endl;
-//		if (v >= VERBOSITY_DEBUG)
-//			std::cout << joe_results << std::endl;
 		if (v >= VERBOSITY_DEBUG)
 			std::cout << histogram_table << std::endl;
 
@@ -521,16 +510,20 @@ int main(int argc, char * argv[]) {
 		std::ofstream ofs;
 		ofs.open("output.txt", std::ios::out | std::ios::app);
 
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
-		if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
-//		if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
-//		if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
-//		if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
+		if (v >= VERBOSITY_CHECK_CORRECTNESS)
+			ofs << "Results for n == " << n << ", w == " << w << ", v == " << v
+			        << std::endl;
+		if (v >= VERBOSITY_DEFAULT)
+			ofs << "Time to completion: "
+			        << std::to_string(finish_usecs - start_usecs) << " usecs"
+			        << std::endl;
 		if (v >= VERBOSITY_DEBUG)
 			ofs << histogram_table << std::endl;
 		ofs.close();
 
-		if(v >= VERBOSITY_DEFAULT) std::cout << "Finale: " << finale << std::endl;
+		if (v >= VERBOSITY_DEFAULT)
+			std::cout << "Finale: " << finale << std::endl;
     }
-    else if(pid != 0) execl("dataserver", NULL);
+	else if (pid != 0)
+		execl("dataserver", (char*) NULL);
 }

@@ -155,18 +155,18 @@
 	Multithreading often requires the use of specialized "thread-safe" data structures. In order to facilitate multithreading, you will code a thread-safe class called SafeBuffer (see the commented-out line client\_E7.cpp, "//SafeBuffer request\_buffer;"). SafeBuffer can simply wrap around an STL data structure (we recommend std::list or std::queue), but must have a constructor and destructor as well as the operations push\_back and retrieve\_front (if you want the provided make\_histogram function to work, also include a size function). push\_back adds an element to the back of the buffer and retrieve\_front removes an element from the front so that items are added and removed in FIFO order (see requirements below). Both functions must use locks (see Advanced Concepts section) to ensure that the buffer can be modified concurrently at either end (concurrent modification at \emph{both} ends requires \emph{semaphores}, which we will tackle in the next assignment).
 	
 	\ \\
-	In addition to processing the requests using multithreading, and coding a specialized data structure for that purpose, the request buffer must also be initially populated using multithreading. However, writing the code for request threads will be much easier than the worker threads: you will only ever have 3 request threads, one for each user (John, Jane, and Joe from earlier), and each one simply pushes n requests (corresponding to its respective user) to request\_buffer. Furthermore, the request threads do not have to run concurrently with the worker threads (and in fact \emph{must} not), which means that the only lines of request-thread-related code in main (apart from setting up the thread parameters) will be three pthread\_create calls followed by thread pthread\_join function calls. Simple enough, right? \emph{:)}
+	In addition to processing the requests using multithreading, and coding a specialized data structure for that purpose, the request buffer must also be initially populated using multithreading. However, writing the code for request threads will be much easier than the worker threads: you will only ever have 3 request threads, one for each user (John, Jane, and Joe from earlier; note we said 3 request \emph{threads}, not 3 request \emph{thread functions}), and each one simply pushes n requests (corresponding to its respective user) to request\_buffer. Furthermore, the request threads do not have to run concurrently with the worker threads (and in fact \emph{must} not), which means that the only lines of request-thread-related code in main (apart from setting up the thread parameters) will be three pthread\_create calls followed by thread pthread\_join function calls.
 	
 	\ \\
 	Aside from multithreading, your program should have the following characteristics and satisfy the following requirements:
 	\begin{itemize}
 	    \setlength\itemsep{-0.1em}
 	    
-	    \item The program should function correctly for any number of threads. Practically speaking, this means that if the pthread\_create function call fails (see Synchronization under Advanced Concepts), or the RequestChannel constructor fails (it will throw an exception if it does), your program must recover and finish correctly (if such errors prevent any worker threads from being started, report the problem and exit). Check the return value of of the pthread\_create function call (also check errno for valuable debug information, man 3 errno) and catch any exceptions thrown by the RequestChannel constructor, in both cases "cleaning up" as required. Further error-handling should not be needed. Note that failures to create threads or construct RequestChannels do not always (at least, not in and of themselves) indicate a programming error but may be due to OS limitations such as maximum threads per process or available file descriptors, both of which vary greatly among operating systems.
+	    \item The program should function correctly for any number of threads. This does not mean that you have to handle all the errors resulting from large numbers of threads, but only that high numbers of threads do not in and of themselves affect program correctness. Practically speaking this means that your synchronization is provably correct, not that your error-handling is robust. You will not have to test your program with more threads than the minimum of (fd-max - 2)/2, and however many threads causes pthread\_create to fail. The value of fd-max on your system can be checked with "ulimit -n" at the command line, while the number of threads that causes pthread\_create to fail may need to be determined experimentally. Note that both values differ greatly between operating systems.
 	    \item No fifo files should remain after running the client program with any number of threads.  
 	    \item The client program should not take an unreasonably long time to execute.  Generally, the execution should be quicker than the single threaded version.  You can use the sample code as a performance baseline.  
 	    \item All requests for the program are handled correctly, which includes being processed in FIFO order.  The histogram should report the correct number of requests and should NOT drop any requests.  
-	    \item Your code may not make use of \emph{any} global variables, as they (in most circumstances) exemplify poor programming practice. Appropriately-named storage structs have been provided to be used in their place, although you will need to fill in their code before using them.
+	    \item Your code may not make use of \emph{any} global variables, as they (in most circumstances) exemplify poor programming practice. The easiest way to avoid this is by using storage structs (see Appendix A)
 	    
 	\end{itemize}
 
@@ -195,7 +195,7 @@
         \begin{enumerate}
         
             \item Describe what your code does and how it differs from the code that was initially given to you.  
-            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints starting at 1 and going to the highest number that will run (\emph{without} reporting some kind of error) on your OS.  After making the graph, Describe the behavior of the client program is w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given.  
+            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints (more or less evenly spaced) starting at 5 and going to the highest number that will run (\emph{without} reporting some kind of error) on your OS.  After making the graph, describe the behavior of the client program as w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given. (See Appendix B for example graph)
             \begin{itemize}
                 \setlength\itemsep{-0.1em}
                 
@@ -203,7 +203,7 @@
                 
             \end{itemize}
             
-            \item Describe the platform that you gathered data on (I.e. CSCE Linux server, Raspberry Pi, personal computer, etc...).  If it was a personal device (This includes the raspberry pi), describe the operating system that it runs.  Also answer the following sub-questions:
+            \item Describe the platform that you gathered data on (I.e. CSCE Linux server, Raspberry Pi, personal computer, etc...).  If it was a personal device (this includes the raspberry pi), describe the operating system that it runs.  Also answer the following sub-questions:
             \begin{itemize}
                 \setlength\itemsep{-0.1em}
                 
@@ -310,22 +310,22 @@
         		\begin{enumerate}
         		\setlength\itemsep{-0.1em}
         			\item Initial code modified to create 3 request threads in main. (15 points, all or nothing)
-			\item Coded one, \emph{and only one}, request\_thread\_function, and not 3 separate copies of it (one for each user). If 3 such copies are used, deduct 10 points. The person's name must be passed as an argument, or as one of the member variables of PARAMS\_REQUEST.
+			\item Coded one, \emph{and only one}, request\_thread\_function, and not 3 separate copies of it (one for each user). If 3 such copies are used, deduct 10 points. The person's name must be passed as an argument, or as one of the member variables an appropriate storage struct.
 			\item Request threads joined before any worker threads are started. (5 points)
 		\end{enumerate}
 	\item Worker Thread Functionality (30 points)
 		\begin{enumerate}
 		\setlength\itemsep{-0.1em}
 			\item Quits properly using "quit" request pushed from main function. (10 points)
-			\item Histograms correct. (10 points)
-			\item Proper thread-safety used for request\_buffer and histogram vectors. (10 points
+			\item Histograms correct (must use make\_histogram\_table function). (10 points)
+			\item Proper thread-safety used for request\_buffer and *frequency\_count vectors. (10 points
 				\begin{itemize}
 				\setlength\itemsep{-0.1em}
 					\item SafeBuffer used for request\_buffer.
-					\item Locks used before incrementing histogram vectors.
+					\item Locks used before incrementing *frequency\_count vectors.
 				\end{itemize}
 		\end{enumerate}
-	\item PARAMS (10 points)
+	\item Globals (or rather, lack thereof) (10 points)
 		\begin{enumerate}
         		\setlength\itemsep{-0.1em}
 			\item No global variables used, if global variables are used deduct from 1 to 10 points depending on how many.

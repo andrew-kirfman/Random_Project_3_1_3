@@ -27,7 +27,7 @@
 /* INCLUDES */
 /*
     This assignment does not require any additional includes
- 	besides un-commenting SafeBuffer.h, nor will you probably use
+ besides un-commenting "SafeBuffer.h", nor will you probably use
  	all the provided includes, but you are free to add any that
  	you find helpful.
 */
@@ -51,6 +51,10 @@
 #include <numeric>
 #include <list>
 #include <vector>
+#include <algorithm>
+#include <csignal>
+#include <sstream>
+#include <iomanip>
 
 //#include "SafeBuffer.h"
 
@@ -58,26 +62,11 @@
 /* DATA STRUCTURES */
 /*--------------------------------------------------------------------------*/
 
-struct PARAMS_REQUEST {
-	/*
-		This structure will be used as a "shipping container"
-		for everything that will be USED in the request thread
-		function but has to be INITIALIZED or DEFINED in main.
-		These will be mostly pointers to data structures, such as
-	 	the request buffer, or function parameters such as
-	 	which person the request thread is for, as well as the
-	 	number of requests to make.
-	 */
-};
-
-struct PARAMS_WORKER {
-    /*
-	 	This structure has the same general purpose as PARAMS_REQUEST
-	 	but is used in the worker thread function, and thus requires
-	 	different fields and a different constructor based on what
-	 	the worker thread function needs to use.
-     */
-};
+/*
+ * This is a good place to write in storage structs
+ * with which to pass parameters to the worker
+ * and request thread functions.
+ */
 
 /*
     The class below allows any thread in this program to use
@@ -106,16 +95,26 @@ class atomic_standard_output {
          of the usage of mutexes, which are a crucial
          synchronization type. You will probably not
          be able to write the worker thread function
-         without using these.
+		 without using mutexes.
      */
     pthread_mutex_t console_lock;
 public:
-    atomic_standard_output() { pthread_mutex_init(&console_lock, NULL); }
-    void println(std::string s){
-        pthread_mutex_lock(&console_lock);
-        std::cout << s << std::endl;
-        pthread_mutex_unlock(&console_lock);
-    }
+		atomic_standard_output() {
+			pthread_mutex_init(&console_lock, NULL);
+		}
+		~atomic_standard_output() {
+			pthread_mutex_destroy(&console_lock);
+		}
+		void println(std::string s) {
+			pthread_mutex_lock(&console_lock);
+			std::cout << s << std::endl;
+			pthread_mutex_unlock(&console_lock);
+		}
+		void perror(std::string s) {
+			pthread_mutex_lock(&console_lock);
+			std::cerr << s << ": " << strerror(errno) << std::endl;
+			pthread_mutex_unlock(&console_lock);
+		}
 };
 
 atomic_standard_output threadsafe_standard_output;
@@ -124,22 +123,50 @@ atomic_standard_output threadsafe_standard_output;
 /* HELPER FUNCTIONS */
 /*--------------------------------------------------------------------------*/
 
-std::string make_histogram(std::string name, std::vector<int> *data) {
-    std::string results = "Frequency count for " + name + ":\n";
-    for(int i = 0; i < data->size(); ++i) {
-        results += std::to_string(i * 10) + "-" + std::to_string((i * 10) + 9) + ": " + std::to_string(data->at(i)) + "\n";
-    }
-    return results;
+std::string make_histogram_table(std::string name1, std::string name2,
+        std::string name3, std::vector<int> *data1, std::vector<int> *data2,
+        std::vector<int> *data3) {
+	std::stringstream tablebuilder;
+	tablebuilder << std::setw(25) << std::right << name1;
+	tablebuilder << std::setw(15) << std::right << name2;
+	tablebuilder << std::setw(15) << std::right << name3 << std::endl;
+	for (int i = 0; i < data1->size(); ++i) {
+		tablebuilder << std::setw(10) << std::left
+		        << std::string(
+		                std::to_string(i * 10) + "-"
+		                        + std::to_string((i * 10) + 9));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data1->at(i));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data2->at(i));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data3->at(i)) << std::endl;
+	}
+	tablebuilder << std::setw(10) << std::left << "Total";
+	tablebuilder << std::setw(15) << std::right
+	        << accumulate(data1->begin(), data1->end(), 0);
+	tablebuilder << std::setw(15) << std::right
+	        << accumulate(data2->begin(), data2->end(), 0);
+	tablebuilder << std::setw(15) << std::right
+	        << accumulate(data3->begin(), data3->end(), 0) << std::endl;
+
+	return tablebuilder.str();
 }
+
 
 void* request_thread_function(void* arg) {
 	/*
-		Fill in the loop conditions and body.
-		The body should require only a single line of code.
-		The conditions should be somewhat intuitive.
-	 */
+	 Fill in the loop conditions and body.
+	 The body should require only a single line of code.
+	 The conditions should be somewhat intuitive.
 
-	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
+	 In both thread functions, the arg parameter
+	 will be used to pass parameters to the function.
+	 One of the parameters for the request thread
+	 function MUST be the name of the person for whom
+	 the data requests are being pushed: you MAY NOT
+	 create 3 copies of this function, one for each person.
+	 */
 
 	for(;;) {
 
@@ -161,8 +188,6 @@ void* worker_thread_function(void* arg) {
         whether you used "new" for it.
      */
 
-    PARAMS_WORKER wp = *(PARAMS_WORKER*)arg;
-
     while(true) {
 
     }
@@ -174,10 +199,8 @@ void* worker_thread_function(void* arg) {
 
 int main(int argc, char * argv[]) {
     /*
-        Note that the assignment calls for n = 10000.
-        That is far too large for a single thread to accomplish quickly,
-        but you will still have to test it for w = 1 once you finish
-        filling in the worker thread function.
+	 Note that the assignment calls for n = 10000.
+	 That is far too large for a single thread to accomplish quickly.
      */
     int n = 100; //default number of requests per "patient"
     int w = 1; //default number of worker threads
@@ -194,16 +217,18 @@ int main(int argc, char * argv[]) {
                 break;
 			case 'd':
 				REAL_TIME_HIST_DISP = true;
+				break;
             case 'h':
             default:
-                std::cout << "This program can be invoked with the following flags:" << std::endl;
-                std::cout << "-n [int]: number of requests per patient" << std::endl;
-                std::cout << "-w [int]: number of worker threads" << std::endl;
-                std::cout << "-h: print this message and quit" << std::endl;
-                std::cout << "Example: ./client_solution -n 10000 -w 120 -v 1" << std::endl;
-                std::cout << "If a given flag is not used, or given an invalid value," << std::endl;
-                std::cout << "a default value will be given to the corresponding variable." << std::endl;
-                std::cout << "If an illegal option is detected, behavior is the same as using the -h flag." << std::endl;
+				std::cout << "This program can be invoked with the following flags:" << std::endl;
+				std::cout << "-n [int]: number of requests per patient" << std::endl;
+				std::cout << "-w [int]: number of worker threads" << std::endl;
+				std::cout << "-d: display histograms in real time using a SIGALRM handler (if implemented)" << std::endl;
+				std::cout << "-h: print this message and quit" << std::endl;
+				std::cout << "Example: ./client_solution -n 10000 -w 120 -v 1" << std::endl;
+				std::cout << "If a given flag is not used, or given an invalid value," << std::endl;
+				std::cout << "a default value will be given to the corresponding variable." << std::endl;
+				std::cout << "If an illegal option is detected, behavior is the same as using the -h flag." << std::endl;
                 exit(0);
         }
     }
@@ -238,31 +263,31 @@ int main(int argc, char * argv[]) {
 /*--------------------------------------------------------------------------*/
 /*  BEGIN CRITICAL SECTION  */
 /*
-	You will modify the program so that client.cpp
- 	populates the request buffer using 3 request threads
- 	in parallel instead of sequentially in a loop, and likewise
- 	to process the request using w worker threads instead of
- 	sequentially in a loop.
+		 You will modify the program so that client.cpp
+		 populates the request buffer using 3 request threads
+		 in parallel instead of sequentially in a loop, and likewise
+		 to processes requests using w worker threads instead of
+		 sequentially in a loop.
 
- 	Note that in the finished product, as in this initial code,
- 	all the requests will be pushed to the request buffer
- 	BEFORE the worker threads begin processing them. This means
- 	that you will have to ensure that all 3 request threads
- 	have terminated before kicking off any worker threads.
- 	In the next machine problem, we'll deal with the
- 	synchronization problems that arise from allowing the
- 	request threads and worker threads to run in parallel
- 	with each other.
+		 Note that in the finished product, as in this initial code,
+		 all the requests will be pushed to the request buffer
+		 BEFORE the worker threads begin processing them. This means
+		 that you will have to ensure that all 3 request threads
+		 have terminated before kicking off any worker threads.
+		 In the next machine problem, we'll deal with the
+		 synchronization problems that arise from allowing the
+		 request threads and worker threads to run in parallel
+		 with each other.
 
- 	Just to be clear: for this machine problem, request
-	threads will run concurrently with request threads, and worker
- 	threads will run concurrently with worker threads, but request
-	threads will NOT run concurrently with worker threads.
+		 Just to be clear: for this machine problem, request
+		 threads will run concurrently with request threads, and worker
+		 threads will run concurrently with worker threads, but request
+		 threads will NOT run concurrently with worker threads.
 
-	While gathering data for your report, remember to comment
- 	out all the output operations occurring between when you
- 	start the timer and when you end the timer. Output operations
- 	are notoriously time-intensive and will skew your results.
+		 While gathering data for your report, remember to comment
+		 out all the output operations occurring between when you
+		 start the timer and when you end the timer. Output operations
+		 are notoriously time-intensive and will skew your results.
 */
 /*--------------------------------------------------------------------------*/
 
@@ -333,9 +358,9 @@ int main(int argc, char * argv[]) {
 
         std::cout << "Finished!" << std::endl;
 
-        std::string john_results = make_histogram("John Smith", &john_frequency_count);
-        std::string jane_results = make_histogram("Jane Smith Smith", &jane_frequency_count);
-        std::string joe_results = make_histogram("Joe Smith", &joe_frequency_count);
+		std::string histogram_table = make_histogram_table("John Smith",
+		        "Jane Smith", "Joe Smith", &john_frequency_count,
+		        &jane_frequency_count, &joe_frequency_count);
 
         std::cout << "Results for n == " << n << ", w == " << w << std::endl;
 
@@ -343,12 +368,7 @@ int main(int argc, char * argv[]) {
 		 	This is a good place to output your timing data.
 		 */
 
-        std::cout << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
-        std::cout << john_results << std::endl;
-        std::cout << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
-        std::cout << jane_results << std::endl;
-        std::cout << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
-        std::cout << joe_results << std::endl;
+        std::cout << histogram_table << std::endl;
 
         std::cout << "Sleeping..." << std::endl;
         usleep(10000);
@@ -363,5 +383,6 @@ int main(int argc, char * argv[]) {
         delete chan;
         std::cout << "Finale: " << finale << std::endl; //However, this line is optional.
     }
-    else if(pid != 0) execl("dataserver", NULL);
+	else if (pid != 0)
+		execl("dataserver", (char*) NULL);
 }

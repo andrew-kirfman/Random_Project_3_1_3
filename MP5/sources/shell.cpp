@@ -166,7 +166,36 @@ int main(int argc, char** argv)
         }
 
         // Strip leading and trailing spaces
-        input_command = std::regex_replace(input_command, std::regex("^ +| +$|( ) +"), "");
+        int start_pos = 0;
+        int end_pos = input_command.length() -1;
+        
+        for(int i=0; i<input_command.length(); i++)
+		{
+			if(input_command[i] == ' ' || input_command == '\t')
+			{
+				start_pos++;
+				continue
+			}
+			else
+			{
+				break;
+			}
+		}
+		
+		for(int i=input_command.length() - 1; i>= 0; i++)
+		{
+			if(input_command[i] == ' ' || input_command == '\n')
+			{
+				end_pos--;
+				continue;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		input_command = input_command.substr(start_pos, end_pos - start_pos + 1);
 
         /* Tokenize input command */
         std::vector<std::string> tokens;

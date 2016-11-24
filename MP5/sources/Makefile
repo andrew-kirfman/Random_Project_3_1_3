@@ -12,7 +12,7 @@ CFLAGS=-O3 -Wall -g
 
 
 all: shell.cpp
-	$(CC) $(CFLAGS) $(STD) shell.cpp -o andrew_shell
+	$(CC) $(CFLAGS) $(STD) shell.cpp -o shell
 
 clean:
-	rm -rf andrew_shell
+	rm -rf shell

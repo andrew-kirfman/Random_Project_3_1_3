@@ -37,7 +37,6 @@
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
-#include "reqchannel.h"
 #include <pthread.h>
 #include <string>
 #include <sys/time.h>
@@ -45,11 +44,17 @@
 #include <cmath>
 #include <fstream>
 #include <numeric>
+#include <algorithm>
 #include <list>
 #include <vector>
 #include <exception>
 #include <errno.h>
+#include <sys/stat.h>
+#include <csignal>
+#include <sstream>
+#include <iomanip>
 
+#include "reqchannel.h"
 #include "SafeBuffer.h"
 
 /*--------------------------------------------------------------------------*/
@@ -115,14 +120,50 @@ atomic_standard_output threadsafe_console_output;
 /*--------------------------------------------------------------------------*/
 
 std::string make_histogram(std::string name, std::vector<int> *data) {
-    std::string results = "Frequency count for " + name + ":\n";
+	std::string total = name + " total: "
+	        + std::to_string(accumulate(data->begin(), data->end(), 0)) + "\n";
+
+	std::string frequency_count = "";
     for(int i = 0; i < data->size(); ++i) {
-        results += std::to_string(i * 10) + "-" + std::to_string((i * 10) + 9) + ": " + std::to_string(data->at(i)) + "\n";
+		frequency_count += std::to_string(i * 10) + "-"
+		        + std::to_string((i * 10) + 9) + ": "
+		        + std::to_string(data->at(i)) + "\n";
     }
-    return results;
+	return total + frequency_count;
+}
+
+std::string make_histogram_table(std::string name1, std::string name2,
+        std::string name3, std::vector<int> *data1, std::vector<int> *data2,
+        std::vector<int> *data3) {
+	std::stringstream tablebuilder;
+	tablebuilder << std::setw(25) << std::right << name1;
+	tablebuilder << std::setw(15) << std::right << name2;
+	tablebuilder << std::setw(15) << std::right << name3 << std::endl;
+	for (int i = 0; i < data1->size(); ++i) {
+		tablebuilder << std::setw(10) << std::left
+		        << std::string(
+		                std::to_string(i * 10) + "-"
+		                        + std::to_string((i * 10) + 9));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data1->at(i));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data2->at(i));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data3->at(i)) << std::endl;
+	}
+	tablebuilder << std::setw(10) << std::left << "Total";
+	tablebuilder << std::setw(15) << std::right
+	        << accumulate(data1->begin(), data1->end(), 0);
+	tablebuilder << std::setw(15) << std::right
+	        << accumulate(data2->begin(), data2->end(), 0);
+	tablebuilder << std::setw(15) << std::right
+	        << accumulate(data3->begin(), data3->end(), 0) << std::endl;
+
+	return tablebuilder.str();
 }
 
 void* request_thread_function(void* arg) {
+	signal(SIGALRM, SIG_IGN);
 	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
 	if(rp.v >= VERBOSITY_HYPER) {
 		threadsafe_console_output.println("Inside request thread function for " + rp.name + "...");
@@ -136,26 +177,9 @@ void* request_thread_function(void* arg) {
 }
 
 void* worker_thread_function(void* arg) {
-    PARAMS_WORKER wp = *(PARAMS_WORKER*)arg;
-	
-//	std::string s = wp.controlChannel->send_request("newthread");
-//	if(s == "ERROR") {
-//		threadsafe_console_output.perror("wthread[***] failed on newthread request");
-//		pthread_exit(NULL);
-//	}
-//	try {
-//		wp.workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
-//	}
-//	catch (sync_lib_exception sle) {
-//		threadsafe_console_output.perror("wthread[" + s + "] new client-side channel not created: " + std::string(sle.what()));
-//		pthread_exit(NULL);
-//	}
-//	catch (std::bad_alloc ba) {
-//		threadsafe_console_output.println("wthread[" + s + "] RequestChannel constructor threw std::bad_alloc");
-//		pthread_exit(NULL);
-//	}
+	PARAMS_WORKER wp = *(PARAMS_WORKER*) arg;
 
-    while(true) {
+	while (true) {
 		if(wp.v >= VERBOSITY_HYPER) {
 			threadsafe_console_output.println("wthread[" + wp.workerChannel->name() + " retrieving request...");
 		}
@@ -167,7 +191,7 @@ void* worker_thread_function(void* arg) {
 		if(wp.v >= VERBOSITY_HYPER) {
 			threadsafe_console_output.println("wthread[" + wp.workerChannel->name() + " received response " + response + " to request " + request + "...");
 		}
-		
+
         if(request == "data John Smith") {
             pthread_mutex_lock(wp.john_m);
             wp.john_frequency_count->at(stoi(response) / 10) += 1;
@@ -190,19 +214,62 @@ void* worker_thread_function(void* arg) {
     }
 }
 
+void display_histograms(int sig, siginfo_t * si, void * unused) {
+	/*
+	 * Need to add in totals, since make_histogram
+	 * doesn't do them automatically.
+	 */
+
+	PARAMS_WORKER dhp = *(PARAMS_WORKER*) si->si_value.sival_ptr;
+
+	pthread_mutex_lock(dhp.john_m);
+	pthread_mutex_lock(dhp.jane_m);
+	pthread_mutex_lock(dhp.joe_m);
+	std::string histogram_table = make_histogram_table("John Smith",
+	        "Jane Smith", "Joe Smith", dhp.john_frequency_count,
+	        dhp.jane_frequency_count, dhp.joe_frequency_count);
+	pthread_mutex_unlock(dhp.john_m);
+	pthread_mutex_unlock(dhp.jane_m);
+	pthread_mutex_unlock(dhp.joe_m);
+
+//	std::string tmp_john_results = "";
+//	pthread_mutex_lock(dhp.john_m);
+//	tmp_john_results += make_histogram("John Smith", dhp.john_frequency_count);
+//	pthread_mutex_unlock(dhp.john_m);
+//
+//	std::string tmp_jane_results = "";
+//	pthread_mutex_lock(dhp.jane_m);
+//	tmp_jane_results += make_histogram("Jane Smith", dhp.jane_frequency_count);
+//	pthread_mutex_unlock(dhp.jane_m);
+//
+//	std::string tmp_joe_results = "";
+//	pthread_mutex_lock(dhp.joe_m);
+//	tmp_joe_results += make_histogram("Joe Smith", dhp.joe_frequency_count);
+//	pthread_mutex_unlock(dhp.joe_m);
+
+	system("clear");
+	threadsafe_console_output.println(histogram_table);
+//	threadsafe_console_output.println(tmp_john_results);
+//	threadsafe_console_output.println(tmp_jane_results);
+//	threadsafe_console_output.println(tmp_joe_results);
+}
+
+
 /*--------------------------------------------------------------------------*/
 /* MAIN FUNCTION */
 /*--------------------------------------------------------------------------*/
 
 int main(int argc, char * argv[]) {
-    
+
     int n = 10000; //default number of requests per "patient"
     int w = 10; //default number of worker threads
     int v = VERBOSITY_DEFAULT;
     int opt = 0;
+	bool REAL_TIME_HIST_DISP = false;
 	int THREADS_FAILED = 0;
-    
-    while ((opt = getopt(argc, argv, "n:w:v:h")) != -1) {
+
+
+    while ((opt = getopt(argc, argv, "n:w:v:hd")) != -1) {
         switch (opt) {
             case 'n':
                 n = atoi(optarg);
@@ -214,6 +281,9 @@ int main(int argc, char * argv[]) {
                 v = atoi(optarg);
                 if(v < 0) v = VERBOSITY_HELP_ONLY;
                 break;
+			case 'd':
+				REAL_TIME_HIST_DISP = true;
+				break;
             case 'h':
             default:
                 if(v >= VERBOSITY_HELP_ONLY) std::cout << "This program can be invoked with the following flags:" << std::endl;
@@ -233,22 +303,22 @@ int main(int argc, char * argv[]) {
                 exit(0);
         }
     }
-    
+
     pid_t pid = fork();
     if(pid == 0){
         struct timeval start_time;
         struct timeval finish_time;
         int64_t start_usecs;
         int64_t finish_usecs;
-        
+
         if(v >= VERBOSITY_DEFAULT) std::cout << "n == " << n << std::endl;
         if(v >= VERBOSITY_DEFAULT) std::cout << "w == " << w << std::endl;
-        
+
         if(v >= VERBOSITY_DEFAULT) std::cout << "CLIENT STARTED:" << std::endl;
         if(v >= VERBOSITY_DEFAULT) std::cout << "Establishing control channel... " << std::flush;
         RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE);
         if(v >= VERBOSITY_DEFAULT) std::cout << "done." << std::endl;
-        
+
         /*
             All worker and request threads will use,
             these but they are kept on the stack in
@@ -256,18 +326,28 @@ int main(int argc, char * argv[]) {
          */
 
 		SafeBuffer request_buffer;
-        std::vector<int> john_frequency_count(10, 0);
-        std::vector<int> jane_frequency_count(10, 0);
-        std::vector<int> joe_frequency_count(10, 0);
-        pthread_mutex_t john_m, jane_m, joe_m;
-        pthread_mutex_init(&john_m, NULL);
-        pthread_mutex_init(&jane_m, NULL);
-        pthread_mutex_init(&joe_m, NULL);
+		std::vector<int> john_frequency_count(10, 0);
+		std::vector<int> jane_frequency_count(10, 0);
+		std::vector<int> joe_frequency_count(10, 0);
+		pthread_mutex_t john_m, jane_m, joe_m;
+		pthread_mutex_init(&john_m, NULL);
+		pthread_mutex_init(&jane_m, NULL);
+		pthread_mutex_init(&joe_m, NULL);
+
+		PARAMS_WORKER dhp(nullptr, nullptr,
+		        &john_frequency_count, //DisplayHistogramsParameters
+		        &jane_frequency_count, &joe_frequency_count, &john_m, &jane_m,
+		        &joe_m, v);
+		struct sigaction sa;
+		sigevent sevp;
+		timer_t timer;
+		itimerspec timer_value;
+		timespec initial_timervalue, timer_interval;
 
 		PARAMS_REQUEST john_req_params(&request_buffer, "John Smith", n, v);
 		PARAMS_REQUEST jane_req_params(&request_buffer, "Jane Smith", n, v);
 		PARAMS_REQUEST joe_req_params(&request_buffer, "Joe Smith", n, v);
-		
+
         /*
             Failing to initialize these properly can
             leads to some pretty nasty bugs.
@@ -275,7 +355,7 @@ int main(int argc, char * argv[]) {
         std::vector<PARAMS_WORKER> wtps(w, PARAMS_WORKER(nullptr, &request_buffer, &john_frequency_count,
                                              &jane_frequency_count, &joe_frequency_count,
                                              &john_m, &jane_m, &joe_m, v));
-        
+
         /*
             Request buffer is populated sequentially,
             as opposed to using request threads as in
@@ -283,55 +363,77 @@ int main(int argc, char * argv[]) {
             in advance as well, since there's no bounded
             buffer to manage the synchronization.
          */
-		
+
         //assert(gettimeofday(&start_time, 0) == 0);
 
         if(v >= VERBOSITY_DEBUG) {
             std::cout << "Populating request buffer; starting request threads... ";
             fflush(NULL);
         }
-		
+
 		pthread_t john_req_tid, jane_req_tid, joe_req_tid;
-		
+
 		pthread_create(&john_req_tid, NULL, request_thread_function, (void*) &john_req_params);
 		pthread_create(&jane_req_tid, NULL, request_thread_function, (void*) &jane_req_params);
 		pthread_create(&joe_req_tid, NULL, request_thread_function, (void*) &joe_req_params);
-		
+
 		pthread_join(john_req_tid, NULL);
 		pthread_join(jane_req_tid, NULL);
 		pthread_join(joe_req_tid, NULL);
-		
+
         if(v >= VERBOSITY_DEBUG) std::cout << "done." << std::endl;
-        
+
         if(v >= VERBOSITY_DEBUG) {
             std::cout << "Pushing quit requests pre-emptively... ";
             fflush(NULL);
         }
-        
+
         for(int i = 0; i < w; ++i) {
             request_buffer.push_back("quit");
         }
         if(v >= VERBOSITY_DEBUG) std::cout << "done." << std::endl;
-		
+
 		/*
 			TANZIR-REQUESTED-REVISION-RELATED QUESTION:
 		 		Should the request thread execution be timed?
 				If so, how? Most importantly, should it be combined
 		 		with the worker thread timing as it was earlier?
 		 */
+
+		if (REAL_TIME_HIST_DISP) {
+			sigemptyset(&sa.sa_mask);
+			sa.sa_flags = SA_SIGINFO;
+			sa.sa_sigaction = display_histograms;
+			sigaction(SIGALRM, &sa, NULL);
+
+			sevp.sigev_notify = SIGEV_SIGNAL;
+			sevp.sigev_signo = SIGALRM;
+			sevp.sigev_value.sival_ptr = (void*) &dhp;
+			timer_create(CLOCK_REALTIME, &sevp, &timer);
+
+			initial_timervalue.tv_nsec = 0;
+			initial_timervalue.tv_sec = 2;
+			timer_interval.tv_nsec = 0;
+			timer_interval.tv_sec = 2;
+			timer_value.it_value = initial_timervalue;
+			timer_value.it_interval = timer_interval;
+		}
+
+
 		assert(gettimeofday(&start_time, 0) == 0);
+		if (REAL_TIME_HIST_DISP) {
+			timer_settime(timer, TIMER_ABSTIME, &timer_value, NULL);
+		}
 
         std::vector<pthread_t> wtids;
 		for(int i = 0; i < w; ++i) {
 			try {
 				std::string s = chan->send_request("newthread");
 				wtps[i].workerChannel = new RequestChannel(s, RequestChannel::CLIENT_SIDE);
-//				wtps[i].controlChannel = chan;
 				wtids.push_back(0);
 				if((errno = pthread_create(&wtids[i], NULL, worker_thread_function, (void *) &wtps[i])) != 0) {
 					threadsafe_console_output.perror("MAIN: pthread_create failure for " + wtps[i].workerChannel->name());
-//					threadsafe_console_output.perror("MAIN: pthread_create failure on attempt [" + std::to_string(i) + "]");
-					
+
 					delete wtps[i].workerChannel;
 					wtps[i].failed = true;
 					++THREADS_FAILED;
@@ -347,7 +449,7 @@ int main(int argc, char * argv[]) {
 				throw;
 			}
 		}
-		
+
 		for(int i = 0; i < w; ++i) {
 			if(v >= VERBOSITY_HYPER) threadsafe_console_output.println("MAIN: joining worker thread " + std::to_string(i) + "...");
 			if(!wtps[i].failed && (errno = pthread_join(wtids[i], NULL)) != 0) {
@@ -355,32 +457,58 @@ int main(int argc, char * argv[]) {
 			}
 			if(v >= VERBOSITY_HYPER) threadsafe_console_output.println("MAIN: finished with worker thread " + std::to_string(i) + ".");
 		}
-		
+
         assert(gettimeofday(&finish_time, 0) == 0);
-        
+
         /*
             All the data is assembled and presented,
             as well as output to a file if necessary.
          */
         start_usecs = (start_time.tv_sec * 1e6) + start_time.tv_usec;
         finish_usecs = (finish_time.tv_sec * 1e6) + finish_time.tv_usec;
-        if(v >= VERBOSITY_DEBUG) std::cout << "Finished!" << std::endl;
-        
-        std::string john_results = make_histogram("John Smith", &john_frequency_count);
-        std::string jane_results = make_histogram("Jane Smith Smith", &jane_frequency_count);
-        std::string joe_results = make_histogram("Joe Smith", &joe_frequency_count);
-        
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
-        if(v >= VERBOSITY_DEFAULT) std::cout << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) std::cout << john_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) std::cout << jane_results << std::endl;
-        if(v >= VERBOSITY_CHECK_CORRECTNESS) std::cout << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
-        if(v >= VERBOSITY_DEBUG) std::cout << joe_results << std::endl;
-        
-        if(v >= VERBOSITY_DEFAULT) std::cout << "Sleeping..." << std::endl;
-        usleep(10000);
+
+		if (REAL_TIME_HIST_DISP) {
+			sleep(2);
+			timer_delete(timer);
+			signal(SIGALRM, SIG_IGN);
+		}
+
+		if (v >= VERBOSITY_DEBUG) {
+			if (REAL_TIME_HIST_DISP)
+				system("clear");
+			std::cout << "Finished!" << std::endl;
+		}
+
+//		std::string john_results = make_histogram("John Smith",
+//		        &john_frequency_count);
+//		std::string jane_results = make_histogram("Jane Smith",
+//		        &jane_frequency_count);
+//		std::string joe_results = make_histogram("Joe Smith",
+//		        &joe_frequency_count);
+
+		std::string histogram_table = make_histogram_table("John Smith",
+		        "Jane Smith", "Joe Smith", &john_frequency_count,
+		        &jane_frequency_count, &joe_frequency_count);
+
+		if (v >= VERBOSITY_CHECK_CORRECTNESS)
+			std::cout << "Results for n == " << n << ", w == " << w << ", v == "
+			        << v << std::endl;
+		if (v >= VERBOSITY_DEFAULT)
+			std::cout << "Time to completion: "
+			        << std::to_string(finish_usecs - start_usecs) << " usecs"
+			        << std::endl;
+//		if (v >= VERBOSITY_DEBUG)
+//			std::cout << john_results << std::endl;
+//		if (v >= VERBOSITY_DEBUG)
+//			std::cout << jane_results << std::endl;
+//		if (v >= VERBOSITY_DEBUG)
+//			std::cout << joe_results << std::endl;
+		if (v >= VERBOSITY_DEBUG)
+			std::cout << histogram_table << std::endl;
+
+		if (v >= VERBOSITY_DEFAULT)
+			std::cout << "Sleeping..." << std::endl;
+		usleep(10000);
         /*
             EVERY RequestChannel must send a "quit"
             request before program termination, and
@@ -389,20 +517,19 @@ int main(int argc, char * argv[]) {
          */
         std::string finale = chan->send_request("quit");
         delete chan;
-		
+
 		std::ofstream ofs;
 		ofs.open("output.txt", std::ios::out | std::ios::app);
-		
+
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", w == " << w << ", v == " << v << std::endl;
 		if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
-		if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
-		if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
-		if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
+//		if(v >= VERBOSITY_DEBUG) ofs << john_results << std::endl;
+//		if(v >= VERBOSITY_DEBUG) ofs << jane_results << std::endl;
+//		if(v >= VERBOSITY_DEBUG) ofs << joe_results << std::endl;
+		if (v >= VERBOSITY_DEBUG)
+			ofs << histogram_table << std::endl;
 		ofs.close();
-		
+
 		if(v >= VERBOSITY_DEFAULT) std::cout << "Finale: " << finale << std::endl;
     }
     else if(pid != 0) execl("dataserver", NULL);

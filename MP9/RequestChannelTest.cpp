@@ -77,13 +77,32 @@ struct stat_thread_params {
 	int n = 10;
 	int v = VERBOSITY_DEFAULT;
 	BoundedBuffer * patient_response_buf;
-	std::vector<int> *patient_frequency_count;
-	stat_thread_params(int num_requests, int verbosity, BoundedBuffer * bbuf, std::vector<int> *freq) {
+		std::vector<int> * patient_frequency_count;
+		pthread_mutex_t *patient_m;
+		stat_thread_params(int num_requests, int verbosity, BoundedBuffer * bbuf, std::vector<int> *freq, pthread_mutex_t * _patient_m) {
 		n = num_requests;
 		v = verbosity;
 		patient_response_buf = bbuf;
 		patient_frequency_count = freq;
+			patient_m = _patient_m;
 	}
+};
+
+struct display_histogram_params {
+		int v = VERBOSITY_DEFAULT;
+		std::vector<int> * john_frequency_count;
+		std::vector<int> * jane_frequency_count;
+		std::vector<int> * joe_frequency_count;
+		pthread_mutex_t * john_m;
+		pthread_mutex_t * jane_m;
+		pthread_mutex_t * joe_m;
+		display_histogram_params(int verbosity, std::vector<int> * john_fc, std::vector<int> * jane_fc,
+		        std::vector<int> * joe_fc, pthread_mutex_t * _john_m, pthread_mutex_t * _jane_m,
+		        pthread_mutex_t * _joe_m) :
+				v(verbosity), john_frequency_count(john_fc), jane_frequency_count(jane_fc),
+				        joe_frequency_count(joe_fc), john_m(_john_m), jane_m(_jane_m), joe_m(_joe_m) {
+		}
+
 };
 
 /*--------------------------------------------------------------------------*/
@@ -121,28 +140,79 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
 	return results;
 }
 
+std::string make_histogram_table(std::string name1, std::string name2,
+        std::string name3, std::vector<int> *data1, std::vector<int> *data2,
+        std::vector<int> *data3) {
+	std::stringstream tablebuilder;
+	tablebuilder << std::setw(25) << std::right << name1;
+	tablebuilder << std::setw(15) << std::right << name2;
+	tablebuilder << std::setw(15) << std::right << name3 << std::endl;
+	for (int i = 0; i < data1->size(); ++i) {
+		tablebuilder << std::setw(10) << std::left
+		             << std::string(
+		                     std::to_string(i * 10) + "-"
+		                             + std::to_string((i * 10) + 9));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data1->at(i));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data2->at(i));
+		tablebuilder << std::setw(15) << std::right
+		        << std::to_string(data3->at(i)) << std::endl;
+	}
+	tablebuilder << std::setw(10) << std::left << "Total";
+	tablebuilder << std::setw(15) << std::right
+	             << accumulate(data1->begin(), data1->end(), 0);
+	tablebuilder << std::setw(15) << std::right
+	             << accumulate(data2->begin(), data2->end(), 0);
+	tablebuilder << std::setw(15) << std::right
+	             << accumulate(data3->begin(), data3->end(), 0)
+	             << std::endl;
+
+	return tablebuilder.str();
+}
+
+void display_histograms(int sig, siginfo_t * si, void * unused) {
+	display_histogram_params dhp = *(display_histogram_params*) si->si_value.sival_ptr;
+
+	pthread_mutex_lock(dhp.john_m);
+	pthread_mutex_lock(dhp.jane_m);
+	pthread_mutex_lock(dhp.joe_m);
+	std::string histogram_table = make_histogram_table("John Smith",
+	        "Jane Smith", "Joe Smith", dhp.john_frequency_count,
+	        dhp.jane_frequency_count, dhp.joe_frequency_count);
+	pthread_mutex_unlock(dhp.john_m);
+	pthread_mutex_unlock(dhp.jane_m);
+	pthread_mutex_unlock(dhp.joe_m);
+
+	system("clear");
+	threadsafe_console_output.println(histogram_table);
+}
+
+
 void* request_thread_function(void* arg) {
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	
+
 	request_thread_params rtp = *(request_thread_params*) arg;
-	
+
 	for(int i = 0; i < rtp.n; ++i) {
 		if(rtp.v == VERBOSITY_HYPER) threadsafe_console_output.println("REQUEST: pushing request [" + rtp.request + "] to request buffer");
 		rtp.request_buffer->push_back(rtp.request);
 	}
-	
+
 	return nullptr;
 }
 
 void* worker_thread_function(void* arg) {
-	
+
+
+
 	worker_thread_params wtp = *(worker_thread_params*)arg;
-	
+
 	if(wtp.v == VERBOSITY_HYPER) {
 		threadsafe_console_output.println("WORKER:" + wtp.workerChannel->name() + ": entered thread function");
 	}
-	
+
 	while(true) {
 		std::string request = "";
 		request = wtp.request_buffer->retrieve_front();
@@ -172,32 +242,34 @@ void* worker_thread_function(void* arg) {
 			if(wtp.v == VERBOSITY_HYPER) {
 				threadsafe_console_output.println("WORKER:" + wtp.workerChannel->name() + ": destructing");
 			}
-			
+
 			delete wtp.workerChannel;
-			
+
 			break;
 		}
 	}
-	
+
 	return nullptr;
 }
 
 void* stat_thread_function(void* arg) {
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	
+
 	stat_thread_params stp = *(stat_thread_params*)arg;
-	
+
 	int count = 0;
 	while(count < stp.n) {
 		std::string patient_response(stp.patient_response_buf->retrieve_front());
 		if(stp.v == VERBOSITY_HYPER) {
 			threadsafe_console_output.println("STAT: retrieved [" + patient_response + "] from response buffer");
 		}
+		pthread_mutex_lock(stp.patient_m);
 		stp.patient_frequency_count->at(stoi(patient_response) / 10) += 1;
+		pthread_mutex_unlock(stp.patient_m);
 		++count;
 	}
-	
+
 	return nullptr;
 }
 
@@ -207,7 +279,9 @@ void* stat_thread_function(void* arg) {
 
 int main(int argc, char * argv[]) {
 	int n = 10; //default number of requests per "patient"
-	int s = 50; //default size of request_buffer
+	int s = 10; //default size of request_buffer.
+	//Assigned value of 10 because that is the default msg_max value on Linux.
+	//Trying to create message queues with more messages than msg_max results in mq_open failing with EINVAL.
 	int w = 10; //default number of worker threads
 	int v = VERBOSITY_DEFAULT;
 	int r = NAMED_PIPE;
@@ -216,10 +290,11 @@ int main(int argc, char * argv[]) {
 	int THREADS_NOT_CREATED = 0;
 	bool CHANNEL_TYPE_IMPLEMENTED = true;
 	bool SEPARATE_WINDOWS = false;
+	bool REAL_TIME_HIST_DISP = false;
 	bool USE_ALTERNATE_FILE_OUTPUT = false;
 	std::string channel_type = "";
 	int opt = 0;
-	while ((opt = getopt(argc, argv, "n:s:w:ov:m:r:b:xh")) != -1) {
+	while ((opt = getopt(argc, argv, "n:s:w:ov:m:r:b:xdh")) != -1) {
 		switch (opt) {
 			case 'n':
 				n = atoi(optarg);
@@ -274,6 +349,9 @@ int main(int argc, char * argv[]) {
 			case 'x':
 				SEPARATE_WINDOWS = true;
 				break;
+			case 'd':
+				REAL_TIME_HIST_DISP = true;
+				break;
 			case 'h':
 			default:
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("This program can be invoked with the following flags:");
@@ -305,6 +383,8 @@ int main(int argc, char * argv[]) {
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("-m [int]: max size of bounded buffer slots (only for -b 1 and -b 2)");
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("\tNOTE: lower bound of 15, which is the length of the longest request for this program, but larger values may be used for testing");
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("-x: do not call fork, but wait for the dataserver to be invoked separately");
+				if (v >= VERBOSITY_HELP_ONLY)
+					threadsafe_console_output.println("-d: display histograms in real time using a SIGALRM handler (if implemented)");
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("-h: print this message and quit");
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("Example: ./client_solution -n 10000 -b 1 -s 50 -w 120 -m 2 -v 1 -r 3 -m 2 -x");
 				if(v >= VERBOSITY_HELP_ONLY) threadsafe_console_output.println("If a given flag is not used, or given an invalid value,");
@@ -313,7 +393,7 @@ int main(int argc, char * argv[]) {
 				exit(EXIT_SUCCESS);
 		}
 	}
-	
+
 	if(!CHANNEL_TYPE_IMPLEMENTED) {
 		threadsafe_console_output.println("Apologies, but there is no IPC mechanism corresponding to mode " + std::to_string(r) + " for this program.");
 		threadsafe_console_output.println("Invoke program with -h to see full help message.");
@@ -324,7 +404,7 @@ int main(int argc, char * argv[]) {
 		threadsafe_console_output.println("Invoke the program with -h for a list of valid mode numbers.");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	pid_t pid;
 	if(!SEPARATE_WINDOWS) pid = fork();
 	if((!SEPARATE_WINDOWS && pid > 0) ||
@@ -334,16 +414,16 @@ int main(int argc, char * argv[]) {
 		int64_t start_usecs;
 		int64_t finish_usecs;
 		RequestChannel * control_channel = nullptr;
-		
+
 		/*
 			Using more SignalRequestChannels than can
 		 	be immediately accommodated by the available
-		 	signal numbers introduces some complicated 
+		 	signal numbers introduces some complicated
 		 	synchronization problems.
 		 */
-		
+
 		if(r == SIGNAL) w = std::min(w, NUM_SYSTEM_RT_SIGVALUES - 1);
-		
+
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("n == " + std::to_string(n));
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("s == " + std::to_string(s));
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("w == " + std::to_string(w));
@@ -351,9 +431,9 @@ int main(int argc, char * argv[]) {
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("r == " + std::to_string(r));
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("b == " + std::to_string(b));
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("m == " + std::to_string(m));
-		
+
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Establishing " + channel_type + " control channel... ");
-		
+
 		try {
 			if(r == NAMED_PIPE) {
 				control_channel = (RequestChannel*) new NamedPipeRequestChannel(control_channel_name, RequestChannel::CLIENT_SIDE);
@@ -375,15 +455,15 @@ int main(int argc, char * argv[]) {
 			threadsafe_console_output.perror("MAIN: control channel not created: " + std::string(sle.what()));
 			throw;
 		}
-		
-		
+
+
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Finished establishing " + channel_type + " control channel.");
-		
+
 		BoundedBuffer * request_buffer = nullptr;
 		BoundedBuffer * john_smith = nullptr;
 		BoundedBuffer * jane_smith = nullptr;
 		BoundedBuffer * joe_smith = nullptr;
-		
+
 		try {
 			if(b == PTHREAD_BUFFER) {
 				if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: created PTHREAD BOUNDED BUFFERS for use by threads");
@@ -417,31 +497,65 @@ int main(int argc, char * argv[]) {
 			if(joe_smith != nullptr) delete joe_smith;
 			throw sync_lib_exception("MAIN: bounded buffers not created, no point in continuing.");
 		}
-		
+
 		std::vector<int> john_frequency_count(10,0);
 		std::vector<int> jane_frequency_count(10,0);
 		std::vector<int> joe_frequency_count(10,0);
-		
+		pthread_mutex_t john_m, jane_m, joe_m;
+		pthread_mutex_init(&john_m, NULL);
+		pthread_mutex_init(&jane_m, NULL);
+		pthread_mutex_init(&joe_m, NULL);
+
+		display_histogram_params dhp(v, &john_frequency_count, &jane_frequency_count, &joe_frequency_count, &john_m, &jane_m, &joe_m);
+		struct sigaction sa;
+		sigevent sevp;
+		timer_t timer;
+		itimerspec timer_value;
+		timespec initial_timervalue, timer_interval;
+
 		request_thread_params rtp0 = request_thread_params(n, v, request_buffer, "data John Smith");
 		request_thread_params rtp1 = request_thread_params(n, v, request_buffer, "data Jane Smith");
 		request_thread_params rtp2 = request_thread_params(n, v, request_buffer, "data Joe Smith");
-		stat_thread_params stp0 = stat_thread_params(n, v, john_smith, &john_frequency_count);
-		stat_thread_params stp1 = stat_thread_params(n, v, jane_smith, &jane_frequency_count);
-		stat_thread_params stp2 = stat_thread_params(n, v, joe_smith, &joe_frequency_count);
+		stat_thread_params stp0 = stat_thread_params(n, v, john_smith, &john_frequency_count, &john_m);
+		stat_thread_params stp1 = stat_thread_params(n, v, jane_smith, &jane_frequency_count, &jane_m);
+		stat_thread_params stp2 = stat_thread_params(n, v, joe_smith, &joe_frequency_count, &joe_m);
 		std::vector<worker_thread_params> wtps = std::vector<worker_thread_params>(
 																				   w, worker_thread_params(v, nullptr, request_buffer, john_smith, jane_smith, joe_smith));
-		
+
 		pthread_t tid1, tid2, tid3, tid4, tid5, tid6;
 		pthread_create(&tid4, NULL, stat_thread_function, &stp0);
 		pthread_create(&tid5, NULL, stat_thread_function, &stp1);
 		pthread_create(&tid6, NULL, stat_thread_function, &stp2);
-		
+
+		if (REAL_TIME_HIST_DISP) {
+			sigemptyset(&sa.sa_mask);
+			sa.sa_flags = SA_SIGINFO;
+			sa.sa_sigaction = display_histograms;
+			sigaction(SIGALRM, &sa, NULL);
+
+			sevp.sigev_notify = SIGEV_SIGNAL;
+			sevp.sigev_signo = SIGALRM;
+			sevp.sigev_value.sival_ptr = (void*) &dhp;
+			timer_create(CLOCK_REALTIME, &sevp, &timer);
+
+			initial_timervalue.tv_nsec = 0;
+			initial_timervalue.tv_sec = 2;
+			timer_interval.tv_nsec = 0;
+			timer_interval.tv_sec = 2;
+			timer_value.it_value = initial_timervalue;
+			timer_value.it_interval = timer_interval;
+		}
+
 		assert(gettimeofday(&start_time, 0) == 0);
-		
+
+		if (REAL_TIME_HIST_DISP) {
+			timer_settime(timer, TIMER_ABSTIME, &timer_value, NULL);
+		}
+
 		pthread_create(&tid1, NULL, request_thread_function, &rtp0);
 		pthread_create(&tid2, NULL, request_thread_function, &rtp1);
 		pthread_create(&tid3, NULL, request_thread_function, &rtp2);
-		
+
 		for(int i = 0; i < w; ++i) {
 			try {
 				std::string new_channel_name = "";
@@ -452,7 +566,7 @@ int main(int argc, char * argv[]) {
 				if(v == VERBOSITY_HYPER) {
 					threadsafe_console_output.println("MAIN: received new channel name [" + new_channel_name + "], creating new " + channel_type + " request channel...");
 				}
-				
+
 				if(r == NAMED_PIPE) {
 					wtps[i].workerChannel = (RequestChannel*) new NamedPipeRequestChannel(new_channel_name, RequestChannel::CLIENT_SIDE);
 				}
@@ -468,11 +582,11 @@ int main(int argc, char * argv[]) {
 				else if(r == SIGNAL) {
 					wtps[i].workerChannel = (RequestChannel*) new SignalRequestChannel(new_channel_name, RequestChannel::CLIENT_SIDE);
 				}
-				
+
 				if(v == VERBOSITY_HYPER) {
 					threadsafe_console_output.println("MAIN: created new " + channel_type + " request channel [" + new_channel_name + "], starting worker thread [" + std::to_string(i) + "]");
 				}
-				
+
 				if((errno = pthread_create(&wtps[i].id, NULL, worker_thread_function, (void *) &wtps[i])) != 0) {
 					threadsafe_console_output.perror("MAIN: pthread_create failed for [" + new_channel_name + "], new " + channel_type + " thread not created");
 					delete wtps[i].workerChannel;
@@ -515,25 +629,23 @@ int main(int argc, char * argv[]) {
 				throw;
 			}
 		}
-		
-		
-		
+
 		if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: Joining request threads...");
-		
+
 		pthread_join(tid1, NULL);
 		pthread_join(tid2, NULL);
 		pthread_join(tid3, NULL);
-		
+
 		if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: Pushing quit requests...");
-		
+
 		for(int i = 0; i < w - THREADS_NOT_CREATED; ++i) {
 			std::string quit_request = "quit" + std::to_string(i + 1);
 			if(v >= VERBOSITY_HYPER) threadsafe_console_output.println("MAIN: Pushing request [" + quit_request + "]");
 			request_buffer->push_back(quit_request);
 		}
-		
+
 		if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: Joining worker threads...");
-		
+
 		for(int i = 0; i < w; ++i) {
 			if(!wtps[i].failed) {
 				if(!wtps[i].failed && (errno = pthread_join(wtps[i].id, NULL)) != 0) {
@@ -541,57 +653,54 @@ int main(int argc, char * argv[]) {
 				}
 			}
 		}
-		
+
 		assert(gettimeofday(&finish_time, 0) == 0);
 		start_usecs = (start_time.tv_sec * 1e6) + start_time.tv_usec;
 		finish_usecs = (finish_time.tv_sec * 1e6) + finish_time.tv_usec;
-		
+
 		if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: Joining stat threads...");
-		
+
 		pthread_join(tid4, NULL);
 		pthread_join(tid5, NULL);
 		pthread_join(tid6, NULL);
-		
+
+		if (REAL_TIME_HIST_DISP) {
+			sleep(2);
+			timer_delete(timer);
+			signal(SIGALRM, SIG_IGN);
+		}
+
 		if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: Stat threads finished!");
-		
+
 		delete request_buffer;
 		delete john_smith;
 		delete jane_smith;
 		delete joe_smith;
-		
-		std::string john_results = make_histogram("John Smith", &john_frequency_count);
-		std::string jane_results = make_histogram("Jane Smith Smith", &jane_frequency_count);
-		std::string joe_results = make_histogram("Joe Smith", &joe_frequency_count);
-		
+
+		std::string histogram_table = make_histogram_table("John Smith", "Jane Smith", "Joe Smith",
+		        &john_frequency_count, &jane_frequency_count, &joe_frequency_count);
+
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println("Results for n == " + std::to_string(n) + ", s == " + std::to_string(s) + ", w == " + std::to_string(w) + ", r == " + channel_type + ", b == " + std::to_string(b) + ", m == " + std::to_string(m));
-		
+
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("Time to completion: " + std::to_string(finish_usecs - start_usecs) + " usecs");
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println("John Smith total: " + std::to_string(accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0)));
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println(john_results);
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println("Jane Smith total: " + std::to_string(accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0)));
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println(jane_results);
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println("Joe Smith total: " +  std::to_string(accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0)));
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) threadsafe_console_output.println(joe_results);
-		
+		if (v >= VERBOSITY_DEFAULT)
+			threadsafe_console_output.println(histogram_table);
+
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Sleeping...");
 		usleep(10000);
 		std::string finale = control_channel->send_request("quit_control");
 		delete control_channel;
-		
+
 		std::ofstream ofs;
 		if(USE_ALTERNATE_FILE_OUTPUT) ofs.open("output2.txt", std::ios::out | std::ios::app);
 		else ofs.open("output.txt", std::ios::out | std::ios::app);
-		
+
 		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Results for n == " << n << ", s == " << s << ", w == " << w << ", r == " << channel_type << ", b == " << b << ", m == " << m << std::endl;
 		if(v >= VERBOSITY_DEFAULT) ofs << "Time to completion: " << std::to_string(finish_usecs - start_usecs) << " usecs" << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "John Smith total: " << accumulate(john_frequency_count.begin(), john_frequency_count.end(), 0) << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << john_results << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Jane Smith total: " << accumulate(jane_frequency_count.begin(), jane_frequency_count.end(), 0) << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << jane_results << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << "Joe Smith total: " << accumulate(joe_frequency_count.begin(), joe_frequency_count.end(), 0) << std::endl;
-		if(v >= VERBOSITY_CHECK_CORRECTNESS) ofs << joe_results << std::endl;
+		if (v >= VERBOSITY_CHECK_CORRECTNESS)
+			ofs << histogram_table;
 		ofs.close();
-		
+
 		if(v >= VERBOSITY_DEFAULT) threadsafe_console_output.println("MAIN: Finale: " + finale);
 	}
 	else if(!SEPARATE_WINDOWS && pid == 0) {

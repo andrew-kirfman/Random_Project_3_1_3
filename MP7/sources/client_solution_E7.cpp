@@ -123,19 +123,6 @@ atomic_standard_output threadsafe_console_output;
 /* HELPER FUNCTIONS */
 /*--------------------------------------------------------------------------*/
 
-std::string make_histogram(std::string name, std::vector<int> *data) {
-	std::string total = name + " total: "
-	        + std::to_string(accumulate(data->begin(), data->end(), 0)) + "\n";
-
-	std::string frequency_count = "";
-    for(int i = 0; i < data->size(); ++i) {
-		frequency_count += std::to_string(i * 10) + "-"
-		        + std::to_string((i * 10) + 9) + ": "
-		        + std::to_string(data->at(i)) + "\n";
-    }
-	return total + frequency_count;
-}
-
 std::string make_histogram_table(std::string name1, std::string name2,
         std::string name3, std::vector<int> *data1, std::vector<int> *data2,
         std::vector<int> *data3) {
@@ -164,6 +151,23 @@ std::string make_histogram_table(std::string name1, std::string name2,
 	        << accumulate(data3->begin(), data3->end(), 0) << std::endl;
 
 	return tablebuilder.str();
+}
+
+void display_histograms(int sig, siginfo_t * si, void * unused) {
+	PARAMS_WORKER dhp = *(PARAMS_WORKER*) si->si_value.sival_ptr;
+
+	pthread_mutex_lock(dhp.john_m);
+	pthread_mutex_lock(dhp.jane_m);
+	pthread_mutex_lock(dhp.joe_m);
+	std::string histogram_table = make_histogram_table("John Smith",
+	        "Jane Smith", "Joe Smith", dhp.john_frequency_count,
+	        dhp.jane_frequency_count, dhp.joe_frequency_count);
+	pthread_mutex_unlock(dhp.john_m);
+	pthread_mutex_unlock(dhp.jane_m);
+	pthread_mutex_unlock(dhp.joe_m);
+
+	system("clear");
+	threadsafe_console_output.println(histogram_table);
 }
 
 void* request_thread_function(void* arg) {
@@ -216,24 +220,6 @@ void* worker_thread_function(void* arg) {
         }
     }
 }
-
-void display_histograms(int sig, siginfo_t * si, void * unused) {
-	PARAMS_WORKER dhp = *(PARAMS_WORKER*) si->si_value.sival_ptr;
-
-	pthread_mutex_lock(dhp.john_m);
-	pthread_mutex_lock(dhp.jane_m);
-	pthread_mutex_lock(dhp.joe_m);
-	std::string histogram_table = make_histogram_table("John Smith",
-	        "Jane Smith", "Joe Smith", dhp.john_frequency_count,
-	        dhp.jane_frequency_count, dhp.joe_frequency_count);
-	pthread_mutex_unlock(dhp.john_m);
-	pthread_mutex_unlock(dhp.jane_m);
-	pthread_mutex_unlock(dhp.joe_m);
-
-	system("clear");
-	threadsafe_console_output.println(histogram_table);
-}
-
 
 /*--------------------------------------------------------------------------*/
 /* MAIN FUNCTION */

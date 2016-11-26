@@ -167,7 +167,6 @@ std::string make_histogram_table(std::string name1, std::string name2,
 }
 
 void* request_thread_function(void* arg) {
-	signal(SIGALRM, SIG_IGN);
 	PARAMS_REQUEST rp = *(PARAMS_REQUEST*)arg;
 	if(rp.v >= VERBOSITY_HYPER) {
 		threadsafe_console_output.println("Inside request thread function for " + rp.name + "...");
@@ -219,11 +218,6 @@ void* worker_thread_function(void* arg) {
 }
 
 void display_histograms(int sig, siginfo_t * si, void * unused) {
-	/*
-	 * Need to add in totals, since make_histogram
-	 * doesn't do them automatically.
-	 */
-
 	PARAMS_WORKER dhp = *(PARAMS_WORKER*) si->si_value.sival_ptr;
 
 	pthread_mutex_lock(dhp.john_m);

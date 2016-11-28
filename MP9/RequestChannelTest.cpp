@@ -132,14 +132,6 @@ const unsigned int SIGRT_RANGE_LENGTH = SIGRTMAX - SIGRTMIN + 1;
 /* HELPER FUNCTIONS */
 /*--------------------------------------------------------------------------*/
 
-std::string make_histogram(std::string name, std::vector<int> *data) {
-	std::string results = "Frequency count for " + name + ":\n";
-	for(int i = 0; i < data->size(); ++i) {
-		results += std::to_string(i * 10) + "-" + std::to_string((i * 10) + 9) + ": " + std::to_string(data->at(i)) + "\n";
-	}
-	return results;
-}
-
 std::string make_histogram_table(std::string name1, std::string name2,
         std::string name3, std::vector<int> *data1, std::vector<int> *data2,
         std::vector<int> *data3) {
@@ -171,22 +163,22 @@ std::string make_histogram_table(std::string name1, std::string name2,
 	return tablebuilder.str();
 }
 
-void display_histograms(int sig, siginfo_t * si, void * unused) {
-	display_histogram_params dhp = *(display_histogram_params*) si->si_value.sival_ptr;
-
-	pthread_mutex_lock(dhp.john_m);
-	pthread_mutex_lock(dhp.jane_m);
-	pthread_mutex_lock(dhp.joe_m);
-	std::string histogram_table = make_histogram_table("John Smith",
-	        "Jane Smith", "Joe Smith", dhp.john_frequency_count,
-	        dhp.jane_frequency_count, dhp.joe_frequency_count);
-	pthread_mutex_unlock(dhp.john_m);
-	pthread_mutex_unlock(dhp.jane_m);
-	pthread_mutex_unlock(dhp.joe_m);
-
-	system("clear");
-	threadsafe_console_output.println(histogram_table);
-}
+//void display_histograms(int sig, siginfo_t * si, void * unused) {
+//	display_histogram_params dhp = *(display_histogram_params*) si->si_value.sival_ptr;
+//
+//	pthread_mutex_lock(dhp.john_m);
+//	pthread_mutex_lock(dhp.jane_m);
+//	pthread_mutex_lock(dhp.joe_m);
+//	std::string histogram_table = make_histogram_table("John Smith",
+//	        "Jane Smith", "Joe Smith", dhp.john_frequency_count,
+//	        dhp.jane_frequency_count, dhp.joe_frequency_count);
+//	pthread_mutex_unlock(dhp.john_m);
+//	pthread_mutex_unlock(dhp.jane_m);
+//	pthread_mutex_unlock(dhp.joe_m);
+//
+//	system("clear");
+//	threadsafe_console_output.println(histogram_table);
+//}
 
 
 void* request_thread_function(void* arg) {
@@ -207,20 +199,20 @@ void* worker_thread_function(void* arg) {
 
 	worker_thread_params wtp = *(worker_thread_params*)arg;
 
-	sigset_t wtf_mask;
-	if (sigemptyset(&wtf_mask) < 0) {
-		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on sigemptyset");
-	}
-	if (sigaddset(&wtf_mask, SIGALRM) < 0) {
-		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on sigaddset");
-	}
-	if ((errno = pthread_sigmask(SIG_BLOCK, &wtf_mask, NULL)) != 0) {
-		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on pthread_sigmask");
-	}
-
-	if (wtp.v == VERBOSITY_HYPER) {
-		threadsafe_console_output.println("WORKER:" + wtp.workerChannel->name() + ": entered thread function");
-	}
+//	sigset_t wtf_mask;
+//	if (sigemptyset(&wtf_mask) < 0) {
+//		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on sigemptyset");
+//	}
+//	if (sigaddset(&wtf_mask, SIGALRM) < 0) {
+//		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on sigaddset");
+//	}
+//	if ((errno = pthread_sigmask(SIG_BLOCK, &wtf_mask, NULL)) != 0) {
+//		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on pthread_sigmask");
+//	}
+//
+//	if (wtp.v == VERBOSITY_HYPER) {
+//		threadsafe_console_output.println("WORKER:" + wtp.workerChannel->name() + ": entered thread function");
+//	}
 
 	while(true) {
 		std::string request = "";
@@ -536,30 +528,30 @@ int main(int argc, char * argv[]) {
 		pthread_create(&tid5, NULL, stat_thread_function, &stp1);
 		pthread_create(&tid6, NULL, stat_thread_function, &stp2);
 
-		if (REAL_TIME_HIST_DISP) {
-			sigemptyset(&sa.sa_mask);
-			sa.sa_flags = SA_SIGINFO | SA_RESTART;
-			sa.sa_sigaction = display_histograms;
-			sigaction(SIGALRM, &sa, NULL);
-
-			sevp.sigev_notify = SIGEV_SIGNAL;
-			sevp.sigev_signo = SIGALRM;
-			sevp.sigev_value.sival_ptr = (void*) &dhp;
-			timer_create(CLOCK_REALTIME, &sevp, &timer);
-
-			initial_timervalue.tv_nsec = 0;
-			initial_timervalue.tv_sec = 2;
-			timer_interval.tv_nsec = 0;
-			timer_interval.tv_sec = 2;
-			timer_value.it_value = initial_timervalue;
-			timer_value.it_interval = timer_interval;
-		}
+//		if (REAL_TIME_HIST_DISP) {
+//			sigemptyset(&sa.sa_mask);
+//			sa.sa_flags = SA_SIGINFO | SA_RESTART;
+//			sa.sa_sigaction = display_histograms;
+//			sigaction(SIGALRM, &sa, NULL);
+//
+//			sevp.sigev_notify = SIGEV_SIGNAL;
+//			sevp.sigev_signo = SIGALRM;
+//			sevp.sigev_value.sival_ptr = (void*) &dhp;
+//			timer_create(CLOCK_REALTIME, &sevp, &timer);
+//
+//			initial_timervalue.tv_nsec = 0;
+//			initial_timervalue.tv_sec = 2;
+//			timer_interval.tv_nsec = 0;
+//			timer_interval.tv_sec = 2;
+//			timer_value.it_value = initial_timervalue;
+//			timer_value.it_interval = timer_interval;
+//		}
 
 		assert(gettimeofday(&start_time, 0) == 0);
 
-		if (REAL_TIME_HIST_DISP) {
-			timer_settime(timer, TIMER_ABSTIME, &timer_value, NULL);
-		}
+//		if (REAL_TIME_HIST_DISP) {
+//			timer_settime(timer, TIMER_ABSTIME, &timer_value, NULL);
+//		}
 
 		pthread_create(&tid1, NULL, request_thread_function, &rtp0);
 		pthread_create(&tid2, NULL, request_thread_function, &rtp1);
@@ -673,11 +665,11 @@ int main(int argc, char * argv[]) {
 		pthread_join(tid5, NULL);
 		pthread_join(tid6, NULL);
 
-		if (REAL_TIME_HIST_DISP) {
-			sleep(2);
-			timer_delete(timer);
-			signal(SIGALRM, SIG_IGN);
-		}
+//		if (REAL_TIME_HIST_DISP) {
+//			sleep(2);
+//			timer_delete(timer);
+//			signal(SIGALRM, SIG_IGN);
+//		}
 
 		if(v >= VERBOSITY_DEBUG) threadsafe_console_output.println("MAIN: Stat threads finished!");
 

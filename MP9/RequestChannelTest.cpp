@@ -205,11 +205,20 @@ void* request_thread_function(void* arg) {
 
 void* worker_thread_function(void* arg) {
 
-
-
 	worker_thread_params wtp = *(worker_thread_params*)arg;
 
-	if(wtp.v == VERBOSITY_HYPER) {
+	sigset_t wtf_mask;
+	if (sigemptyset(&wtf_mask) < 0) {
+		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on sigemptyset");
+	}
+	if (sigaddset(&wtf_mask, SIGALRM) < 0) {
+		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on sigaddset");
+	}
+	if ((errno = pthread_sigmask(SIG_BLOCK, &wtf_mask, NULL)) != 0) {
+		threadsafe_console_output.perror("WORKER:" + wtp.workerChannel->name() + ": failed on pthread_sigmask");
+	}
+
+	if (wtp.v == VERBOSITY_HYPER) {
 		threadsafe_console_output.println("WORKER:" + wtp.workerChannel->name() + ": entered thread function");
 	}
 
@@ -529,7 +538,7 @@ int main(int argc, char * argv[]) {
 
 		if (REAL_TIME_HIST_DISP) {
 			sigemptyset(&sa.sa_mask);
-			sa.sa_flags = SA_SIGINFO;
+			sa.sa_flags = SA_SIGINFO | SA_RESTART;
 			sa.sa_sigaction = display_histograms;
 			sigaction(SIGALRM, &sa, NULL);
 

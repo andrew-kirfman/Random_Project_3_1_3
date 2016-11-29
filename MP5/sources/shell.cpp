@@ -169,12 +169,12 @@ int main(int argc, char** argv)
         int start_pos = 0;
         int end_pos = input_command.length() -1;
         
-        for(int i=0; i<input_command.length(); i++)
+        for(unsigned short int i=0; i<input_command.length(); i++)
 		{
-			if(input_command[i] == ' ' || input_command == '\t')
+			if(input_command[i] == ' ' || input_command[i] == '\t')
 			{
 				start_pos++;
-				continue
+				continue;
 			}
 			else
 			{
@@ -184,7 +184,7 @@ int main(int argc, char** argv)
 		
 		for(int i=input_command.length() - 1; i>= 0; i++)
 		{
-			if(input_command[i] == ' ' || input_command == '\n')
+			if(input_command[i] == ' ' || input_command[i] == '\t')
 			{
 				end_pos--;
 				continue;

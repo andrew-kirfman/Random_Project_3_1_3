@@ -284,6 +284,7 @@ struct task_struct {
         Example \#2: Uses of fork/exec
     \end{center}
 \begin{lstlisting}[frame=single]
+#include<iostream>          (*@// Contains cout@*)
 #include<unistd.h>          (*@// Contains fork and exec@*)
 #include<sys/types.h>       (*@// Contains pid\_t datatype@*)
 #include<sys/wait.h>        (*@// Contains wait \& waitpid@*)
@@ -300,7 +301,7 @@ int main(int argc, char **argv)
     }
     else if(pid == -1)
     {
-        cout << "[ERROR]: Fork failed: " << strerror(errno) << endl;
+        std::cout << "[ERROR]: Fork failed: " << strerror(errno) << std::endl;
     }
     else
     {
@@ -312,10 +313,141 @@ int main(int argc, char **argv)
 
 \newpage
 
+    \begin{center}
+        Figure \#3: Results of Example \#2
+    \end{center}
+    \begin{center}
+        \includegraphics[scale=0.8]{e2_output.png}
+    \end{center}
+
     \ \\
     When a UNIX/LINUX system starts up, two processes are initialized by the kernel.  The first, process 0, is known as the swapper.  As its name implies, it controls the scheduling of all processes on the system.  The second, process 1, is known as init.  Init is critical in the initialization of the system and starts many important routines (This includes the login shell).  Afterwards, all other new processes are created using fork and exec.  
 
+    \ \\
+    \textbf{fork()};
+    
+    \ \\
+    When the operating system is initialized, three processes are created.  The first, known as the swapper (process id 0), serves as the scheduler for jobs on the system.  The second, known as init (process id 1), sets up many processes and services across the system.  After it performs its initial tasks, init becomes a looping call to wait() which reclaims the state of orphaned processes.  The third, known as the pagedaemon (process id 2), is responsible for memory management.  
+    
+    \ \\
+    Other than these three processes started by the operating system, every other process in the system is brought to life through a call to the \code{fork()} system call.  A process calling fork is copied by the kernel.  At this point, the process that called fork is known as the parent, and the newly created process is known as the child since the parent process caused the child to be created.  The newly created process is essentially exactly the same as the child, even having the exact same variables and open files.  Fork is unique in that it is called once by the parent process and returns twice (to the parent and child separately).  To the parent, fork returns the process id (PID) of the newly created child.  To the child, fork returns 0.  If the call fails entirely, -1 is returned to the parent, and no child is created.  For more information about fork, see its manpage by calling \code{man 2 fork}.  
+    
+    \ \\
+    Copying the entire context of a process could take quite a long time, especially if the parent process contains a large amount of data.  Instead, modern kernels perform an action called copy-on-write.  When the fork call returns, both processes point to the same regions in memory.  As soon as either process wants to write data anywhere in the address space, the kernel creates a new page in memory for that process.  Therefore, both processes use essentially all of the same memory regions initially, and they slowly diverge as time progresses.  
+    
+    \ \\
+    A pseudocode description of the actual fork algorithm is provided below (Bach).  
+    \vspace{5mm}
+
+\begin{lstlisting}[frame=single]
+(*@algorithm fork@*)
+(*@input:@*)  (*@none@*)
+(*@output: to parent proces, child PID number@*)
+        (*@to child process. 0@*)
+{
+    (*@check for available kernel resources;@*)
+    (*@get free proc table slot and unique PID number;@*)
+    (*@check that user not running too many processes;@*)
+    (*@mark child state as "being created";@*)
+    (*@copy data from parent proc tabgle slot to new child slot;@*)
+    (*@increment counts on current directory inode and changed root (if applicable);@*)
+    (*@increment open file counts in file table;@*)
+    (*@make copy of parent context (PCB, text, data, stack) in memory);@*)
+    (*@push dummy system level context layer onto child system level context;@*)
+        (*@dummy context contains data allowing child process to recognize@*)
+        (*@itself, and start running from here when scheduled@*)
+    (*@if(executing process is parent process)@*)
+    {
+        (*@change child state to "ready to run";@*)
+        (*@return(child ID);@*)
+    }
+    (*@else@*)
+    {
+        (*@initialize PCB timing fields;@*)
+        (*@return(0);@*)
+    }
+}
+\end{lstlisting}
+    
+    \vspace{3mm}
+    \ \\
+    \textbf{The Six Exec Functions}
+    
+    \ \\
+    After executing \code{fork()}, you are left with two identical processes.  This isn't usually particularly useful unless you specifically need two exact copies of a process.  Instead, UNIX provides a function, known as exec, which allows you to change a process's address space in order to run an entirely new program.  Running an exec command deletes the existing text, data, and stack segments of the existing process and replaces them with with those of a new program.  The algorithm for exec is presented below (Bach 218).  
+    
+\ \\
+\begin{lstlisting}[frame=single]
+(*@algorithm exec@*)
+(*@input: @*)  (*@(1) file name@*)
+        (*@ (2) parameter list@*)
+        (*@ (3) environment variables list@*)
+(*@output: none@*)
+{
+    (*@get file inode (algorithm namei);@*)
+    (*@very file is executable and user has permission to execute;@*)
+    (*@read file headers, check that it is a load module;@*)
+    (*@copy exec parameters from old address space to system space;@*)
+    (*@for(every region attached to process)@*)
+    {
+        (*@detach all old regions (algorithm detach);@*)
+    }
+    (*@for(every region specified in load module)@*)
+    {
+        (*@allocate new regions (algorithm allocreg);@*)
+        (*@attach the regions (algorithm attachreg);@*)
+        (*@load region into memory if appropriate (algorithm loadreg);@*)
+    }
+    (*@copy exec parameters into new user stack region;@*)
+    (*@special processing for setuid programs, tracing;@*)
+    (*@initialize user register save area for return to user mode;@*)
+    (*@release inode of file (algorithm iput)@*)
+}
+\end{lstlisting}
+
+    \ \\
+    In UNIX systems, there is only one algorithm for exec, but the system call interface provides a total of six different variations of the exec function which differ only on how they handle input arguments.  This means that only one system call (usually \code{execve()}) is actually required to be implemented.  The other functions are stubs with perform necessary preparations and then eventually call execve.  Short function descriptions of each version are provided below (Setvens 207-209).  
+
+    \begin{center}
+        Example \#1: Exec Functions
+    \end{center}
+\begin{lstlisting}[frame=single]
+#include<unistd.h>
+
+1. int execl(const char *pathname, const char *arg0, ... (*@/* (char *) 0 */ @*));
+
+2. int execv(const char *pathname, char *const argv[]);
+
+
+(*@The following exec commands take an environment array (envp) in addition @*)
+(*@to the other arguments.  This can be used to define a custom environment @*)
+(*@for the process.  Otherwise, uses parent's environment.  @*)
+
+3. int execle(const char *pathname, const char *arg0, ... (*@/* (char *) 0 */ @*), 
+    char *const envp[]);
+
+4. int execve(const char *pathname, char *const argv[], char *const envp[]);
+
+(*@Exec commands ending in a p use the PATH environ variable in order to find@*)
+(*@the executable file.  An error is thrown if the file is not in a directory@*)
+(*@specified by PATH.  @*)
+
+5. int execlp(const char* filename, const char *arg0, ... (*@/* (char *) 0 */ @*));
+
+6. int execvp(const char *filename, char *const argv[]);
+
+(*@All return -1 on error and do not return when successful@*)
+\end{lstlisting}
+
+    \begin{center}
+        Figure \#4: Relationship of exec functions
+    \end{center}
+    \begin{center}
+        \includegraphics{relationship.png}
+    \end{center}
+
 \end{myindentpar}
+    
 
 \newpage
 \noindent

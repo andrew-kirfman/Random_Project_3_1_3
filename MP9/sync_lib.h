@@ -49,6 +49,8 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <sstream>
+#include <iomanip>
 
 /*--------------------------------------------------------------------------*/
 /* FORWARDS */
@@ -68,15 +70,15 @@ const int NUM_SYSTEM_RT_SIGVALUES = SIGRTMAX - SIGRTMIN + 1;
 /*--------------------------------------------------------------------------*/
 
 class Semaphore {
-	
+
 public:
-	
+
 	/* CONSTRUCTOR/DESTRUCTOR */
-	
+
 	virtual ~Semaphore() {};
-	
+
 	/* SEMAPHORE OPERATIONS */
-	
+
 	//The int return value for P() and V() can be used
 	//as part of error checking.
 	virtual int P() = 0;
@@ -90,20 +92,20 @@ public:
 class ThreadSharedSemaphore : public Semaphore {
 private:
 	/* INTERNAL DATA STRUCTURES */
-	
+
 	int             value = 0;
 	pthread_mutex_t value_access_lock;
 	pthread_cond_t  wait_queue;
-	
+
 public:
-	
+
 	/* CONSTRUCTOR/DESTRUCTOR */
-	
+
 	ThreadSharedSemaphore(int _val);
 	virtual ~ThreadSharedSemaphore() override;
-	
+
 	/* SEMAPHORE OPERATIONS */
-	
+
 	virtual int P() override;
 	virtual int V() override;
 };
@@ -115,28 +117,28 @@ public:
 class ProcessSharedSemaphore : public Semaphore {
 private:
 	/* INTERNAL DATA STRUCTURES	*/
-	
+
 	int			max = 0;
 	std::string	sema_name = "";
 	sem_t* 		sema = SEM_FAILED;
 	bool		unlink_on_destruction = true;
 	bool		empty_constructor_used = false;
-	
+
 public:
-	
+
 	/* CONSTRUCTOR/DESTRUCTOR	*/
-	
+
 	ProcessSharedSemaphore(std::string _name, int _val);
 	ProcessSharedSemaphore() { empty_constructor_used = true; }
 	virtual ~ProcessSharedSemaphore() override;
-	
+
 	/* SEMAPHORE OPERATIONS		*/
-	
+
 	virtual int P() override;
 	virtual int V() override;
-	
+
 	/*HELPER FUNCTIONS			*/
-	
+
 	bool		initial_construction_failed();
 	std::string get_name();
 	void		set_unlink_on_destruction(bool _unlink_afterwards);
@@ -164,7 +166,7 @@ class ThreadSharedBoundedBuffer : public BoundedBuffer {
 	ThreadSharedSemaphore empty; //No underflow
 	pthread_mutex_t item_access_lock; //Thread-safe: only allows one at a time
 	std::queue<std::string> items;
-	
+
 public:
 	ThreadSharedBoundedBuffer(int _size);
 	virtual ~ThreadSharedBoundedBuffer() override;
@@ -178,16 +180,16 @@ public:
 /*--------------------------------------------------------------------------*/
 
 class MessageQueueBoundedBuffer : public BoundedBuffer {
-	
+
 	int max_msgs = 0;
 	std::string my_name = "";
 	std::string mq_name = "";
 	int msg_size = 0;
 	bool unlink_on_destruction = true;
 	bool empty_constructur_used = false;
-	
+
 	mqd_t mq_descriptor = (mqd_t) -1;
-	
+
 public:
 	MessageQueueBoundedBuffer(std::string _name, int _num_msgs, int _msg_size);
 	MessageQueueBoundedBuffer() { empty_constructur_used = true; }
@@ -195,7 +197,7 @@ public:
 	virtual std::string push_back(std::string str) override;
 	virtual std::string retrieve_front() override;
 	virtual int size() override;
-	
+
 	std::string get_name();
 	int 		get_msg_size();
 	void 		set_unlink_on_destruction(bool _unlink_afterwards);
@@ -206,7 +208,7 @@ public:
 /*--------------------------------------------------------------------------*/
 
 class SharedMemoryBoundedBuffer : public BoundedBuffer {
-	
+
 	int max_items = 0;
 	int block_size = 0;
 	int shm_total_bytes = 0;
@@ -219,12 +221,12 @@ class SharedMemoryBoundedBuffer : public BoundedBuffer {
 	bool unlink_on_destruction = true;
 	bool already_existed = false;
 	bool empty_constructor_used = false;
-	
+
 	char* shm_seg = (char*) MAP_FAILED;
 	char* shm_seg_blocks_start = (char*) MAP_FAILED;
 	int read_index = 0; //in blocks
 	int write_index = 0;
-	
+
 public:
 	SharedMemoryBoundedBuffer(std::string _name, int _num_items, int _block_size);
 	SharedMemoryBoundedBuffer() : empty_constructor_used(true) {}
@@ -232,7 +234,7 @@ public:
 	virtual std::string push_back(std::string str) override;
 	virtual std::string retrieve_front() override;
 	virtual int size() override;
-	
+
 	std::string get_name();
 	int 		get_blocks_taken();
 	int 		get_block_size();
@@ -245,13 +247,13 @@ public:
 /*--------------------------------------------------------------------------*/
 
 class RequestChannel {
-	
+
 public:
 	typedef enum {SERVER_SIDE, CLIENT_SIDE} Side;
 	typedef enum {READ_MODE, WRITE_MODE} Mode;
-	
+
 	/* CONSTRUCTOR/DESTRUCTOR */
-	
+
 	//virtual RequestChannel(const std::string _name, const Side _side) = 0;
 	/*
 	 EXPECTED BEHAVIOR OF CONSTRUCTORS THAT USE THIS INTERFACE:
@@ -261,33 +263,33 @@ public:
 	 The channel has two ends, which are conveniently called "SERVER_SIDE" and "CLIENT_SIDE".
 	 If two processes connect through a channel, one has to connect on the server side
 	 and the other on the client side. Otherwise the results are unpredictable.
-	 
+
 	 NOTE: If the creation of the request channel fails (typically happens when too many
 	 request channels are being created) a sync_lib_exception can be thrown.
-	 
+
 	 NOTE: It is easy to open too many request channels in parallel. In some systems,
 	 limits on the number of open files per process limit the number of established
 	 request channels to 125 or less.
 	 */
-	
+
 	virtual ~RequestChannel() {};
 	/*
 	 EXPECTED BEHAVIOR OF DESTRUCTORS THAT USE THIS INTERFACE:
 	 Destructor of the local copy of the bus. By default, the Server Side deletes any IPC
 	 mechanisms associated with the channel.
 	 */
-	
+
 	virtual std::string send_request(std::string _request) = 0;
 	/* Send a string over the channel and wait for a reply. */
-	
+
 	virtual std::string cread() = 0;
 	/* Blocking read of data from the channel. Returns a string of characters
 	 read from the channel. Returns NULL if read failed. */
-	
+
 	virtual int cwrite(std::string _msg) = 0;
 	/* Write the data to the channel. The function returns the number of characters written
 	 to the channel. */
-	
+
 	virtual std::string name() = 0;
 	/* Returns the name of the request channel. */
 };
@@ -301,13 +303,13 @@ static int roundUp (size_t numToRound, size_t multiple) {
 	if(multiple == 0) {
 		return numToRound;
 	}
-	
+
 	int remainder = numToRound % multiple;
-	
+
 	if (remainder == 0) {
 		return numToRound;
 	}
-	
+
 	return numToRound + multiple - remainder;
 }
 
@@ -339,7 +341,7 @@ static atomic_console_output threadsafe_console_output;
 
 class sync_lib_exception : public std::exception {
 	std::string err = "failure in sync library";
-	
+
 public:
 	sync_lib_exception() {}
 	sync_lib_exception(std::string msg) : err(msg) {}

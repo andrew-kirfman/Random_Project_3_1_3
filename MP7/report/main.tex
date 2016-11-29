@@ -1,6 +1,77 @@
 \documentclass[12pt]{extarticle}
-\usepackage{amsmath, amsthm, latexsym, tikz, graphicx, listings, microtype, mathtools, soul, color, fancyhdr}
+\usepackage{amsmath, amsthm, latexsym, tikz, graphicx, listings, microtype, mathtools, soul, color, fancyhdr, pgfplots, filecontents}
 \usepackage[margin=1in]{geometry}
+\pgfplotsset{width=15cm,height=10cm,compat=1.13}
+
+%Timing data gathered on Joshua Higginbotham's MacBook Pro,
+%used to make the example graph (Appendix B)
+\begin{filecontents*}{testdata.csv}
+w,usecs
+20,6227032
+25,4984267
+30,4154714
+35,3587760
+40,3146142
+45,2822256
+50,2550766
+55,2303931
+60,2115760
+65,1958458
+70,1821863
+75,1705560
+80,1598997
+85,1511727
+90,1427361
+95,1356797
+100,1284811
+105,1228262
+110,1169654
+115,1121278
+120,1081317
+125,1040008
+130,1006671
+135,962837
+140,925167
+145,895679
+150,871183
+155,847787
+160,832181
+165,792484
+170,768953
+175,744501
+180,726273
+185,708575
+190,692679
+195,678567
+200,706424
+205,661261
+210,651291
+215,623957
+220,608975
+225,597934
+230,609772
+235,578803
+240,606318
+245,581887
+250,547820
+300,538680
+400,594374
+500,700618
+600,748922
+700,787258
+800,726860
+900,903822
+1000,821859
+1100,839192
+1200,886371
+1300,898255
+1400,958942
+1500,1077546
+1600,1020523
+1700,1060130
+1800,1049812
+1900,19229150
+\end{filecontents*}
 
 \newenvironment{myindentpar}[1]%
  {\begin{list}{}%
@@ -66,8 +137,6 @@
 \newcommand{\code}[1]{\colorbox{codegray}{\texttt{#1}}}
 
 \begin{document}
-
-
 \begin{center}
     \underline{{\large Machine Problem 7: UNIX Threads \  }(Due: \duedate)}  \\
 \end{center}
@@ -155,20 +224,44 @@
 	Multithreading often requires the use of specialized "thread-safe" data structures. In order to facilitate multithreading, you will code a thread-safe class called SafeBuffer (see the commented-out line client\_E7.cpp, "//SafeBuffer request\_buffer;"). SafeBuffer can simply wrap around an STL data structure (we recommend std::list or std::queue), but must have a constructor and destructor as well as the operations push\_back and retrieve\_front (if you want the provided make\_histogram function to work, also include a size function). push\_back adds an element to the back of the buffer and retrieve\_front removes an element from the front so that items are added and removed in FIFO order (see requirements below). Both functions must use locks (see Advanced Concepts section) to ensure that the buffer can be modified concurrently at either end (concurrent modification at \emph{both} ends requires \emph{semaphores}, which we will tackle in the next assignment).
 	
 	\ \\
-	In addition to processing the requests using multithreading, and coding a specialized data structure for that purpose, the request buffer must also be initially populated using multithreading. However, writing the code for request threads will be much easier than the worker threads: you will only ever have 3 request threads, one for each user (John, Jane, and Joe from earlier), and each one simply pushes n requests (corresponding to its respective user) to request\_buffer. Furthermore, the request threads do not have to run concurrently with the worker threads (and in fact \emph{must} not), which means that the only lines of request-thread-related code in main (apart from setting up the thread parameters) will be three pthread\_create calls followed by thread pthread\_join function calls. Simple enough, right? \emph{:)}
+	In addition to processing the requests using multithreading, and coding a specialized data structure for that purpose, the request buffer must also be initially populated using multithreading. However, writing the code for request threads will be much easier than the worker threads: you will only ever have 3 request threads, one for each user (John, Jane, and Joe from earlier; note we said 3 request \emph{threads}, not 3 request \emph{thread functions}), and each one simply pushes n requests (corresponding to its respective user) to request\_buffer. Furthermore, the request threads do not have to run concurrently with the worker threads (and in fact \emph{must} not), which means that the only lines of request-thread-related code in main (apart from setting up the thread parameters) will be three pthread\_create calls followed by thread pthread\_join function calls.
 	
 	\ \\
 	Aside from multithreading, your program should have the following characteristics and satisfy the following requirements:
 	\begin{itemize}
 	    \setlength\itemsep{-0.1em}
 	    
-	    \item The program should function correctly for any number of threads. Practically speaking, this means that if the pthread\_create function call fails (see Synchronization under Advanced Concepts), or the RequestChannel constructor fails (it will throw an exception if it does), your program must recover and finish correctly (if such errors prevent any worker threads from being started, report the problem and exit). Check the return value of of the pthread\_create function call (also check errno for valuable debug information, man 3 errno) and catch any exceptions thrown by the RequestChannel constructor, in both cases "cleaning up" as required. Further error-handling should not be needed. Note that failures to create threads or construct RequestChannels do not always (at least, not in and of themselves) indicate a programming error but may be due to OS limitations such as maximum threads per process or available file descriptors, both of which vary greatly among operating systems.
+	    \item The program should function correctly for any number of threads. This does not mean that you have to handle all the errors resulting from large numbers of threads, but only that high numbers of threads do not in and of themselves affect program correctness. Practically speaking this means that your synchronization is provably correct, not that your error-handling is robust. You will not have to test your program with more threads than the minimum of (fd-max - 2)/2, and however many threads causes pthread\_create to fail. The value of fd-max on your system can be checked with "ulimit -n" at the command line, while the number of threads that causes pthread\_create to fail may need to be determined experimentally. Note that both values differ greatly between operating systems.
 	    \item No fifo files should remain after running the client program with any number of threads.  
 	    \item The client program should not take an unreasonably long time to execute.  Generally, the execution should be quicker than the single threaded version.  You can use the sample code as a performance baseline.  
 	    \item All requests for the program are handled correctly, which includes being processed in FIFO order.  The histogram should report the correct number of requests and should NOT drop any requests.  
-	    \item Your code may not make use of \emph{any} global variables, as they (in most circumstances) exemplify poor programming practice. Appropriately-named storage structs have been provided to be used in their place, although you will need to fill in their code before using them.
+	    \item Your code may not make use of \emph{any} global variables, as they (in most circumstances) exemplify poor programming practice. The easiest way to avoid this is by using storage structs (more on those later).
 	    
 	\end{itemize}
+
+	\ \\
+    \textbf{Bonus}
+    
+    \ \\
+    You have the opportunity to gain bonus credit for this machine problem. To gain this bonus credit, you must implement a real-time histogram display for the requests being processed.
+    
+    \ \\
+    Run the initial client code once, and pay close attention to the final display. It uses the make\_histogram\_table function to format and output the frequency counts for the requests processed for each patient, which takes as arguments the 3 patient names and pointers to the 3 *frequency\_count vectors (ctrl+F in the initial code can help you figure out what the frequency\_count vectors are).
+    
+    \ \\
+    Write a signal-handler function that clears the terminal window (system("clear) is an easy way to do this) and then displays the output of make\_histogram\_table. You will need to make sure that this is threadsafe by synchronizing on the same mutexes that the worker threads use to modify the *frequency\_count vectors.
+    
+    \ \\
+    In main, register your signal-handler function as the handler for SIGALRM (man 2 sigaction). Then, set up a timer to raise SIGALRM at 2-second intervals (man 2 timer\_create, man 2 timer\_settime), so that your handler is invoked and displays the current patient response totals and frequency counts approximately every 2 seconds. To do this, you will need to make sure that your signal handler is given all the necessary parameters when it catches a signal (man 7 sigevent). When all requests have been processed, stop the timer (man 2 timer\_delete).
+    
+    \ \\
+    If you have succeeded, the result should look like a histogram table that stays in one place in the terminal while its component values are updated to reflect the execution of the underlying program. 
+    
+    \ \\
+    Is there some purpose for this bonus portion other than making your program output look nice? Yes, there is. Firstly, it gives you the opportunity to use signals and signal handlers (perhaps for the first time), which are important both in this course and generally in computer science. Secondly, it provides a snapshot of the run-time state of your program, which can be useful for debugging (i.e. if you can tell that the histogram is updating but the values aren't changing, you know there's a problem to be diagnosed).
+    
+    \ \\
+    As with the other parts of the assignment you will lose points for using global variables. However, using global variables for the bonus will result in points being deducted \emph{only from the bonus portion of the assignment}, not from the main assignment, i.e. you cannot lose points by attempting to earn the bonus credit. Finally, please use the make\_histogram\_table function to format your output. Programming assignments are much easier to grade when the output is standardized.
 
 \end{myindentpar}
 
@@ -195,7 +288,7 @@
         \begin{enumerate}
         
             \item Describe what your code does and how it differs from the code that was initially given to you.  
-            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints starting at 1 and going to the highest number that will run (\emph{without} reporting some kind of error) on your OS.  After making the graph, Describe the behavior of the client program is w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given.  
+            \item Make a graph that shows how your client program's running time for n = 10000 varies with the value for "w".  Include at least 20 datapoints (more or less evenly spaced) starting at 5 and going to the highest number that will run (\emph{without} reporting some kind of error) on your OS.  After making the graph, describe the behavior of the client program as w increases.  Is there a point at which the overhead of managing threads in the kernel outweighs the benefits of multithreading?  Also compare (quantitatively and qualitatively) your client program's performance to the code you were originally given.
             \begin{itemize}
                 \setlength\itemsep{-0.1em}
                 
@@ -203,7 +296,7 @@
                 
             \end{itemize}
             
-            \item Describe the platform that you gathered data on (I.e. CSCE Linux server, Raspberry Pi, personal computer, etc...).  If it was a personal device (This includes the raspberry pi), describe the operating system that it runs.  Also answer the following sub-questions:
+            \item Describe the platform that you gathered data on (I.e. CSCE Linux server, Raspberry Pi, personal computer, etc...).  If it was a personal device (this includes the raspberry pi), describe the operating system that it runs.  Also answer the following sub-questions:
             \begin{itemize}
                 \setlength\itemsep{-0.1em}
                 
@@ -218,6 +311,47 @@
     \end{itemize}
     
 \end{itemize}
+
+\noindent
+\ \\
+{\large \underline{Notes Concerning Global Variables and Storage Structs}}
+
+	\ \\
+	Global variables are generally regarded as poor coding practice, but we realize that some students haven't yet been taught how to avoid using them in a multithreaded program, where they seem to be a very easy and attractive option. Here, then, is the way we have found easiest and most effective to avoid using global variables: storage structs.
+	
+	\ \\
+	A storage struct is an old-fashioned C struct, which serves mainly to store and organize different variables. An instance of such a struct can be  passed to a thread function as the last argument given to pthread\_create. The thread function then accesses its arg parameters, a void pointer, and casts it back to the type of the storage struct that is being used, and is then able access all the struct's fields and methods. If a programmer cleverly defines the struct's fields based on the needs of his program, he has a very clean and efficient way to pass parameters to a thread function.
+	
+	\ \\
+	Instances of storage structs can be declared and initialized in main, and any memory allocated for them is valid so long as it remains in scope in main. This means that pointers to storage structs that have been allocated in main, and to their data fields, can be passed to thread functions and will be valid until main terminates. Even then, if heap memory is used it will be valid until explicitly deleted. Pointers and storage structs can thus be used to solve the scoping problems previously solved by global variables, making the latter unnecessary.
+
+	\ \\
+	You may find it helpful to go over the example code in the man page for pthread\_create, since it includes an example of storage struct usage (the thread\_info struct).
+
+\newpage
+\noindent
+\ \\
+{\large \underline{Notes Concerning the Graph for your Report}}
+\ \\
+\begin{tikzpicture}
+\begin{axis}[
+	title=MP7 Timing Data,
+	xlabel=Number of Worker Threads ({$w$}),
+	ylabel=Execution Time (in {$\mu$}-secs),
+]
+\addplot table [x=w, y=usecs, col sep=comma] {testdata.csv};
+\end{axis}
+\end{tikzpicture}
+
+        \ \\
+        This graph was created using data gathered on a MacBook Pro 2011 running OS X Sierra, with n held constant at 10000. You will not be expected to gather this many data points (there are more than 60 in this graph), or run 1900 threads, for your report. Gathering this much data required increasing the number of available file descriptors as root, as well as more error-handling code that you will be expected to write.
+        
+        \ \\
+        It does, however, demonstrate the expected behavior of MP7 as w increases, and is intended to encourage you to test your program with larger numbers of threads than you might initially be inclined to. After all, the report requires you to test right up to the default limitations of your OS (but no further).
+        
+        \ \\
+        If, in gathering data for your report, you find that the default limitations of your OS (namely, available file descriptors and thread creation resources) prevent you from building a graph that demonstrates the full range of MP7's expected behavior (i.e. performance increases, then flattens out, then suddenly becomes horrible), not to worry: you are only required to run as many threads as your OS will allow \emph{by default}. But you will not be able to complete Part 3 of the report if you try to do less.
+
 
 \ \\
 {\large \underline{Advanced Concepts}:}
@@ -310,25 +444,26 @@
         		\begin{enumerate}
         		\setlength\itemsep{-0.1em}
         			\item Initial code modified to create 3 request threads in main. (15 points, all or nothing)
-			\item Coded one, \emph{and only one}, request\_thread\_function, and not 3 separate copies of it (one for each user). If 3 such copies are used, deduct 10 points. The person's name must be passed as an argument, or as one of the member variables of PARAMS\_REQUEST.
+			\item Coded one, \emph{and only one}, request\_thread\_function, and not 3 separate copies of it (one for each user). If 3 such copies are used, deduct 10 points. The person's name must be passed as an argument, or as one of the member variables an appropriate storage struct.
 			\item Request threads joined before any worker threads are started. (5 points)
 		\end{enumerate}
 	\item Worker Thread Functionality (30 points)
 		\begin{enumerate}
 		\setlength\itemsep{-0.1em}
 			\item Quits properly using "quit" request pushed from main function. (10 points)
-			\item Histograms correct. (10 points)
-			\item Proper thread-safety used for request\_buffer and histogram vectors. (10 points
+			\item Histograms correct (must use make\_histogram\_table function). (10 points)
+			\item Proper thread-safety used for request\_buffer and *frequency\_count vectors. (10 points
 				\begin{itemize}
 				\setlength\itemsep{-0.1em}
 					\item SafeBuffer used for request\_buffer.
-					\item Locks used before incrementing histogram vectors.
+					\item Locks used before incrementing *frequency\_count vectors.
 				\end{itemize}
 		\end{enumerate}
-	\item PARAMS (10 points)
+	\item Globals (or rather, lack thereof) (10 points)
 		\begin{enumerate}
         		\setlength\itemsep{-0.1em}
 			\item No global variables used, if global variables are used deduct from 1 to 10 points depending on how many.
+			\item No points deducted for global variables that are used \emph{only for the bonus portion of the assignment}.
 		\end{enumerate}
 	\item Cleaning up resources (20 points)
 		\begin{enumerate}
@@ -350,6 +485,12 @@
 					\item Plot should be linear with w for some range, but should begin flatten out (or even decrease!) after a certain point when thread/channel management starts to outweigh the benefits of parallelization.
 				\end{itemize}
 			\item Answers provided to the 3 questions in the Report section of the handout (6 points, 2 for each question)
+		\end{enumerate}
+	\item Bonus Real-time Histogram Display (value to be determined by professor)
+		\begin{enumerate}
+			\item No global variables used for this portion of the assignment.
+			\item Uses the provided make\_histogram\_table function.
+			\item Looks good and works.
 		\end{enumerate}
 \end{itemize}
 

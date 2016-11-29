@@ -29,7 +29,7 @@ MessageQueueRequestChannel.o: sync_lib.h MessageQueueRequestChannel.h MessageQue
 SharedMemoryRequestChannel.o: sync_lib.h SharedMemoryBoundedBuffer.o SharedMemoryRequestChannel.h SharedMemoryRequestChannel.cpp
 	g++ -std=c++11 -c -g SharedMemoryRequestChannel.cpp
 
-SignalRequestChannel.o: sync_lib.h SignalRequestChannel.h SignalRequestChannel.cpp
+SignalRequestChannel.o: sync_lib.h SignalRequestChannel.h SignalRequestChannel.cpp SharedMemoryBoundedBuffer.o MessageQueueRequestChannel.o
 	g++ -std=c++11 -c -g SignalRequestChannel.cpp
 
 Dataserver.o: sync_lib.h Dataserver.h Dataserver.cpp NamedPipeRequestChannel.o UnnamedPipeRequestChannel.o MessageQueueRequestChannel.o ProcessSharedSemaphore.o SharedMemoryBoundedBuffer.o SharedMemoryRequestChannel.o SignalRequestChannel.o

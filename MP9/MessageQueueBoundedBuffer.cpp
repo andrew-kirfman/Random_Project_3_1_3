@@ -50,12 +50,12 @@ mq_name("/" + my_name + "_mq")
 		}
 	}
 	else if(mq_descriptor == (mqd_t) -1){
-		throw sync_lib_exception("MESSAGE_QUEUE_BOUNDED_BUFFER:" + mq_name + ": failed to open pre-existing mq for reading and writing");
+		throw sync_lib_exception("MESSAGE_QUEUE_BOUNDED_BUFFER:" + mq_name + ": failed to create/open mq for reading and writing");
 	}
 }
 
 MessageQueueBoundedBuffer::~MessageQueueBoundedBuffer() {
-	
+
 	if(!empty_constructur_used) {
 		if(mq_close(mq_descriptor) < 0) {
 			threadsafe_console_output.perror("MESSAGE_QUEUE_BOUNDED_BUFFER:" + mq_name + ": failed to close mq with mqd == " + std::to_string(mq_descriptor));
@@ -73,7 +73,7 @@ std::string MessageQueueBoundedBuffer::push_back(std::string req) {
 	if(mq_send(mq_descriptor, req.c_str(), req.length(), 0) < 0) {
 		return "ERROR_MQ_SEND_FAILED";
 	}
-	
+
 	return req;
 }
 
@@ -81,13 +81,13 @@ std::string MessageQueueBoundedBuffer::retrieve_front() {
 	char buf[msg_size];
 	memset(buf, '\0', msg_size);
 	std::string read_result;
-	
+
 	if(mq_receive(mq_descriptor, buf, msg_size, NULL) < 0) {
 		return "ERROR_MQ_RECEIVE_FAILED";
 	}
-	
+
 	read_result = buf;
-	
+
 	return read_result;
 }
 

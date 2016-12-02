@@ -343,7 +343,7 @@ int linked_list::Delete(int delete_key)
         if (error_code == 1)
         {
             std::cout << "A node with the key to be deleted: " << delete_key << " does not exist." << std::endl;
-            return 0;
+            return -1;
         }
         else
         {

@@ -468,40 +468,29 @@ void linked_list2::PrintList ()
 
 int linked_list2::Find_tier(int key)
 {
-    int num_bigger_tiers = INT_MAX%num_tiers;
+	// Use integer division to find the approximate tier size.   
+	// This won't be exact because depending on the number
+	// of tiers, there will be a few numbers left over at the
+	// very end of the integer range.  
+	// 
+	// For this problem, incorporate those few potentially extra
+	// left over numbers into the nth tier (i.e. the one that goes
+	// from [(n - 1) * tier_size, INT_MAX)).  
     int tier_size = INT_MAX/num_tiers;
 
-    int extra = 0;
-    int tier_bound = tier_size;
-
-    //This will = 1 for as many tiers that should be one larger
-    if(num_bigger_tiers > 0)
+    for (int i = 1; i < num_tiers + 1; i++)
     {
-        extra = 1;
-    }
-
-    for (int i = 0; i < num_tiers; i++)
-    {
-        tier_bound += extra;
-        if(key <= tier_bound + extra)
+		if(i == num_tiers)
+		{
+			std::cout << "Hello World!" << std::endl;
+			return num_tiers - 1;
+		}
+		
+        if(key < tier_size * i)
         {
-            return i;
+			std::cout << "Hello World! " << std::to_string(i) << std::endl;
+            return (i - 1);
         }
-
-        //move bound up to max key values of the next region
-        tier_bound += tier_size;
-
-        if(num_bigger_tiers - i > 0)
-        {
-            extra = 1;
-        }
-        else
-        {
-            extra = 0;
-        }
-
-        tier_bound += extra;
-
     }
     return -1;
 }

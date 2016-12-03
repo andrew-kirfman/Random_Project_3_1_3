@@ -50,5 +50,5 @@ output*.txt
 .cproject
 
 #Other
-*.gz
+*.gz*
 .settings

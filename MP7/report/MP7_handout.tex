@@ -239,30 +239,6 @@ w,usecs
 	    
 	\end{itemize}
 
-	\ \\
-    \textbf{Bonus}
-    
-    \ \\
-    You have the opportunity to gain bonus credit for this machine problem. To gain this bonus credit, you must implement a real-time histogram display for the requests being processed.
-    
-    \ \\
-    Run the initial client code once, and pay close attention to the final display. It uses the make\_histogram\_table function to format and output the frequency counts for the requests processed for each patient, which takes as arguments the 3 patient names and pointers to the 3 *frequency\_count vectors (ctrl+F in the initial code can help you figure out what the frequency\_count vectors are).
-    
-    \ \\
-    Write a signal-handler function that clears the terminal window (system("clear) is an easy way to do this) and then displays the output of make\_histogram\_table. You will need to make sure that this is threadsafe by synchronizing on the same mutexes that the worker threads use to modify the *frequency\_count vectors.
-    
-    \ \\
-    In main, register your signal-handler function as the handler for SIGALRM (man 2 sigaction). Then, set up a timer to raise SIGALRM at 2-second intervals (man 2 timer\_create, man 2 timer\_settime), so that your handler is invoked and displays the current patient response totals and frequency counts approximately every 2 seconds. To do this, you will need to make sure that your signal handler is given all the necessary parameters when it catches a signal (man 7 sigevent). When all requests have been processed, stop the timer (man 2 timer\_delete).
-    
-    \ \\
-    If you have succeeded, the result should look like a histogram table that stays in one place in the terminal while its component values are updated to reflect the execution of the underlying program. 
-    
-    \ \\
-    Is there some purpose for this bonus portion other than making your program output look nice? Yes, there is. Firstly, it gives you the opportunity to use signals and signal handlers (perhaps for the first time), which are important both in this course and generally in computer science. Secondly, it provides a snapshot of the run-time state of your program, which can be useful for debugging (i.e. if you can tell that the histogram is updating but the values aren't changing, you know there's a problem to be diagnosed).
-    
-    \ \\
-    As with the other parts of the assignment you will lose points for using global variables. However, using global variables for the bonus will result in points being deducted \emph{only from the bonus portion of the assignment}, not from the main assignment, i.e. you cannot lose points by attempting to earn the bonus credit. Finally, please use the make\_histogram\_table function to format your output. Programming assignments are much easier to grade when the output is standardized.
-
 \end{myindentpar}
 
 \ \\
@@ -317,10 +293,10 @@ w,usecs
 {\large \underline{Notes Concerning Global Variables and Storage Structs}}
 
 	\ \\
-	Global variables are generally regarded as poor coding practice, but we realize that some students haven't yet been taught how to avoid using them in a multithreaded program, where they seem to be a very easy and attractive option. Here, then, is the way we have found easiest and most effective to avoid using global variables: storage structs.
+	Global variables are generally regarded as poor coding practice, but we realize that some students haven't yet been taught how to avoid using them in a multithreaded program, where they seem to be a very easy and attractive option. Here, then, is the way we have found easiest and most effective to avoid using global variables: storage structs. (we use "struct" here for our explanation, but please note that in C++ "class" works just as well)
 	
 	\ \\
-	A storage struct is an old-fashioned C struct, which serves mainly to store and organize different variables. An instance of such a struct can be  passed to a thread function as the last argument given to pthread\_create. The thread function then accesses its arg parameters, a void pointer, and casts it back to the type of the storage struct that is being used, and is then able access all the struct's fields and methods. If a programmer cleverly defines the struct's fields based on the needs of his program, he has a very clean and efficient way to pass parameters to a thread function.
+	A storage struct is an old-fashioned C struct, which serves mainly to store and organize different variables. An instance of such a struct can be  passed to a thread function as the last argument given to pthread\_create. The thread function then accesses its arg parameter, a void pointer, and casts it back to the type of the storage struct that is being used, and is then able access all the struct's fields and methods. If a programmer cleverly defines the struct's fields based on the needs of his program, he has a very clean and efficient way to pass parameters to a thread function.
 	
 	\ \\
 	Instances of storage structs can be declared and initialized in main, and any memory allocated for them is valid so long as it remains in scope in main. This means that pointers to storage structs that have been allocated in main, and to their data fields, can be passed to thread functions and will be valid until main terminates. Even then, if heap memory is used it will be valid until explicitly deleted. Pointers and storage structs can thus be used to solve the scoping problems previously solved by global variables, making the latter unnecessary.
@@ -485,12 +461,6 @@ w,usecs
 					\item Plot should be linear with w for some range, but should begin flatten out (or even decrease!) after a certain point when thread/channel management starts to outweigh the benefits of parallelization.
 				\end{itemize}
 			\item Answers provided to the 3 questions in the Report section of the handout (6 points, 2 for each question)
-		\end{enumerate}
-	\item Bonus Real-time Histogram Display (value to be determined by professor)
-		\begin{enumerate}
-			\item No global variables used for this portion of the assignment.
-			\item Uses the provided make\_histogram\_table function.
-			\item Looks good and works.
 		\end{enumerate}
 \end{itemize}
 

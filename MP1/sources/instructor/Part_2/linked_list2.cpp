@@ -190,6 +190,11 @@ void linked_list2::Destroy()
         free_data_pointer[i] = NULL;
     }
 
+	block_size = 0;
+	mem_size = 0;
+	max_data_size = 0;
+	num_tiers = 0;
+
     free(head_pointer);
     head_pointer = NULL;
     initialized = false;

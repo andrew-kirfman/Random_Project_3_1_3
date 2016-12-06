@@ -44,8 +44,12 @@ output*.txt
 *.log
 *.aux
 *.synctex.gz
+*.tex.bak
 
 #Eclipse byproducts
 .project
 .cproject
+
+#Other
+*.gz*
 .settings

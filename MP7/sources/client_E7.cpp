@@ -117,7 +117,7 @@ public:
 		}
 };
 
-atomic_standard_output threadsafe_standard_output;
+atomic_standard_output threadsafe_console_output;
 
 /*--------------------------------------------------------------------------*/
 /* HELPER FUNCTIONS */

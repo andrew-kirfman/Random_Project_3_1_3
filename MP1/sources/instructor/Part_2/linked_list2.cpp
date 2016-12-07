@@ -487,13 +487,11 @@ int linked_list2::Find_tier(int key)
     {
 		if(i == num_tiers)
 		{
-			std::cout << "Hello World!" << std::endl;
 			return num_tiers - 1;
 		}
 		
         if(key < tier_size * i)
         {
-			std::cout << "Hello World! " << std::to_string(i) << std::endl;
             return (i - 1);
         }
     }

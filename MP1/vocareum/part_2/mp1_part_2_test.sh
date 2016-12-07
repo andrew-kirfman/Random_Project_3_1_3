@@ -189,16 +189,34 @@ int main(int argc, char ** argv)
 		bad_init_values += 1;
 	}
 	
-	if(init_front_pointer != NULL)
+	bool front_pointer = false;
+	for(int i=0; i<tiers; i++)
+	{
+		if(init_front_pointer[i] != NULL)
+		{
+			front_pointer = true;
+		}
+	}
+	
+	if(front_pointer == true)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_free_pointer != NULL)
+	bool free_pointer = false;
+	for(int i=0; i<tiers; i++)
+	{
+		if(init_free_pointer[i] != NULL)
+		{
+			free_pointer = true;
+		}
+	}
+	
+	if(free_pointer == true)
 	{
 		bad_init_values += 1;
 	}
-
+	
 	if(init_block_size != block_size)
 	{
 		bad_init_values += 1;
@@ -214,7 +232,7 @@ int main(int argc, char ** argv)
 		bad_init_values += 1;
 	}
 
-	if(init_num_tiers != num_tiers)
+	if(init_num_tiers != tiers)
 	{
 		bad_init_values += 1;
 	}
@@ -228,6 +246,10 @@ int main(int argc, char ** argv)
 	{
 		std::cout << \"Bad Init Values \" << bad_init_values
 			<< \" \" << std::endl;
+	}
+	else
+	{
+		std::cout << \"Init Succeeded \" << std::endl;
 	}
 
 	// Insert some stuff in a few different tiers and make sure the data ends 
@@ -339,8 +361,12 @@ int main(int argc, char ** argv)
 		std::cout << \"Failed Lookup \" << failed_lookups
 			<< \" \" << std::endl;
 	}
+	else
+	{
+		std::cout << \"Lookup Succeeded \" << std::endl;
+	}
 	
-	failed_tiers = 0;
+	int failed_tiers = 0;
 	
 	for(int i=0; i<tiers; i++)
 	{
@@ -365,7 +391,6 @@ int main(int argc, char ** argv)
 			<< \" \" << std::endl;
 	}
 		
-		
 	/* Test Deletions */
 	int failed_deletions = 0;
 	
@@ -380,6 +405,7 @@ int main(int argc, char ** argv)
 		
 		if(test_node == NULL)
 		{
+			std::cout << \"Failed Delete\" << std::endl;
 			failed_deletions += 1;
 		}
 	}
@@ -408,8 +434,8 @@ int main(int argc, char ** argv)
 	
 	// After calling destroy, find data values again for comparison
 	char** post_destroy_head_pointer = linkedList2.getHeadPointer();
-	char** post_destroy_front_pointer = linkedList2.getFrontPointer();
-	char** post_destroy_free_pointer = linkedList2.getFreePointer();
+	node** post_destroy_front_pointer = linkedList2.getFrontPointer();
+	node** post_destroy_free_pointer = linkedList2.getFreePointer();
 	
 	int post_destroy_block_size = linkedList2.getBlockSize();
 	int post_destroy_mem_size = linkedList2.getMemSize();
@@ -423,37 +449,68 @@ int main(int argc, char ** argv)
 		|| pre_destroy_head_pointer == post_destroy_head_pointer)
 	{
 		failed_destroy += 1;
+		std::cout << \"Flag 1\" << std::endl;
 	}
 	
 	if(post_destroy_front_pointer != NULL
 		|| pre_destroy_front_pointer == post_destroy_front_pointer)
 	{
 		failed_destroy += 1;
+		std::cout << \"Flag 2\" << std::endl;
 	}
 	
 	if(post_destroy_free_pointer != NULL
 		|| pre_destroy_free_pointer == post_destroy_free_pointer)
 	{
 		failed_destroy += 1;
+		std::cout << \"Flag 3\" << std::endl;
 	}
 	
-	if(post_destroy_
+	if(post_destroy_block_size != 0
+		|| pre_destroy_block_size == post_destroy_block_size)	
+	{
+		failed_destroy += 1;
+		std::cout << \"Flag 4\" << std::endl;
+	}
 	
+	if(post_destroy_mem_size != 0
+		|| pre_destroy_mem_size == post_destroy_mem_size)
+	{
+		failed_destroy += 1;
+		std::cout << \"Flag 5\" << std::endl;
+	}
 	
+	if(post_destroy_max_data_size != 0
+		|| pre_destroy_mem_size == post_destroy_mem_size)
+	{
+		failed_destroy += 1;
+		std::cout << \"Flag 6\" << std::endl;
+	}
 	
-
+	if(post_destroy_num_tiers != 0
+		|| pre_destroy_num_tiers == post_destroy_num_tiers)
+	{
+		failed_destroy += 1;
+		std::cout << \"Flag 7\" << std::endl;
+	}
+	
+	if(post_destroy_initialized != false
+		|| pre_destroy_initialized == post_destroy_initialized)
+	{
+		failed_destroy += 1;
+		std::cout << \"Flag 8\" << std::endl;
+	}
+	
+	if(failed_destroy > 0)
+	{
+		std::cout << \"Failed Destroy \" << failed_destroy
+			<< \" \" << std::endl;
+	}
 
 	return 0;
-}
+}" > main.cpp
 
-
-" > main.cpp
-
-echo "Hello World!"
-
-
-# Replace this with make &> /dev/null
-make 
+make &> /dev/null
 
 if [ "$?" != "0" ]; then
 	# If the student's code does not compile, then there's no reason to continue
@@ -513,6 +570,54 @@ delete_points=16
 lookup_points=8
 printlist_points=8
 bonus_points=10
+
+
+# Init 
+if [ "$test_constructor" == "" ]; then
+	let "init_points=$init_points-8"
+fi
+
+if [ "$test_init" == "" ]; then
+	number_bad=$(echo "$test_init" | grep "Bad Init Values")
+
+	if [ "$number_bad" != "" ]; then
+		temp1=$(echo "$test_init" | sed 's/.*Bad Init Values[ ]\([0-9]*\).*/\1/g')
+		
+		init_subtraction=$temp1
+
+		if [[ $init_subtraction -gt 8 ]]; then
+			let "init_subtraction=8"
+		fi
+
+		let "init_points=$init_points-$init_subtraction"
+	fi
+fi
+
+# Lookup
+test_lookup="Failed Lookup 5"
+if [ "$test_lookup" == "" ]; then
+	echo "Flag"
+	number_bad=$(echo "$test_lookup" | grep "Faled Lookup")
+
+	echo "THING 1"
+
+	if [ "$number_bad" != "" ]; then
+		temp2=$(echo "$test_lookup" | sed 's/.*Failed Lookup[ ]\([0-9]*\).*/\1/g')
+
+		lookup_subtraction=$temp2
+
+		if [[ $lookup_subtraction -gt 8 ]]; then
+			let "lookup_subtraction=8"
+		fi
+
+		let "lookup_points=$lookup_points-$lookup_subtraction"
+	fi
+fi
+
+
+
+
+
 
 
 

@@ -234,7 +234,6 @@ int main(int argc, char * argv[]) {
 	bool REAL_TIME_HIST_DISP = false;
 	int THREADS_FAILED = 0;
 
-
     while ((opt = getopt(argc, argv, "n:w:v:hd")) != -1) {
         switch (opt) {
             case 'n':

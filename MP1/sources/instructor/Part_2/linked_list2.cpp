@@ -197,6 +197,10 @@ void linked_list2::Destroy()
 
     free(head_pointer);
     head_pointer = NULL;
+    front_pointer = NULL;
+    free_pointer = NULL;
+    free_data_pointer = NULL;
+    
     initialized = false;
 }
 

@@ -1,65 +1,83 @@
-/* 
-    File: my_allocator.h
+/* ------------------------------------------------------------------------ */
+/* Developer: Andrew Kirfman, Dr. Betatti                                   */
+/* Project: CSCE-313 Machine Problem 2                                      */
+/*                                                                          */
+/* File: ./my_allocator.h                                                   */
+/* ------------------------------------------------------------------------ */
 
-    Author: R.Bettati
-            Department of Computer Science
-            Texas A&M University
-    Date  : 08/02/08
-
-    Modified:
-
-*/
-
-#ifndef _my_allocator_h_                   // include file only once
+#ifndef _my_allocator_h_
 #define _my_allocator_h_
 
 /*--------------------------------------------------------------------------*/
-/* DEFINES */
+/* Standard Library Includes                                                */ 
 /*--------------------------------------------------------------------------*/
 
-/* -- (none) -- */
+#include<vector>
+#include<iostream>
 
 /*--------------------------------------------------------------------------*/
-/* INCLUDES */
-/*--------------------------------------------------------------------------*/
-
-
-/*--------------------------------------------------------------------------*/
-/* DATA STRUCTURES */ 
+/* Data Structures                                                          */ 
 /*--------------------------------------------------------------------------*/
 
 typedef void * Addr; 
 
 /*--------------------------------------------------------------------------*/
-/* FORWARDS */ 
+/* Module MyAllocator                                                       */
 /*--------------------------------------------------------------------------*/
 
-/* -- (none) -- */
+struct header
+{
+	header* next;
+	int block_size;
+}
 
-/*--------------------------------------------------------------------------*/
-/* MODULE   MY_ALLOCATOR */
-/*--------------------------------------------------------------------------*/
+class MyAllocator
+{
+private:
+	vector<Addr> *memory_array;
+	
+	// Note: Basic block size must be a power of two!  If someone passes
+	// an argument that isn't a power of two, the program should pick the 
+	// next nearest power of two as the basic_block_size.  
+	unsigned int basic_block_size;
+	unsigned int mem_sze;
+	
+	// Returns nearest higher power of two
+	unsigned int higher_two(unsigned int number);
+	
+	// Returns nearest lower power of two
+	unsigned int lower_two(unsigned int number);
+	
+	// Checks to see if a number is a power of two
+	bool isPowerOfTwo(unsigned int x)
 
-unsigned int init_allocator(unsigned int _basic_block_size, 
-			    unsigned int _length); 
-/* This function initializes the memory allocator and makes a portion of 
-   ’_length’ bytes available. The allocator uses a ’_basic_block_size’ as 
-   its minimal unit of allocation. The function returns the amount of 
-   memory made available to the allocator. If an error occurred, 
-   it returns 0. 
-*/ 
 
-int release_allocator(); 
-/* This function returns any allocated memory to the operating system. 
-   After this function is called, any allocation fails.
-*/ 
-
-Addr my_malloc(unsigned int _length); 
-/* Allocate _length number of bytes of free memory and returns the 
-   address of the allocated portion. Returns 0 when out of memory. */ 
-
-int my_free(Addr _a); 
-/* Frees the section of physical memory previously allocated 
-   using ’my_malloc’. Returns 0 if everything ok. */ 
+public:
+	MyAllocator();
+	
+	/* This function initializes the memory allocator and makes a portion of 
+     * ’_mem_size’ bytes available. The allocator uses a ’_basic_block_size’ as 
+     * its minimal unit of allocation. The function returns the amount of 
+     * memory made available to the allocator. If an error occurred, 
+     * it returns 0. 
+     */ 
+	unsigned int init_allocator(unsitned int _basic_block_size, 
+		unsigned int _mem_size); 
+	
+	/* This function returns any allocated memory to the operating system. 
+     * After this function is called, any allocation fails.
+     */ 	
+	int release_allocator();
+	
+	/* Allocate _length number of bytes of free memory and returns the 
+     * address of the allocated portion. Returns 0 when out of memory. 
+     */ 
+	Addr my_malloc(unsigned int _length);
+	
+	/* Frees the section of physical memory previously allocated 
+     * using ’my_malloc’. Returns 0 if everything ok. 
+     */ 
+	int my_free(Addr _a);
+};
 
 #endif 

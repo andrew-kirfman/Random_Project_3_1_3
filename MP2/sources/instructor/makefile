@@ -1,4 +1,9 @@
-# makefile
+# -------------------------------------------------------------------------- #
+# Developer: Andrew Kirfman, Dr. Betatti                                     #
+# Project: CSCE-313 Machine Problem 2                                        #
+#                                                                            #
+# File: ./makefile                                                           #
+# -------------------------------------------------------------------------- #
 
 all: memtest
 

@@ -286,7 +286,7 @@ int main(int argc, char * argv[]) {
     }
 
     pid_t pid = fork();
-    if(pid == 0){
+	if (pid > 0) {
         struct timeval start_time;
         struct timeval finish_time;
         int64_t start_usecs;
@@ -503,6 +503,6 @@ int main(int argc, char * argv[]) {
 		if (v >= VERBOSITY_DEFAULT)
 			std::cout << "Finale: " << finale << std::endl;
     }
-	else if (pid != 0)
+	else if (pid == 0)
 		execl("dataserver", (char*) NULL);
 }

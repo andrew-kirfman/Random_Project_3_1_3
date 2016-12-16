@@ -338,12 +338,12 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 	return (Addr) 0;
 }
 
-void MyAllocator::split_block(Addr start_address)
+bool MyAllocator::split_block(Addr start_address)
 {
 	// Don't do anything if they pass a null pointer
 	if(start_address == NULL)
 	{
-		return;
+		return false;
 	}
 	
 	header *memory_block = reinterpret_cast<header*>(start_address);
@@ -351,13 +351,13 @@ void MyAllocator::split_block(Addr start_address)
 	// Don't split a block that's in use
 	if(memory_block->in_use == true)
 	{
-		return;
+		return false;
 	}
 	
 	// Don't do anything if the block size is already the basic block size
 	if(memory_block->block_size == basic_block_size)
 	{
-		return;
+		return false;
 	}
 
 	int current_size = memory_block->block_size;
@@ -434,24 +434,214 @@ void MyAllocator::split_block(Addr start_address)
 		
 		memory_array->at(current_size / 2) = (Addr) block;
 	}
+	
+	return true;
 }
 
-void MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
+bool MyAllocator::are_brothers(Addr start_address1, Addr start_address2)
 {
 	header *memory_block_1 = reinterpret_cast<header*>(start_address1);
 	header *memory_block_2 = reinterpret_cast<header*>(start_address2);
 	
 	if(memory_block_1 == NULL || memory_block_2 == NULL)
 	{
-		return;
+		return false;
 	}
 	
 	if(memory_block_1->in_use == true || memory_block_2->in_use == true)
 	{
-		return;
+		return false;
 	}
 	
+	// Make sure the two blocks are the same size
+	if(memory_block_1->block_size != memory_block_2->block_size)
+	{
+		return false;
+	}
 	
+	// The two blocks can't be the same
+	
+	
+	// Check to see if the blocks are buddies 
+	// In order to be a block's buddy, the address must = the address + block_size
+	bool *mem_1_addr = (bool*) memory_block_1;
+	bool *mem_2_addr = (bool*) memory_block_2;
+	int current_size = memory_block_1->block_size;
+	
+	// Make sure that mem_1 address comes before mem_2 address
+	// I.e. the order of the arguments shouldn't determine whether the program
+	// is successful.  If two blocks are buddies, we should find them.  
+	if(mem_1_addr > mem_2_addr)
+	{
+		header *temp_holder = memory_block_1;
+		memory_block_1 = memory_block_2;
+		memory_block_2 = temp_holder;
+	}
+	
+	int difference = mem_2_addr - mem_1_addr;
+	
+	std::cout << difference << std::endl;
+	
+	// If this is true, they aren't buddies
+	if(difference != current_size)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}	
+}
+
+bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
+{
+	header *memory_block_1 = reinterpret_cast<header*>(start_address1);
+	header *memory_block_2 = reinterpret_cast<header*>(start_address2);
+	
+	if(memory_block_1 == NULL || memory_block_2 == NULL)
+	{
+		return false;
+	}
+	
+	if(memory_block_1->in_use == true || memory_block_2->in_use == true)
+	{
+		return false;
+	}
+	
+	// Make sure the two blocks are the same size
+	if(memory_block_1->block_size != memory_block_2->block_size)
+	{
+		return false;
+	}
+	
+	// The two blocks can't be the same
+	if(memory_block_1 == memory_block_2)
+	{
+		return false;
+	}
+	
+	// Check to see if the blocks are buddies 
+	// In order to be a block's buddy, the address must = the address + block_size
+	bool *mem_1_addr = (bool*) memory_block_1;
+	bool *mem_2_addr = (bool*) memory_block_2;
+	int current_size = memory_block_1->block_size;
+	
+	// Make sure that mem_1 address comes before mem_2 address
+	// I.e. the order of the arguments shouldn't determine whether the program
+	// is successful.  If two blocks are buddies, we should find them.  
+	if(mem_1_addr > mem_2_addr)
+	{
+		header *temp_holder = memory_block_1;
+		memory_block_1 = memory_block_2;
+		memory_block_2 = temp_holder;
+	}
+	
+	int difference = mem_2_addr - mem_1_addr;
+	
+	std::cout << difference << std::endl;
+	
+	// If this is true, they aren't buddies
+	if(difference != current_size)
+	{
+		return false;
+	}
+	
+	// Remove the two blocks from the list they belong to
+	header *start_of_list = (header*) memory_array->at(current_size);
+	
+	// We should be guaranteed to find the elements in the list.  
+	// Find the element before that so that I can remove it.  
+	
+	// remove memory_block_1
+	while(true)
+	{
+		// In the event that the block isn't found, exit
+		if(start_of_list == NULL)
+		{
+			return false;
+		}
+		
+		if(start_of_list == memory_block_1)
+		{
+			break;
+		}
+		
+		if(start_of_list->next == memory_block_1)
+		{
+			break;
+		}
+		
+		start_of_list = start_of_list->next;
+	}
+	
+	// After the loop, start_of_list will either be the element before
+	// memory_block_1 or memory_block_1 itself
+	if(start_of_list == memory_block_1)
+	{
+		// start_of_list is the only element in the list.  Remove it.  
+		memory_array->at(current_size) = start_of_list->next;
+	}
+	else if(start_of_list->next == memory_block_1)
+	{
+		start_of_list->next = memory_block_1->next;
+	}
+	else
+	{
+		// Something bad happened if we get here
+		return false;
+	}
+
+	// remove memory_block_2
+	start_of_list = (header*) memory_array->at(current_size);
+	while(true)
+	{
+		// In the event that the block isn't found, exit
+		if(start_of_list == NULL)
+		{
+			return false;
+		}
+		
+		if(start_of_list == memory_block_2)
+		{
+			break;
+		}
+		
+		if(start_of_list->next == memory_block_2)
+		{
+			break;
+		}
+		
+		start_of_list = start_of_list->next;
+	}
+	
+	// After the loop, start_of_list will either be the element before
+	// memory_block_1 or memory_block_1 itself
+	if(start_of_list == memory_block_2)
+	{
+		// start_of_list is the only element in the list.  Remove it.  
+		memory_array->at(current_size) = start_of_list->next;
+	}
+	else if(start_of_list->next == memory_block_2)
+	{
+		start_of_list->next = memory_block_2->next;
+	}
+	else
+	{
+		// Something bad happened if we get here
+		return false;
+	}	
+	
+	// Reset data values
+	memory_block_1->next = NULL;
+	memory_block_1->block_size = current_size << 2;
+	memory_block_1->in_use = false;
+	memory_block_2->next = NULL;
+	memory_block_2->block_size = 0;
+	memory_block_2->in_use = false;
+	
+	// Insert memory_block_1 into the list
+	memory_block_1->next = (header*) memory_array->at(current_size << 2);
+	memory_array->at(current_size << 2) = memory_block_1;
 }
 
 int MyAllocator::my_free(Addr _a)

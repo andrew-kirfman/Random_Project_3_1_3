@@ -37,7 +37,7 @@ struct header
 class MyAllocator
 {
 private:
-	std::map<int, Addr> *memory_array;
+	//std::map<int, Addr> *memory_array;
 	
 	// Note: Basic block size must be a power of two!  If someone passes
 	// an argument that isn't a power of two, the program should pick the 
@@ -61,10 +61,18 @@ private:
 	bool isPowerOfTwo(unsigned int x);
 
 	// Functions to split/combine blocks of memory
-	void split_block(Addr start_address);
-	void combine_blocks(Addr start_address1, Addr start_address2);
+	bool split_block(Addr start_address);
+	bool combine_blocks(Addr start_address1, Addr start_address2);
+	//bool are_brothers(Addr start_address1, Addr start_address2);
 
 public:
+
+	bool are_brothers(Addr start_address1, Addr start_address2);
+
+
+	// MOVE THIS LATER!!!
+	std::map<int, Addr> *memory_array;
+
 	MyAllocator();
 	
 	/* This function initializes the memory allocator and makes a portion of 

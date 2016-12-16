@@ -5,6 +5,13 @@
 /* File: ./ackerman.h                                                       */
 /* ------------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------------ */
+/* User Defined Includes                                                    */
+/* ------------------------------------------------------------------------ */
+
+#include "my_allocator.h"
+
+
 // Include guard to ensure that the file is included only once
 #ifndef _ackerman_h_
 #define _ackerman_h_
@@ -19,8 +26,8 @@
  * it allocates and de-allocates a portion of memory with the use of the
  * memory allocator defined in module "my_allocator.H".
  */ 
-extern void ackerman_main();
+extern void ackerman_main(MyAllocator *my_alloc);
 
-extern int ackerman_main(int input_n, int input_m);
+extern int ackerman_main(MyAllocator *my_alloc, int input_n, int input_m);
 
 #endif

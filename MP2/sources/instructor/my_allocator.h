@@ -14,6 +14,8 @@
 
 #include<vector>
 #include<iostream>
+#include<map>
+#include<unistd.h>
 
 /*--------------------------------------------------------------------------*/
 /* Data Structures                                                          */ 
@@ -29,18 +31,22 @@ struct header
 {
 	header* next;
 	int block_size;
-}
+	bool in_use;
+};
 
 class MyAllocator
 {
 private:
-	vector<Addr> *memory_array;
+	std::map<int, Addr> *memory_array;
 	
 	// Note: Basic block size must be a power of two!  If someone passes
 	// an argument that isn't a power of two, the program should pick the 
 	// next nearest power of two as the basic_block_size.  
 	unsigned int basic_block_size;
-	unsigned int mem_sze;
+	unsigned int mem_size;
+	
+	// Number of size tiers in memory array
+	unsigned short int num_tiers;
 	
 	// Returns nearest higher power of two
 	unsigned int higher_two(unsigned int number);
@@ -48,9 +54,15 @@ private:
 	// Returns nearest lower power of two
 	unsigned int lower_two(unsigned int number);
 	
+	// Has the list been set up
+	bool initialized;
+	
 	// Checks to see if a number is a power of two
-	bool isPowerOfTwo(unsigned int x)
+	bool isPowerOfTwo(unsigned int x);
 
+	// Functions to split/combine blocks of memory
+	void split_block(Addr start_address);
+	void combine_blocks(Addr start_address1, Addr start_address2);
 
 public:
 	MyAllocator();
@@ -61,13 +73,13 @@ public:
      * memory made available to the allocator. If an error occurred, 
      * it returns 0. 
      */ 
-	unsigned int init_allocator(unsitned int _basic_block_size, 
+	unsigned int init_allocator(unsigned int _basic_block_size, 
 		unsigned int _mem_size); 
 	
 	/* This function returns any allocated memory to the operating system. 
      * After this function is called, any allocation fails.
      */ 	
-	int release_allocator();
+	void release_allocator();
 	
 	/* Allocate _length number of bytes of free memory and returns the 
      * address of the allocated portion. Returns 0 when out of memory. 

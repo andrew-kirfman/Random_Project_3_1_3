@@ -19,7 +19,9 @@ int main(int argc, char ** argv)
 	
 	my_alloc->init_allocator(2 << 6, 2 << 15);
 	
-	my_alloc->my_malloc(50);
+	void* addr = my_alloc->my_malloc(235);
+
+	std::cout << "THTHTH: " << addr << std::endl;
 
 	_exit(0);
 

@@ -203,15 +203,11 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 	// Go through the list and find a block for the memory region
 	for(int i=next_power_of_two; i<=mem_size; i = i * 2)
 	{
-		std::cout << "Hello World!" << std::endl;
 		Addr array_pointer = memory_array->at(i);
 		
 		if(array_pointer != NULL)
-		{
-			std::cout << "Flag1" << std::endl;
-			
-			header *memory_block = reinterpret_cast<header*>(array_pointer);
-			
+		{	
+			header *memory_block = reinterpret_cast<header*>(array_pointer);		
 			
 			// Test to see if we can use this block.  If not, move onto the next tier
 			if(memory_block->in_use == true)
@@ -253,9 +249,6 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 				}
 			}
 			
-			std::cout << "Flag2" << std::endl;
-			std::cout << "Block: " << memory_block << std::endl;
-			
 			// Once you get down here, memory_block should be good.  
 			// If we don't find one on this level, move onto the next one			
 			if(memory_block == NULL)
@@ -272,22 +265,77 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 				}
 			}
 			
-			std::cout << "Hello World!" << std::endl;
+			int save_1 = memory_block->block_size;
+			int save_2 = next_power_of_two;
 			
-			split_block(reinterpret_cast<void*>(memory_block));
-
-
-
-			std::cout << "THING! " << i << std::endl;
-			// Work with memory block, split as necessary
+			int power_1 = 0;
+			int power_2 = 0;
 			
+			while(true)
+			{
+				save_1 = save_1 >> 1;
+				power_1 += 1;
+				
+				if(save_1 == 1)
+				{
+					break;
+				}
+			}
+			
+			while(true)
+			{
+				save_2 = save_2 >> 1;
+				power_2 += 1;
+				
+				if(save_2 == 1)
+				{
+					break;
+				}
+			}
+			
+			int number_of_splits = power_1 - power_2;
+			
+			Addr block_to_split = (Addr) memory_block;
+			int size = memory_block->block_size / 2;
+			std::cout << "Splits: " << number_of_splits << std::endl;
+			
+			for(int j=0; j<number_of_splits; j++)
+			{	
+				split_block(block_to_split);
+				
+				// Should be the first element in the array.  Just check
+				// to be absolutely sure.  
+				header* test_block = (header*) memory_array->at(size);
+				while(true)
+				{
+					if(test_block == NULL)
+					{
+						return (Addr) 0;
+					}
+					
+					if(test_block->in_use == false)
+					{
+						break;
+					} 
+					
+					test_block = test_block->next;
+				}
+				
+				block_to_split = (Addr) test_block;
+				size = test_block->block_size;
+			}
 
+			header *final_block = (header*) block_to_split + 1;
+			
+			return (Addr) final_block;
 		}
 		else
 		{
 			continue;
 		}
 	}
+	
+	return (Addr) 0;
 }
 
 void MyAllocator::split_block(Addr start_address)
@@ -311,18 +359,11 @@ void MyAllocator::split_block(Addr start_address)
 	{
 		return;
 	}
-	
-	std::cout << "Flag2" << std::endl;
-	
+
 	int current_size = memory_block->block_size;
-	std::cout << "Curr Size: " << current_size << std::endl;
-	std::cout << "THINGTHINGTHING: " << memory_array->at(current_size) << std::endl;
-	
 	
 	// Remove the block from its current list.  
 	header *start_of_tier = reinterpret_cast<header*>(memory_array->at(current_size));
-	
-	std::cout << "THTHTHTTH  " << start_of_tier << std::endl;
 	
 	// Two cases:
 	// 1) The list has only one element
@@ -363,22 +404,36 @@ void MyAllocator::split_block(Addr start_address)
 	// Split the block into two smaller blocks
 	// Weridness with pointer arithmetic using void*.  
 	// Temporarily switch to char* to perform the math. 
+	bool *block_address = (bool*) memory_block;
+	bool *second_block_address = block_address + (current_size / 2);
 	
+	// Cast back to headers
+	header *block = (header*) block_address;
+	header *second_block = (header*) second_block_address;
 	
-	// WHY CAN't I CONVERT THE ADDRESES!!!!
-	void* temp_address = reinterpret_cast<void*>(memory_block);
-	char* address = reinterpret_cast<char*>(temp_address);
+	// Set data values and insert into new list
+	block->block_size = current_size / 2;
+	second_block->block_size = current_size / 2;
 	
-	std::cout << "Address: " << address << std::endl;
+	block->in_use = false;
+	second_block->in_use = false;
 	
-	 
-	header *block_address = memory_block;
-	header *second_block_address = block_address + (current_size / 2);
+	header *existing_block = (header*) memory_array->at(current_size / 2);
 	
-	std::cout << "FLAGFLAG" << std::endl;
-	std::cout << "THTH: " << block_address << std::endl;
-	std::cout << "THTTH: " << second_block_address << std::endl;
-	
+	if(existing_block == NULL)
+	{
+		block->next = second_block;
+		second_block->next = NULL;
+		
+		memory_array->at(current_size / 2) = (Addr) block;
+	}
+	else
+	{
+		block->next = second_block;
+		second_block->next = existing_block;
+		
+		memory_array->at(current_size / 2) = (Addr) block;
+	}
 }
 
 void MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)

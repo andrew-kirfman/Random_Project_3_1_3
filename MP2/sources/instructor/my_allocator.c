@@ -10,6 +10,7 @@
 /*--------------------------------------------------------------------------*/
 
 #include <stdlib.h>
+#include <cstdint>
 
 /*--------------------------------------------------------------------------*/
 /* User Defined Includes                                                    */
@@ -144,10 +145,10 @@ unsigned int MyAllocator::init_allocator(unsigned int _basic_block_size,
 	// Allocate the header pointer
 	void *memory = malloc(mem_size);
 	
+	head_pointer = (char*) memory;
+	
 	// Set up the first header structure
 	header* primary_header = reinterpret_cast<header*>(memory);
-	
-	std::cout << "Header: " << primary_header << std::endl;
 	
 	primary_header->next = NULL;
 	primary_header->block_size = mem_size;
@@ -297,7 +298,6 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 			
 			Addr block_to_split = (Addr) memory_block;
 			int size = memory_block->block_size / 2;
-			std::cout << "Splits: " << number_of_splits << std::endl;
 			
 			for(int j=0; j<number_of_splits; j++)
 			{	
@@ -325,7 +325,7 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 				size = test_block->block_size;
 			}
 
-			header *final_block = (header*) block_to_split + 1;
+			uintptr_t final_block = (uintptr_t) block_to_split + 16;
 			
 			return (Addr) final_block;
 		}
@@ -404,8 +404,8 @@ bool MyAllocator::split_block(Addr start_address)
 	// Split the block into two smaller blocks
 	// Weridness with pointer arithmetic using void*.  
 	// Temporarily switch to char* to perform the math. 
-	bool *block_address = (bool*) memory_block;
-	bool *second_block_address = block_address + (current_size / 2);
+	uintptr_t block_address = (uintptr_t) memory_block;
+	uintptr_t second_block_address = block_address + (current_size / 2);
 	
 	// Cast back to headers
 	header *block = (header*) block_address;
@@ -438,17 +438,12 @@ bool MyAllocator::split_block(Addr start_address)
 	return true;
 }
 
-bool MyAllocator::are_brothers(Addr start_address1, Addr start_address2)
+bool MyAllocator::are_buddies(Addr start_address1, Addr start_address2)
 {
 	header *memory_block_1 = reinterpret_cast<header*>(start_address1);
 	header *memory_block_2 = reinterpret_cast<header*>(start_address2);
 	
 	if(memory_block_1 == NULL || memory_block_2 == NULL)
-	{
-		return false;
-	}
-	
-	if(memory_block_1->in_use == true || memory_block_2->in_use == true)
 	{
 		return false;
 	}
@@ -460,37 +455,24 @@ bool MyAllocator::are_brothers(Addr start_address1, Addr start_address2)
 	}
 	
 	// The two blocks can't be the same
-	
-	
-	// Check to see if the blocks are buddies 
-	// In order to be a block's buddy, the address must = the address + block_size
-	bool *mem_1_addr = (bool*) memory_block_1;
-	bool *mem_2_addr = (bool*) memory_block_2;
-	int current_size = memory_block_1->block_size;
-	
-	// Make sure that mem_1 address comes before mem_2 address
-	// I.e. the order of the arguments shouldn't determine whether the program
-	// is successful.  If two blocks are buddies, we should find them.  
-	if(mem_1_addr > mem_2_addr)
-	{
-		header *temp_holder = memory_block_1;
-		memory_block_1 = memory_block_2;
-		memory_block_2 = temp_holder;
-	}
-	
-	int difference = mem_2_addr - mem_1_addr;
-	
-	std::cout << difference << std::endl;
-	
-	// If this is true, they aren't buddies
-	if(difference != current_size)
+	if(memory_block_1 == memory_block_2)
 	{
 		return false;
 	}
-	else
+	
+	// Check to see if the blocks are buddies 
+	// In order to be a block's buddy, the address must = the (address - head_pointer) ^ block_size
+	uintptr_t buddy_address = (uintptr_t) head_pointer +
+		((uintptr_t) memory_block_1 - (uintptr_t) head_pointer) ^ memory_block_1->block_size;
+	
+	if((uintptr_t) memory_block_2 == buddy_address)
 	{
 		return true;
-	}	
+	}
+	else
+	{
+		return false;
+	}
 }
 
 bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
@@ -644,10 +626,30 @@ bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
 	memory_array->at(current_size << 2) = memory_block_1;
 }
 
+Addr MyAllocator::find_unused_brother(Addr sibling_block)
+{
+	header *sibling = (header*) sibling_block;
+	int current_size = sibling->block_size;
+	
+	
+	
+	header* current_level = (header*) memory_array->at(current_size);
+	
+	
+	
+	
+	
+	
+	
+}
+
+
 int MyAllocator::my_free(Addr _a)
 {
 	
 }
+
+
 
 
 

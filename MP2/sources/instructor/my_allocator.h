@@ -39,6 +39,9 @@ class MyAllocator
 private:
 	//std::map<int, Addr> *memory_array;
 	
+	// Maintain a poitner to the head of the list
+	char *head_pointer;
+	
 	// Note: Basic block size must be a power of two!  If someone passes
 	// an argument that isn't a power of two, the program should pick the 
 	// next nearest power of two as the basic_block_size.  
@@ -62,13 +65,18 @@ private:
 
 	// Functions to split/combine blocks of memory
 	bool split_block(Addr start_address);
-	bool combine_blocks(Addr start_address1, Addr start_address2);
-	//bool are_brothers(Addr start_address1, Addr start_address2);
+	//bool combine_blocks(Addr start_address1, Addr start_address2);
+	//bool are_buddies(Addr start_address1, Addr start_address2);
 
 public:
 
-	bool are_brothers(Addr start_address1, Addr start_address2);
+	bool are_buddies(Addr start_address1, Addr start_address2);
+bool combine_blocks(Addr start_address1, Addr start_address2);
 
+	/* Function to search for a block's brother.  Returns
+	 * (Addr) NULL if the brother is in use or is not found.  
+	 */
+	Addr find_unused_brother(Addr sibling_block);
 
 	// MOVE THIS LATER!!!
 	std::map<int, Addr> *memory_array;

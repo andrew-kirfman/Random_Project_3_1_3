@@ -16,6 +16,14 @@
 #include<iostream>
 #include<map>
 #include<unistd.h>
+#include<stdio.h>
+#include<stdlib.h>
+
+/*--------------------------------------------------------------------------*/
+/* Standard Library Includes                                                */ 
+/*--------------------------------------------------------------------------*/
+
+#include "utility.h"
 
 /*--------------------------------------------------------------------------*/
 /* Data Structures                                                          */ 
@@ -71,7 +79,7 @@ private:
 public:
 
 	bool are_buddies(Addr start_address1, Addr start_address2);
-bool combine_blocks(Addr start_address1, Addr start_address2);
+	bool combine_blocks(Addr start_address1, Addr start_address2);
 
 	/* Function to search for a block's brother.  Returns
 	 * (Addr) NULL if the brother is in use or is not found.  
@@ -106,6 +114,11 @@ bool combine_blocks(Addr start_address1, Addr start_address2);
      * using ’my_malloc’. Returns 0 if everything ok. 
      */ 
 	int my_free(Addr _a);
+	
+	/* Diagnostic function to print out your entire memory array.  
+	 * Use this to view the state of your program for debugging
+	 */
+	 void print_array();
 };
 
 #endif 

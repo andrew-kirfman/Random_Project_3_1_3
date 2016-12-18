@@ -21,12 +21,16 @@ int main(int argc, char ** argv)
 	
 	void* addr = my_alloc->my_malloc(235);
 
-	header *block_1 = (header*)my_alloc->memory_array->at(256);
-	header *block_2 = block_1->next;
+	header *block_test = (header*) my_alloc->memory_array->at(2 << 14);
 	
-	std::cout << "Buddies: " << my_alloc->are_buddies((Addr) block_1, (Addr) block_2) << std::endl;
-
-	my_alloc->combine_blocks((Addr) block_1, (Addr) block_2);
+	my_alloc->print_array();
+	
+	std::cout << std::endl;
+	
+	
+	
+	
+	exit(0);
 	
 	header *test_block = (header*)my_alloc->memory_array->at(2 << 6);
 	

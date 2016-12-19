@@ -112,9 +112,9 @@ public:
 	Addr my_malloc(unsigned int _length);
 	
 	/* Frees the section of physical memory previously allocated 
-     * using ’my_malloc’. Returns 0 if everything ok. 
+     * using ’my_malloc’. Returns true if everything ok, false otherwise. 
      */ 
-	int my_free(Addr _a);
+	bool my_free(Addr _a);
 	
 	/* Diagnostic function to print out your entire memory array.  
 	 * Use this to view the state of your program for debugging

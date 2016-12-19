@@ -328,8 +328,6 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 			Addr block_to_split = (Addr) memory_block;
 			int size = memory_block->block_size / 2;
 			
-			print_array();
-			
 			for(int j=0; j<number_of_splits; j++)
 			{	
 				split_block(block_to_split);
@@ -508,8 +506,10 @@ bool MyAllocator::are_buddies(Addr start_address1, Addr start_address2)
 	// Check to see if the blocks are buddies 
 	// In order to be a block's buddy, the address must = 
 	// the head_pointer + (address - head_pointer) ^ block_size
-	uintptr_t buddy_address = (uintptr_t) head_pointer +
-		((uintptr_t) memory_block_1 - (uintptr_t) head_pointer) ^ memory_block_1->block_size;
+	uintptr_t buddy_address = ((uintptr_t) memory_block_1 - (uintptr_t) head_pointer) 
+		^ memory_block_1->block_size;
+	
+	buddy_address = buddy_address + (uintptr_t) head_pointer;
 	
 	if((uintptr_t) memory_block_2 == buddy_address)
 	{
@@ -564,12 +564,8 @@ bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
 		memory_block_2 = temp_holder;
 	}
 	
-	int difference = mem_2_addr - mem_1_addr;
-	
-	std::cout << difference << std::endl;
-	
-	// If this is true, they aren't buddies
-	if(difference != current_size)
+	// If the blocks aren't buddies, they can't be combined.  
+	if(are_buddies((Addr) memory_block_1, (Addr) memory_block_2) == false)
 	{
 		return false;
 	}
@@ -661,15 +657,15 @@ bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
 	
 	// Reset data values
 	memory_block_1->next = NULL;
-	memory_block_1->block_size = current_size << 2;
+	memory_block_1->block_size = current_size << 1;
 	memory_block_1->in_use = false;
 	memory_block_2->next = NULL;
 	memory_block_2->block_size = 0;
 	memory_block_2->in_use = false;
 	
 	// Insert memory_block_1 into the list
-	memory_block_1->next = (header*) memory_array->at(current_size << 2);
-	memory_array->at(current_size << 2) = memory_block_1;
+	memory_block_1->next = (header*) memory_array->at(current_size << 1);
+	memory_array->at(current_size << 1) = memory_block_1;
 }
 
 Addr MyAllocator::find_unused_buddy(Addr sibling_block)
@@ -679,15 +675,21 @@ Addr MyAllocator::find_unused_buddy(Addr sibling_block)
 	
 	header* current_level = (header*) memory_array->at(current_size);
 	
+	
+	// MAJOR PROBLEM HERE.  Buddy address being calculated incorrectly.  
+	
+	
+	
 	// Check to see if the blocks are buddies 
 	// In order to be a block's buddy, the address must = 
 	// the head_pointer + (address - head_pointer) ^ block_size
-	uintptr_t buddy_address = (uintptr_t) head_pointer +
-		((uintptr_t) sibling - (uintptr_t) head_pointer) ^ sibling->block_size;
+	uintptr_t buddy_address = ((uintptr_t) sibling - (uintptr_t) head_pointer) 
+		^ sibling->block_size;
 	
+	buddy_address = buddy_address + (uintptr_t) head_pointer;
 	
 	while(true)
-	{
+	{	
 		// True if at the end of the tier
 		if(current_level == NULL)
 		{
@@ -713,9 +715,103 @@ Addr MyAllocator::find_unused_buddy(Addr sibling_block)
 }
 
 
-int MyAllocator::my_free(Addr _a)
+bool MyAllocator::my_free(Addr _a)
 {
+	uintptr_t starting_address = ((uintptr_t) _a) - sizeof(header);
+	_a = (Addr) starting_address;
 	
+	header *block_to_free = (header*) _a;
+	
+	// Block to free cannot be NULL
+	if(block_to_free == (header*) NULL)
+	{
+		return false;
+	}
+	
+	// Block should be in use
+	if(block_to_free->in_use != true)
+	{
+		return false;
+	}
+	
+	// Sanity check #1: Block size should be a power of two
+	if(isPowerOfTwo(block_to_free->block_size) == false)
+	{
+		return false;
+	}
+	
+	// Sanity check #2: Block size shouldn't be zero
+	if(block_to_free->block_size == 0)
+	{
+		return false;
+	}
+	
+	// Block should exist in the list that corresponds to its size
+	int current_size = block_to_free->block_size;
+	
+	header* current_tier = (header*) memory_array->at(current_size);
+	
+	while(true)
+	{
+		// Reached end of list without finding (header*) _a
+		if(current_tier == NULL)
+		{
+			return false;
+		}
+		
+		// Found the block
+		if(current_tier == block_to_free)
+		{
+			break;
+		}
+		
+		current_tier = current_tier->next;
+	}
+	
+	// Free the block by setting in_use == false
+	block_to_free->in_use = false;
+	
+	// Find the block's buddy and combine if necessary
+	header* buddy_block = (header*) find_unused_buddy((Addr) block_to_free);
+	
+	if(buddy_block == (header*) NULL)
+	{
+		return true;
+	}
+	else
+	{
+		int starting_size = block_to_free->block_size;
+		for(int i=starting_size; i<mem_size; i = (i << 1))
+		{
+			
+			header *iterator = (header*) memory_array->at(i);
+			
+			while(true)
+			{
+				if(iterator == NULL)
+				{
+					break;
+				}
+				
+				if(iterator->in_use == false)
+				{
+					header *buddy = (header*) find_unused_buddy((Addr) iterator);
+					
+					if(buddy != NULL)
+					{
+						combine_blocks((Addr) iterator, (Addr) buddy);
+						i = i >> 1;
+						break;
+					}
+				}
+				
+				iterator = iterator->next;
+				
+			}
+		}
+		
+		combine_blocks((Addr) block_to_free, (Addr) buddy_block);
+	}
 }
 
 void MyAllocator::print_array()

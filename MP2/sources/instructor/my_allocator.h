@@ -72,7 +72,7 @@ private:
 	bool isPowerOfTwo(unsigned int x);
 
 	// Functions to split/combine blocks of memory
-	bool split_block(Addr start_address);
+	//bool split_block(Addr start_address);
 	//bool combine_blocks(Addr start_address1, Addr start_address2);
 	//bool are_buddies(Addr start_address1, Addr start_address2);
 
@@ -80,11 +80,12 @@ public:
 
 	bool are_buddies(Addr start_address1, Addr start_address2);
 	bool combine_blocks(Addr start_address1, Addr start_address2);
+	bool split_block(Addr start_address);
 
 	/* Function to search for a block's brother.  Returns
 	 * (Addr) NULL if the brother is in use or is not found.  
 	 */
-	Addr find_unused_brother(Addr sibling_block);
+	Addr find_unused_buddy(Addr sibling_block);
 
 	// MOVE THIS LATER!!!
 	std::map<int, Addr> *memory_array;
@@ -119,6 +120,12 @@ public:
 	 * Use this to view the state of your program for debugging
 	 */
 	 void print_array();
+	// Note from one student to another.  You will not be graded on the
+	// print_array function other than that it needs to output something
+	// reasonably coherent.  I would strongly recommend putting some time into
+	// your version of this function as it will greatly help you debug your
+	// program during development.  The designer of this assignment (i.e. me)
+	// greatly benefited from being able to see the state of his code in action.  
 };
 
 #endif 

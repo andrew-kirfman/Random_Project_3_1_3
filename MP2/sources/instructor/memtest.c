@@ -18,26 +18,21 @@ int main(int argc, char ** argv)
 	
 	
 	my_alloc->init_allocator(2 << 6, 2 << 15);
+	Addr test_pointer = my_alloc->memory_array->at(2 << 15);
+	my_alloc->split_block(test_pointer);
+	my_alloc->split_block(test_pointer);
 	
-	void* addr = my_alloc->my_malloc(235);
-
-	header *block_test = (header*) my_alloc->memory_array->at(2 << 14);
+	my_alloc->print_array();
+	
+	exit(0);
+	
+	
+	
+	Addr test = my_alloc->my_malloc((2 << 15) - sizeof(header));
 	
 	my_alloc->print_array();
 	
 	std::cout << std::endl;
-	
-	
-	
-	
-	exit(0);
-	
-	header *test_block = (header*)my_alloc->memory_array->at(2 << 6);
-	
-	std::cout << "TEST: " << test_block << std::endl;
-	std::cout << "Size: " << test_block->block_size << std::endl;
-
-	std::cout << "THTHTH: " << addr << std::endl;
 
 	_exit(0);
 

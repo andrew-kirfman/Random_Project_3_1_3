@@ -24,6 +24,11 @@
 
 unsigned int MyAllocator::higher_two(unsigned int number)
 {
+	if(isPowerOfTwo(number) == true)
+	{
+		return number;
+	}
+	
 	unsigned int exponent = 0;
 	while(true)
 	{
@@ -178,7 +183,24 @@ void MyAllocator::release_allocator()
 		for(auto it = memory_array->begin(); it != memory_array->end(); ++it)
 		{
 			
-		
+			// IMPLEMENT THINGS FURTHER HERE!!!!!!!
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			//
+			
 			
 		}
 		
@@ -194,12 +216,19 @@ void MyAllocator::release_allocator()
 
 
 Addr MyAllocator::my_malloc(unsigned int _length)
-{
+{	
 	// The required length is _length + the space taken up by the header structure
 	int needed_length = _length + sizeof(header);
 	
 	// But since we can only allocate in powers of two, round up
 	int next_power_of_two = higher_two(needed_length);
+
+	// Function shouldn't try to allocate regions larger than
+	// total available memory.  
+	if(next_power_of_two > mem_size)
+	{
+		return (Addr) 0;
+	}
 	
 	// Go through the list and find a block for the memory region
 	for(int i=next_power_of_two; i<=mem_size; i = i * 2)
@@ -333,19 +362,17 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 				}
 				
 				block_to_split = (Addr) test_block;
-				size = test_block->block_size;
+				size = test_block->block_size / 2;
 				
 				std::cout << block_to_split << std::endl;
 				
 				
 				print_array();
 				
-				std::cout << "THTHTTH: " << memory_array->at(2 << 14) << std::endl;
-				std::cout << "THTHTHT: " << ((header*) memory_array->at(2 << 14))->next->block_size << std::endl;
-				
 				std::cin.ignore(1000, '\n');
 			}
 
+			((header*) block_to_split)->in_use = true;
 			uintptr_t final_block = (uintptr_t) block_to_split + 16;
 			
 			return (Addr) final_block;
@@ -510,7 +537,8 @@ bool MyAllocator::are_buddies(Addr start_address1, Addr start_address2)
 	}
 	
 	// Check to see if the blocks are buddies 
-	// In order to be a block's buddy, the address must = the (address - head_pointer) ^ block_size
+	// In order to be a block's buddy, the address must = 
+	// the head_pointer + (address - head_pointer) ^ block_size
 	uintptr_t buddy_address = (uintptr_t) head_pointer +
 		((uintptr_t) memory_block_1 - (uintptr_t) head_pointer) ^ memory_block_1->block_size;
 	
@@ -675,21 +703,44 @@ bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
 	memory_array->at(current_size << 2) = memory_block_1;
 }
 
-Addr MyAllocator::find_unused_brother(Addr sibling_block)
+Addr MyAllocator::find_unused_buddy(Addr sibling_block)
 {
 	header *sibling = (header*) sibling_block;
 	int current_size = sibling->block_size;
 	
-	
-	
 	header* current_level = (header*) memory_array->at(current_size);
 	
+	// Check to see if the blocks are buddies 
+	// In order to be a block's buddy, the address must = 
+	// the head_pointer + (address - head_pointer) ^ block_size
+	uintptr_t buddy_address = (uintptr_t) head_pointer +
+		((uintptr_t) sibling - (uintptr_t) head_pointer) ^ sibling->block_size;
 	
 	
-	
-	
-	
-	
+	while(true)
+	{
+		// True if at the end of the tier
+		if(current_level == NULL)
+		{
+			return (Addr) 0;
+		}
+		
+		// True if the block is in use
+		if(current_level->in_use == true)
+		{
+			current_level = current_level->next;
+			continue;
+		}
+		
+		// True if the block is the buddy
+		if(((uintptr_t) current_level) == buddy_address)
+		{
+			return (Addr) current_level;
+		}
+		
+		// Reached if the block is not in use but is not the buddy
+		current_level = current_level->next;
+	}
 }
 
 
@@ -746,7 +797,14 @@ void MyAllocator::print_array()
 				break;
 			}
 			
-			std::cout << BOLDBLUE << block_iterator->block_size << " " << block_iterator << BOLDWHITE << " -> " << RESET;
+			if(block_iterator->in_use == true)
+			{
+				std::cout << BOLDMAGENTA << block_iterator << BOLDWHITE << " -> " << RESET;
+			}
+			else
+			{
+				std::cout << BOLDBLUE << block_iterator << BOLDWHITE << " -> " << RESET;
+			}
 			
 			block_iterator = block_iterator->next;
 		}

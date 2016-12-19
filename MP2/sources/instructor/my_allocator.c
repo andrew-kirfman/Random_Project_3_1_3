@@ -92,7 +92,6 @@ unsigned int MyAllocator::init_allocator(unsigned int _basic_block_size,
 		return 0;
 	}
 	
-	
 	// If the mem_size is greater than the block_size, return an error
 	// Obviously, you can't fit a block that's larger than available memory
 	if(_basic_block_size > _mem_size)
@@ -176,39 +175,60 @@ unsigned int MyAllocator::init_allocator(unsigned int _basic_block_size,
 
 void MyAllocator::release_allocator()
 {
-	// Coalesce allocated memory regions back into one that can be freed.  
-	while(true)
+	// If array isn't initialized, don't do anything
+	if(initialized == false)
 	{
-		
-		for(auto it = memory_array->begin(); it != memory_array->end(); ++it)
-		{
-			
-			// IMPLEMENT THINGS FURTHER HERE!!!!!!!
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			
-			
-		}
-		
-		
-		
+		return;
 	}
 	
+	// Mark all regions as unused
+	for(int i=basic_block_size; i<mem_size; i = i * 2)
+	{
+		header *iterator = (header*) memory_array->at(i);
+		
+		while(true)
+		{
+			if(iterator == (header*) NULL)
+			{
+				break;
+			}
+			
+			iterator->in_use = false;
+			
+			iterator = iterator->next;
+		}
+	}
+
+	// Coalesce allocated memory regions back into one that can be freed.  
+	for(int i=basic_block_size; i<mem_size; i = i * 2)
+	{
+		header *iterator = (header*) memory_array->at(i);
+		
+		while(true)
+		{
+			if(iterator == (header*) NULL)
+			{
+				break;
+			}
+			
+			header* buddy = (header*) find_unused_buddy((Addr) iterator);
+			
+			if(buddy != (header*) NULL)
+			{
+				// Combine the two blocks together
+				combine_blocks((Addr) iterator, (Addr) buddy);
+				
+				// Reset the loop so that it goes through the ith tier again
+				i = i >> 1;
+				break;
+			}
+
+			iterator = iterator->next;
+		}
+	}
 	
+	// Actually free the head pointer
+	free(head_pointer);
 	
 	// Also set initialized = false to indicate that memory was freed.  
 	initialized = false;
@@ -217,6 +237,12 @@ void MyAllocator::release_allocator()
 
 Addr MyAllocator::my_malloc(unsigned int _length)
 {	
+	// If the array isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return (Addr) 0;
+	}
+	
 	// The required length is _length + the space taken up by the header structure
 	int needed_length = _length + sizeof(header);
 	
@@ -371,6 +397,12 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 
 bool MyAllocator::split_block(Addr start_address)
 {
+	// If array isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return false;
+	}
+	
 	// Don't do anything if they pass a null pointer
 	if(start_address == NULL)
 	{
@@ -483,6 +515,12 @@ bool MyAllocator::split_block(Addr start_address)
 
 bool MyAllocator::are_buddies(Addr start_address1, Addr start_address2)
 {
+	// If array isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return false;
+	}
+	
 	header *memory_block_1 = reinterpret_cast<header*>(start_address1);
 	header *memory_block_2 = reinterpret_cast<header*>(start_address2);
 	
@@ -523,6 +561,12 @@ bool MyAllocator::are_buddies(Addr start_address1, Addr start_address2)
 
 bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
 {
+	// If array isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return false;
+	}
+	
 	header *memory_block_1 = reinterpret_cast<header*>(start_address1);
 	header *memory_block_2 = reinterpret_cast<header*>(start_address2);
 	
@@ -670,16 +714,17 @@ bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
 
 Addr MyAllocator::find_unused_buddy(Addr sibling_block)
 {
+	// If array isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return (Addr) NULL;
+	}
+	
 	header *sibling = (header*) sibling_block;
 	int current_size = sibling->block_size;
 	
 	header* current_level = (header*) memory_array->at(current_size);
-	
-	
-	// MAJOR PROBLEM HERE.  Buddy address being calculated incorrectly.  
-	
-	
-	
+
 	// Check to see if the blocks are buddies 
 	// In order to be a block's buddy, the address must = 
 	// the head_pointer + (address - head_pointer) ^ block_size
@@ -717,6 +762,12 @@ Addr MyAllocator::find_unused_buddy(Addr sibling_block)
 
 bool MyAllocator::my_free(Addr _a)
 {
+	// If the array isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return false;
+	}
+	
 	uintptr_t starting_address = ((uintptr_t) _a) - sizeof(header);
 	_a = (Addr) starting_address;
 	
@@ -816,6 +867,12 @@ bool MyAllocator::my_free(Addr _a)
 
 void MyAllocator::print_array()
 {
+	// If allocator isn't initialized, don't do anything
+	if(initialized == false)
+	{
+		return;
+	}
+	
 	// Get the length of the longest size
 	int max_str_length = 0;
 	for(auto it = memory_array->begin(); it != memory_array->end(); ++it)
@@ -877,22 +934,3 @@ void MyAllocator::print_array()
 		std::cout << BOLDRED << "[NULL]" << RESET << std::endl;	
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

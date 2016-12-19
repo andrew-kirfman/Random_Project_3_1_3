@@ -1,66 +1,93 @@
-/* 
-    File: my_allocator.c
-
-    Author: <your name>
-            Department of Computer Science
-            Texas A&M University
-    Date  : <date>
-
-    Modified: 
-
-    This file contains the implementation of the module "MY_ALLOCATOR".
-
-*/
+/* ------------------------------------------------------------------------ */
+/* Developer: Andrew Kirfman, Dr. Betatti                                   */
+/* Project: CSCE-313 Machine Problem 2                                      */
+/*                                                                          */
+/* File: ./my_allocator.c                                                   */
+/* ------------------------------------------------------------------------ */
 
 /*--------------------------------------------------------------------------*/
-/* DEFINES */
+/* Standard Library Includes                                                */
 /*--------------------------------------------------------------------------*/
 
-    /* -- (none) -- */
+#include <stdlib.h>
+#include <cstdint>
 
 /*--------------------------------------------------------------------------*/
-/* INCLUDES */
+/* User Defined Includes                                                    */
 /*--------------------------------------------------------------------------*/
 
-#include<stdlib.h>
 #include "my_allocator.h"
 
 /*--------------------------------------------------------------------------*/
-/* DATA STRUCTURES */ 
+/* Functions For Module MyAllocator                                         */
 /*--------------------------------------------------------------------------*/
 
-    /* -- (none) -- */
-
-/*--------------------------------------------------------------------------*/
-/* CONSTANTS */
-/*--------------------------------------------------------------------------*/
-
-    /* -- (none) -- */
-
-/*--------------------------------------------------------------------------*/
-/* FORWARDS */
-/*--------------------------------------------------------------------------*/
-
-    /* -- (none) -- */
-
-/*--------------------------------------------------------------------------*/
-/* FUNCTIONS FOR MODULE MY_ALLOCATOR */
-/*--------------------------------------------------------------------------*/
-
-/* Don't forget to implement "init_allocator" and "release_allocator"! */
-
-
-extern Addr my_malloc(unsigned int _length) {
-  /* This preliminary implementation simply hands the call over the 
-     the C standard library! 
-     Of course this needs to be replaced by your implementation.
-  */
-  return malloc((size_t)_length);
+unsigned int MyAllocator::higher_two(unsigned int number)
+{
+	
 }
 
-extern int my_free(Addr _a) {
-  /* Same here! */
-  free(_a);
-  return 0;
+unsigned int MyAllocator::lower_two(unsigned int number)
+{
+	
 }
 
+bool MyAllocator::isPowerOfTwo(unsigned int x)
+{
+	
+}
+
+MyAllocator::MyAllocator()
+{
+	
+}
+
+// If successful, returns the amount of memory allocated.  If failure
+// occurs, returns 0.  
+unsigned int MyAllocator::init_allocator(unsigned int _basic_block_size,
+	unsigned int _mem_size)
+{
+
+}
+
+void MyAllocator::release_allocator()
+{
+
+}
+
+
+Addr MyAllocator::my_malloc(unsigned int _length)
+{	
+	
+}
+
+bool MyAllocator::split_block(Addr start_address)
+{
+	
+}
+
+bool MyAllocator::are_buddies(Addr start_address1, Addr start_address2)
+{
+	
+}
+
+bool MyAllocator::combine_blocks(Addr start_address1, Addr start_address2)
+{
+	
+}
+
+Addr MyAllocator::find_unused_buddy(Addr sibling_block)
+{
+	
+}
+
+
+bool MyAllocator::my_free(Addr _a)
+{
+	
+}
+
+void MyAllocator::print_array()
+{
+	
+}

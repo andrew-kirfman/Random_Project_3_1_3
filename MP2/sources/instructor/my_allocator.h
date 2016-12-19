@@ -78,6 +78,14 @@ private:
 
 public:
 
+	/* Getter Functions */
+	char *getHeadPointer();
+	unsigned int getBasicBlockSize();
+	unsigned int getMemSize();
+	unsigned short int getNumTiers();
+	bool getInitialized();
+	std::map<int, Addr> *getMemoryArray();
+
 	bool are_buddies(Addr start_address1, Addr start_address2);
 	bool combine_blocks(Addr start_address1, Addr start_address2);
 	bool split_block(Addr start_address);

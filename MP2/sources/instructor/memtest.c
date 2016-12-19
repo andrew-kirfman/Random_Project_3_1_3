@@ -9,7 +9,6 @@
 /* User Defined Includes                                                    */
 /* ------------------------------------------------------------------------ */
 
-#include "ackerman.h"
 #include "my_allocator.h"
 
 int main(int argc, char ** argv) 
@@ -44,13 +43,4 @@ int main(int argc, char ** argv)
 	std::cout << std::endl;
 
 	_exit(0);
-
-
-  // input parameters (basic block size, memory length)
-
-  // init_allocator(basic block size, memory length)
-
-  ackerman_main(my_alloc);
-
-  // release_allocator()
 }

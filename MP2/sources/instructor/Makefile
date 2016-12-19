@@ -11,17 +11,14 @@ CFLAGS=
 
 all: memtest
 
-ackerman.o: ackerman.c 
-	$(CC) $(STD) $(CFLAGS) -c -g  ackerman.c
-
 my_allocator.o : my_allocator.c
 	$(CC) $(STD) $(CFLAGS) -c -g my_allocator.c
 
 memtest.o : memtest.c
 	$(CC) $(STD) $(CFLAGS) -c -g memtest.c
 
-memtest: memtest.o ackerman.o my_allocator.o
-	$(CC) $(STD) $(CFLAGS) -o memtest memtest.o ackerman.o my_allocator.o
+memtest: memtest.o my_allocator.o
+	$(CC) $(STD) $(CFLAGS) -o memtest memtest.o my_allocator.o
 
 clean:
 	rm -rf *.o *.gch memtest

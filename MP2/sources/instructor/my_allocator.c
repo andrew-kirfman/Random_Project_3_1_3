@@ -934,3 +934,34 @@ void MyAllocator::print_array()
 		std::cout << BOLDRED << "[NULL]" << RESET << std::endl;	
 	}
 }
+
+/* Getter Functions */
+char *MyAllocator::getHeadPointer()
+{
+	return head_pointer;
+}
+
+unsigned int MyAllocator::getBasicBlockSize()
+{
+	return basic_block_size;
+}
+
+unsigned int MyAllocator::getMemSize()
+{
+	return mem_size;
+}
+
+unsigned short int MyAllocator::getNumTiers()
+{
+	return num_tiers;
+}
+
+bool MyAllocator::getInitialized()
+{
+	return initialized;
+}
+	
+std::map<int, Addr> *MyAllocator::getMemoryArray()
+{
+	return memory_array;
+}

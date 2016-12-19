@@ -59,36 +59,40 @@ private:
 	// Number of size tiers in memory array
 	unsigned short int num_tiers;
 	
+	// Has the list been set up
+	bool initialized;
+
+	// Map of linked lists of memory regions
+	std::map<int, Addr> *memory_array;
+	
 	// Returns nearest higher power of two
 	unsigned int higher_two(unsigned int number);
 	
 	// Returns nearest lower power of two
 	unsigned int lower_two(unsigned int number);
 	
-	// Has the list been set up
-	bool initialized;
-	
 	// Checks to see if a number is a power of two
 	bool isPowerOfTwo(unsigned int x);
 
-	// Functions to split/combine blocks of memory
-	//bool split_block(Addr start_address);
-	//bool combine_blocks(Addr start_address1, Addr start_address2);
-	//bool are_buddies(Addr start_address1, Addr start_address2);
-
 public:
 
-	bool are_buddies(Addr start_address1, Addr start_address2);
-	bool combine_blocks(Addr start_address1, Addr start_address2);
+	/* Getter Functions */
+	char *getHeadPointer();
+	unsigned int getBasicBlockSize();
+	unsigned int getMemSize();
+	unsigned short int getNumTiers();
+	bool getInitialized();
+	std::map<int, Addr> *getMemoryArray();
+
+	/* Functions to split/combine blocks of memory */
 	bool split_block(Addr start_address);
+	bool combine_blocks(Addr start_address1, Addr start_address2);
+	bool are_buddies(Addr start_address1, Addr start_address2);
 
 	/* Function to search for a block's brother.  Returns
 	 * (Addr) NULL if the brother is in use or is not found.  
 	 */
 	Addr find_unused_buddy(Addr sibling_block);
-
-	// MOVE THIS LATER!!!
-	std::map<int, Addr> *memory_array;
 
 	MyAllocator();
 	

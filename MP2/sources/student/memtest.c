@@ -9,7 +9,6 @@
 /* User Defined Includes                                                    */
 /* ------------------------------------------------------------------------ */
 
-#include "ackerman.h"
 #include "my_allocator.h"
 
 int main(int argc, char ** argv) 
@@ -20,6 +19,8 @@ int main(int argc, char ** argv)
 	// Use getopt to grab command line arguments
 	// from argv.  Use these arguments as inputs to your program
 	my_alloc->init_allocator(2 << 6, 2 << 15);
+
+    std::cout << "Hello World!" << std::endl;
 
 	return 0;
 }

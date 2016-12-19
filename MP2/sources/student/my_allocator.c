@@ -42,8 +42,6 @@ MyAllocator::MyAllocator()
 	
 }
 
-// If successful, returns the amount of memory allocated.  If failure
-// occurs, returns 0.  
 unsigned int MyAllocator::init_allocator(unsigned int _basic_block_size,
 	unsigned int _mem_size)
 {
@@ -88,6 +86,37 @@ bool MyAllocator::my_free(Addr _a)
 }
 
 void MyAllocator::print_array()
+{
+	
+}
+
+/* Getter Functions */
+char *MyAllocator::getHeadPointer()
+{
+	
+}
+
+unsigned int MyAllocator::getBasicBlockSize()
+{
+	
+}
+
+unsigned int getMemSize()
+{
+	
+}
+
+unsigned short int getNumTiers()
+{
+	
+}
+
+bool getInitialized()
+{
+	
+}
+	
+std::map<int, Addr> *getMemoryArray()
 {
 	
 }

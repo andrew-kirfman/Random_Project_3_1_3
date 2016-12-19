@@ -332,19 +332,11 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 			
 			for(int j=0; j<number_of_splits; j++)
 			{	
-				std::cout << "BLOCK_TO_SPLIT: " << block_to_split << std::endl;
-				std::cout << "BLOCK_SIZE: " << ((header*) block_to_split)->block_size << std::endl;
-				
 				split_block(block_to_split);
-				
-				std::cout << block_to_split << std::endl;
 				
 				// Should be the first element in the array.  Just check
 				// to be absolutely sure.  
 				header* test_block = (header*) memory_array->at(size);
-				
-				std::cout << "SIZE: " << size << std::endl;
-				std::cout << test_block << std::endl;
 				
 				while(true)
 				{
@@ -363,13 +355,6 @@ Addr MyAllocator::my_malloc(unsigned int _length)
 				
 				block_to_split = (Addr) test_block;
 				size = test_block->block_size / 2;
-				
-				std::cout << block_to_split << std::endl;
-				
-				
-				print_array();
-				
-				std::cin.ignore(1000, '\n');
 			}
 
 			((header*) block_to_split)->in_use = true;
@@ -417,12 +402,9 @@ bool MyAllocator::split_block(Addr start_address)
 
 	int current_size = memory_block->block_size;
 	
-	std::cout << "CORRECT BLOCK SIZE: " << current_size << std::endl;
-	
 	// Remove the block from its current list.  
 	header *start_of_tier = (header*) memory_array->at(current_size);
 	
-	std::cout << "START OF TIER NEXT: " << start_of_tier->next << std::endl;
 	// Two cases:
 	// 1) The list has only one element
 	// 2) The list has multiple elements
@@ -440,13 +422,11 @@ bool MyAllocator::split_block(Addr start_address)
 		
 		if(start_of_tier->next == NULL)
 		{
-			std::cout << "TRUE!" << std::endl;
 			break;
 		}
 		
 		if(start_of_tier->next == memory_block)
 		{
-			std::cout << "ALT_TRUE" << std::endl;
 			break;
 		}
 		
@@ -461,13 +441,9 @@ bool MyAllocator::split_block(Addr start_address)
 	
 	if(start_of_tier == memory_block)
 	{
-		std::cout << "TRUE2" << std::endl;
 		// Check to make sure that memory_block is the first element in the list
 		memory_array->at(current_size) = start_of_tier->next;
 	}
-	
-	std::cout << "THING3: " << memory_array->at(current_size) << std::endl;
-	
 	
 	// Split the block into two smaller blocks
 	// Weridness with pointer arithmetic using void*.  
@@ -491,13 +467,10 @@ bool MyAllocator::split_block(Addr start_address)
 	
 	if(existing_block == NULL)
 	{
-		std::cout << "TRUE4" << std::endl;
 		block->next = second_block;
 		second_block->next = NULL;
 		
 		memory_array->at(current_size / 2) = (Addr) block;
-		
-		std::cout << "THING5: " << memory_array->at(current_size / 2) << std::endl;
 	}
 	else
 	{
@@ -506,10 +479,6 @@ bool MyAllocator::split_block(Addr start_address)
 		
 		memory_array->at(current_size / 2) = (Addr) block;
 	}
-	
-	header *iterator = (header*) memory_array->at(current_size / 2);
-	
-	print_array();
 	
 	return true;
 }
@@ -809,14 +778,8 @@ void MyAllocator::print_array()
 			block_iterator = block_iterator->next;
 		}
 		
-		std::cout << BOLDRED << "[NULL]" << RESET << std::endl;
-		
+		std::cout << BOLDRED << "[NULL]" << RESET << std::endl;	
 	}
-	
-	
-	
-	
-	
 }
 
 

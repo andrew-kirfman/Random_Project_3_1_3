@@ -1,12 +1,26 @@
-#include "ackerman.h"
+/* ------------------------------------------------------------------------ */
+/* Developer: Andrew Kirfman, Dr. Betatti                                   */
+/* Project: CSCE-313 Machine Problem 2                                      */
+/*                                                                          */
+/* File: ./memtest.c                                                        */
+/* ------------------------------------------------------------------------ */
 
-int main(int argc, char ** argv) {
+/* ------------------------------------------------------------------------ */
+/* User Defined Includes                                                    */
+/* ------------------------------------------------------------------------ */
 
-  // input parameters (basic block size, memory length)
+#include "my_allocator.h"
 
-  // init_allocator(basic block size, memory length)
+int main(int argc, char ** argv) 
+{
+	MyAllocator *my_alloc = new MyAllocator();
+	
 
-  ackerman_main();
+	// Use getopt to grab command line arguments
+	// from argv.  Use these arguments as inputs to your program
+	my_alloc->init_allocator(2 << 6, 2 << 15);
 
-  // release_allocator()
+    std::cout << "Hello World!" << std::endl;
+
+	return 0;
 }

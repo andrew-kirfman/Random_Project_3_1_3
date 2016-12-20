@@ -1,4 +1,4 @@
-/* 
+/*
     File: dataserver.C
 
     Author: R. Bettati
@@ -34,7 +34,7 @@
 #include "reqchannel.h"
 
 /*--------------------------------------------------------------------------*/
-/* DATA STRUCTURES */ 
+/* DATA STRUCTURES */
 /*--------------------------------------------------------------------------*/
 
     /* -- (none) -- */
@@ -71,14 +71,14 @@ void * handle_data_requests(void * args) {
 
 	RequestChannel * data_channel =  (RequestChannel*)args;
 
-	// -- Handle client requests on this channel. 
+	// -- Handle client requests on this channel.
 
 	handle_process_loop(*data_channel);
 
 	// -- Client has quit. We remove channel.
 
 	delete data_channel;
-	
+
 	return nullptr;
 }
 
@@ -117,6 +117,13 @@ void process_newthread(RequestChannel & _channel, const std::string & _request) 
 
 		pthread_t thread_id;
 		//  std::cout << "starting new thread " << nthreads << endl;
+
+		/*
+		 * Dataserver threads need to be detached (preferably,
+		 * created in a detached state) since there's no
+		 * real way to pthread_join them.
+		 */
+
 		if ((errno = pthread_create(& thread_id, NULL, handle_data_requests, data_channel)) != 0) {
 			perror(std::string("DATASERVER: " + _channel.name() + ": pthread_create failure").c_str());
 			delete data_channel;
@@ -149,7 +156,7 @@ void process_request(RequestChannel & _channel, const std::string & _request) {
 }
 
 void handle_process_loop(RequestChannel & _channel) {
-	
+
 	for(;;) {
 		//std::cout << "Reading next request from channel (" << _channel.name() << ") ..." << std::flush;
 		std::cout << std::flush;

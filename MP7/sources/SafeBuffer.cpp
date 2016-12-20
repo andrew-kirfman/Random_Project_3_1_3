@@ -1,6 +1,6 @@
 //
 //  SafeBuffer.cpp
-//  
+//
 //
 //  Created by Joshua Higginbotham on 11/4/15.
 //
@@ -15,16 +15,16 @@ SafeBuffer::SafeBuffer() {
 }
 
 void SafeBuffer::push_back(std::string req) {
-    pthread_mutex_lock(&data_access_lock);
+	pthread_mutex_lock(&data_access_lock);
     data.push(req);
-    pthread_mutex_unlock(&data_access_lock);
+	pthread_mutex_unlock(&data_access_lock);
 }
 
 std::string SafeBuffer::retrieve_front() {
-    pthread_mutex_lock(&data_access_lock);
+	pthread_mutex_lock(&data_access_lock);
     std::string retrieval = data.front();
     data.pop();
-    pthread_mutex_unlock(&data_access_lock);
+	pthread_mutex_unlock(&data_access_lock);
     return retrieval;
 }
 

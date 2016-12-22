@@ -8,7 +8,6 @@ echo 'VOC_NO_REPORT_OUTPUT'    >> $vocareumReportFile
 # Replace students main file for a temporary one
 mv main.cpp saved_main.cpp
 
-
 echo "
 /* --------------------------------------------------------------------------- */
 /* Developer: Andrew Kirfman, Margaret Baxter                                  */
@@ -21,9 +20,7 @@ echo "
 /* Standard Library Includes                                                   */
 /* --------------------------------------------------------------------------- */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <iostream>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -31,13 +28,10 @@ echo "
 
 #include \"linked_list.h\"
 
-int main(int argc, char ** argv) 
+int main(int argc, char **argv) 
 {
 	int b = 128;
-	int M = b * 11;  // so we have space for 11 items
-	
-	char buf [1024];
-	memset (buf, 1, 1024);		// set each byte to 1
+	int M = b * 11;
 
     /* --------------------------------------------------------------------------- */
     /* Test Class Constructor                                                      */
@@ -91,11 +85,7 @@ int main(int argc, char ** argv)
 		unset_values += 1;
 	}
 
-	if(unset_values > 0)
-	{
-		std::cout << \"Class Constructor Failed \" << unset_values << std::endl;
-	}
-	else
+	if(unset_values == 0)
 	{
 		std::cout << \"Class Constructor Succeeded \" << std::endl;
 	}
@@ -104,50 +94,44 @@ int main(int argc, char ** argv)
     /* Test Init                                                                   */
     /* --------------------------------------------------------------------------- */
 
-	test_list->Init(M,b); 
-
-	char *init_head = test_list->getHeadPointer();
-	node *init_front = test_list->getFrontPointer();
-	node *init_free_pointer = test_list->getFreePointer();
-
-	int init_block = test_list->getBlockSize();
-	int init_mem = test_list->getMemSize();
-	int init_max_data = test_list->getMaxDataSize();
-	bool init_initialized = test_list->getInitialized();
+	test_list->Init(M, b); 
 
 	int bad_init_values = 0;
 
-	if(init_head == NULL || init_head == pre_head_pointer)
+	if(test_list->getHeadPointer() == NULL 
+		|| test_list->getHeadPointer() == pre_head_pointer)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_front != NULL)
+	if(test_list->getFrontPointer() != NULL)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_free_pointer != NULL)
+	if(test_list->getFreePointer() != NULL)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_block == 0 || init_block == pre_block_size)
+	if(test_list->getBlockSize() == 0 || test_list->getBlockSize() == pre_block_size)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_mem == 0 || init_mem == pre_mem_size)
+	if(test_list->getMemSize() == 0 || test_list->getMemSize() == pre_mem_size)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_max_data == 0 || init_mem == pre_max_data_size)
+	if(test_list->getMaxDataSize() == 0 
+		|| test_list->getMaxDataSize() == pre_max_data_size)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_initialized == false || init_initialized == pre_initialized)
+	if(test_list->getInitialized() == false 
+		|| test_list->getInitialized() == pre_initialized)
 	{
 		bad_init_values += 1;
 	}
@@ -157,8 +141,9 @@ int main(int argc, char ** argv)
 		std::cout << \"Bad Init Values \" << bad_init_values << std::endl;
 	}
 
+	// M = 128 * 11, b = 128; M / b = 11
 	int number_of_blocks = M / b;
-	node *init_node = reinterpret_cast< node* >(init_head);
+	node *init_node = (node*) test_list->getHeadPointer();
 	int init_blocks_visited = 0;
 
 	for(int i=0; i<number_of_blocks; i++)
@@ -172,11 +157,7 @@ int main(int argc, char ** argv)
 		init_blocks_visited += 1;
     }
 
-	if(init_blocks_visited < number_of_blocks)
-	{
-		std::cout << \"Init Failed\" << std::endl;
-	}
-	else
+	if(init_blocks_visited == number_of_blocks)
 	{
 		std::cout << \"Init Succeeded\" << std::endl;
 	}
@@ -190,9 +171,7 @@ int main(int argc, char ** argv)
     	test_list->Insert(i, \"Hello World!\", 12);                            
     }
 
-	node* lookup_node;
-
-	lookup_node = test_list->Lookup(0);
+	node* lookup_node = test_list->Lookup(0);
 
 	int blocks_iterated = 0;
 
@@ -272,11 +251,7 @@ int main(int argc, char ** argv)
 			lookup_node = lookup_node->next;
 		}
 
-		if(blocks_iterated != number_of_blocks)
-		{
-			std::cout << \"List Not Set Up Correctly\" << std::endl;
-		}
-		else
+		if(blocks_iterated == number_of_blocks)
 		{
 			std::cout << \"List Set Up Correctly\" << std::endl;
 		}
@@ -320,8 +295,6 @@ test_output=""
 make &> /dev/null
 
 if [ "$?" != "0" ]; then
-	echo "Code didn't compile"
-
 	# If the student's code does not compile, then there's no reason to continue
 	echo "Code Compiles     ...   Failed" >> $vocareumReportFile
     echo "Testing Init      ...   Untestable [0/16]" >> $vocareumReportFile
@@ -362,15 +335,6 @@ if [ "$test_output" == "" ]; then
 	exit 1
 fi
 
-# Search to see how the test program performed
-test_constructor=$(echo "$test_output" | grep "Class Constructor Succeeded")
-test_init=$(echo "$test_output" | grep "Init Succeeded")
-test_lookup=$(echo "$test_output" | grep "Lookup Succeeded")
-test_value_length=$(echo "$test_output" | grep "Value Length Saved Correctly")
-test_value=$(echo "$test_output" | grep "Value Saved Correctly")
-test_list_set_up=$(echo "$test_output" | grep "List Set Up Correctly")
-test_delete=$(echo "$test_output" | grep "Delete Succeeded")
-
 # Maximum points for each category
 init_points=16
 destroy_points=6
@@ -380,31 +344,31 @@ lookup_points=8
 printlist_points=8
 
 # If the constructor doesn't work correctly, deduct 6 points from Init score
-if [ "$test_constructor" == "" ]; then
+if [ "$(echo "$test_output" | grep "Class Constructor Succeeded")" == "" ]; then
 	let "init_points=$init_points-6"
 fi
 
-if [ "$test_init" == "" ]; then
+if [ "$(echo "$test_output" | grep "Init Succeeded")" == "" ]; then
 	let "init_points=$init_points-10"
 fi
 
-if [ "$test_lookup" == "" ]; then
+if [ "$(echo "$test_output" | grep "Lookup Succeeded")" == "" ]; then
 	let "lookup_points=0"
 fi
 
-if [ "$test_value_length" == "" ]; then
+if [ "$(echo "$test_output" | grep "Value Length Saved Correctly")" == "" ]; then
 	let "insert_points=$insert_points-4"
 fi
 
-if [ "$test_value" == "" ]; then
+if [ "$(echo "$test_output" | grep "Value Saved Correctly")" == "" ]; then
 	let "insert_points=$insert_points-4"
 fi
 
-if [ "$test_list_set_up" == "" ]; then
+if [ "$(echo "$test_output" | grep "List Set Up Correctly")" == "" ]; then
 	let "insert_points=$insert_points-8"
 fi
 
-if [ "$test_delete" == "" ]; then
+if [ "$(echo "$test_output" | grep "Delete Succeeded")" == "" ]; then
 	let "delete_points=$delete_points-16"
 fi
 
@@ -427,9 +391,7 @@ echo "
 /* Standard Library Includes                                                   */
 /* --------------------------------------------------------------------------- */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <iostream>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -439,19 +401,13 @@ echo "
 
 int main(int argc, char **argv) 
 {
-	int b = 128;
-	int M = b * 11;  // so we have space for 11 items
-	
-	char buf [1024];
-	memset (buf, 1, 1024);		// set each byte to 1
-
     /* --------------------------------------------------------------------------- */
     /* Test Class Constructor                                                      */
     /* --------------------------------------------------------------------------- */
 
     linked_list* test_list = new linked_list();
 
-	test_list->Init(M,b);
+	test_list->Init(128 * 11, 128);
 
     test_list->Insert(0, \"Hello World!\", 12);  
     test_list->Insert(1, \"Hello World!\", 12);  
@@ -468,19 +424,17 @@ int main(int argc, char **argv)
 make &> /dev/null
 
 if [ "$?" != "0" ]; then
-	echo "PrintList Compile Failed"
-
 	echo "Cannot Execute Test PrintList ./List_1" >> $vocareumReportFile
 
 	let "printlist_points=0"
-fi
-
-print_list_output="$(./List_1)"
-
-if [ "$print_list_output" == "" ]; then
-	let "printlist_points=0"
 else
-	let "printlist_points=8"
+    print_list_output="$(./List_1)"
+    
+    if [ "$print_list_output" == "" ]; then
+        let "printlist_points=0"
+    else
+        let "printlist_points=8"
+    fi
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -496,14 +450,6 @@ echo "
 /* --------------------------------------------------------------------------- */
 
 /* --------------------------------------------------------------------------- */
-/* Standard Library Includes                                                   */
-/* --------------------------------------------------------------------------- */
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-/* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
 /* --------------------------------------------------------------------------- */
 
@@ -512,10 +458,7 @@ echo "
 int main(int argc, char ** argv) 
 {
 	int b = 128;
-	int M = b * 11;  // so we have space for 11 items
-	
-	char buf [1024];
-	memset (buf, 1, 1024);		// set each byte to 1
+	int M = b * 11;
 
     /* --------------------------------------------------------------------------- */
     /* Test Class Constructor                                                      */
@@ -533,17 +476,9 @@ int main(int argc, char ** argv)
 
 	test_list->Destroy();
 
-	if(test_list->getHeadPointer() != NULL)
-	{
-		return 1;		
-	}
-
-	if(test_list->getFrontPointer() != NULL)
-	{
-		return 1;
-	}
-	
-	if(test_list->getFreePointer() != NULL)
+	if(test_list->getHeadPointer() != NULL
+		|| test_list->getFrontPointer() != NULL
+        || test_list->getFreePointer() != NULL)
 	{
 		return 1;
 	}
@@ -558,14 +493,14 @@ if [ "$?" != "0" ]; then
 	echo "Cannot Execute Test Destroy ./List_1" >> $vocareumReportFile
 
 	let "destroy_points=0"
-fi
-
-./List_1
-
-if [ "$?" == 0 ]; then
-	let "destroy_points=6"
 else
-	let "destroy_points=0"
+    ./List_1 > /dev/null
+    
+    if [ "$?" == 0 ]; then
+        let "destroy_points=6"
+    else
+        let "destroy_points=0"
+    fi
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -584,9 +519,7 @@ echo "
 /* Standard Library Includes                                                   */
 /* --------------------------------------------------------------------------- */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include<iostream>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -597,10 +530,7 @@ echo "
 int main(int argc, char ** argv) 
 {
 	int b = 128;
-	int M = b * 11;  // so we have space for 11 items
-	
-	char buf [1024];
-	memset (buf, 1, 1024);		// set each byte to 1
+	int M = b * 11;
 
     /* --------------------------------------------------------------------------- */
     /* Test Class Constructor                                                      */
@@ -608,7 +538,7 @@ int main(int argc, char ** argv)
 
     linked_list* test_list = new linked_list();
 
-	test_list->Init(M,b);
+	test_list->Init(M, b);
 
     test_list->Insert(0, \"Hello World!\", 12);  
     test_list->Insert(1, \"Hello World!\", 12);  
@@ -619,18 +549,16 @@ int main(int argc, char ** argv)
 	// Delete an element from the middle of the list 
 	test_list->Delete(2);
 
-	node* is_deleted = test_list->Lookup(2);	
-
-	if(is_deleted != NULL)
+	if(test_list->Lookup(2) == (node*) NULL)
 	{
-		std::cout << \"Failed Delete \" << std::endl;
+		std::cout << \"Succeeded Delete \" << std::endl;
 	}
 
 	// Make sure the pointers are still set up correctly
 	test_list->Delete(1);
 	test_list->Delete(3);
 	
-	node *head_pointer = reinterpret_cast< node* >(test_list->getHeadPointer());
+	node *head_pointer = (node*) test_list->getHeadPointer();
 	bool success = true;
 
 	for(unsigned short int i=0; i<2; i++)
@@ -644,10 +572,9 @@ int main(int argc, char ** argv)
 		head_pointer = head_pointer->next;
     }
 
-	if(success == false)
+	if(success == true)
 	{
-		// This is a delete error
-		std::cout << \"Failed Pointer Setup \" << std::endl;
+		std::cout << \"Succeeded Pointer Setup \" << std::endl;
 	}
 
 	test_list->Insert(1, \"Hello World!\", 12);
@@ -657,7 +584,7 @@ int main(int argc, char ** argv)
 	test_list->Insert(6, \"Hello World!\", 12);
 
 	success = true;
-	head_pointer = reinterpret_cast<node*>(test_list->getHeadPointer());
+	head_pointer = (node*) test_list->getHeadPointer();
 
 	for(unsigned short int i=0; i<6; i++)
     {
@@ -670,36 +597,36 @@ int main(int argc, char ** argv)
         head_pointer = head_pointer->next;
     }
 
-	if(success == false)
+	if(success == true)
 	{
-		std::cout << \"Failed Insert \" << std::endl;
+		std::cout << \"Succeeded Insert \" << std::endl;
 	}
-}" > main.cpp
+}
+" > main.cpp
 
 make &> /dev/null
 
+
 if [ "$?" != "0" ]; then
 	echo "Advanced Tests Compile Failed" >> $vocareumReportFile
-	let "insert_points=$insert_points-4"
+	let "insert_points=$insert_points-8"
 	let "delete_points=$delete_points-8"
 else
 	advanced_output=$(./List_1)
 
-	echo $advanced_output
+	test_delete_1=$(echo $advanced_output | grep "Succeeded Delete")
+	test_delete_2=$(echo $advanced_output | grep "Succeeded Pointer Setup")
+	test_insert_1=$(echo $advanced_output | grep "Succeeded Insert")
 
-	test_delete_1=$(echo $advanced_output | grep "Failed Delete")
-	test_delete_2=$(echo $advanced_output | grep "Failed Pointer Setup")
-	test_insert_1=$(echo $advanced_output | grep "Failed Insert")
-
-	if [ "$test_delete_1" != "" ]; then
+	if [ "$test_delete_1" == "" ]; then
 		let "delete_points=delete_points-4"
 	fi
 
-	if [ "$test_delete_2" != "" ]; then
+	if [ "$test_delete_2" == "" ]; then
 		let "delete_points=delete_points-4"
 	fi
 
-	if [ "$test_insert_1" != "" ]; then
+	if [ "$test_insert_1" == "" ]; then
 		let "insert_points=insert_points-8"
 	fi
 fi
@@ -721,9 +648,7 @@ echo "
 /* Standard Library Includes                                                   */
 /* --------------------------------------------------------------------------- */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <iostream>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -734,10 +659,7 @@ echo "
 int main(int argc, char ** argv) 
 {
 	int b = 128;
-	int M = b * 11;  // so we have space for 11 items
-	
-	char buf [1024];
-	memset (buf, 1, 1024);		// set each byte to 1
+	int M = b * 11;
 
     /* --------------------------------------------------------------------------- */
     /* Test Class Constructor                                                      */
@@ -745,11 +667,11 @@ int main(int argc, char ** argv)
 
     linked_list* test_list = new linked_list();
 
-	test_list->Init(M,b);
+	test_list->Init(M, b);
 
 	node* free_list = test_list->getFreeDataPointer();
 
-	int num_blocks = M / b;
+	int num_blocks = 11;
 	int blocks_visited = 0;
 
 	while(free_list != NULL)
@@ -759,9 +681,9 @@ int main(int argc, char ** argv)
 		free_list = free_list->next;
 	}
 
-	if(num_blocks != blocks_visited)
+	if(num_blocks == blocks_visited)
 	{
-		std::cout << \"failure_1 \" << std::endl;
+		std::cout << \"success_1 \" << std::endl;
 	}
 
 	test_list->Insert(0, \"Hello World!\", 12);
@@ -777,9 +699,9 @@ int main(int argc, char ** argv)
 		free_list = free_list->next;
 	}
 
-	if(blocks_visited != num_blocks - 1)
+	if(blocks_visited == (num_blocks - 1))
 	{
-		std::cout << \"failure_2 \" << std::endl;
+		std::cout << \"success_2 \" << std::endl;
 	}
 
 	test_list->Delete(0);
@@ -795,14 +717,11 @@ int main(int argc, char ** argv)
 		free_list = free_list->next;
 	}
 
-	if(blocks_visited != num_blocks)
+	if(blocks_visited == num_blocks)
 	{
-		std::cout << \"blocks_visited \" << std::to_string(blocks_visited) << \" \" << std::endl;
-		std::cout << \"Num_Blocks \" << std::to_string(num_blocks) << \" \" << std::endl;
-		std::cout << \"failure_3 \" << std::endl;
+		std::cout << \"success_3 \" << std::endl;
 	}
 
-	std::cout << \"finished \" << std::endl;
 	return 0;
 }" > main.cpp
 
@@ -814,21 +733,21 @@ if [ "$?" != "0" ]; then
 else
 	bonus_output=$(./List_1)
 
-	failed_1=$(echo $bonus_output | grep "failure_1")
-	failed_2=$(echo $bonus_output | grep "failure_2")
-	failed_3=$(echo $bonus_output | grep "failure_3")
+	success_1=$(echo $bonus_output | grep "success_1")
+	success_2=$(echo $bonus_output | grep "success_2")
+	success_3=$(echo $bonus_output | grep "success_3")
 
 	bonus_points=0
 
-	if [ "$failed_1" == "" ]; then
+	if [ "$success_1" != "" ]; then
 		let "bonus_points=$bonus_points+3"
 	fi
 
-	if [ "$failed_2" == "" ]; then
+	if [ "$success_2" != "" ]; then
 		let "bonus_points=$bonus_points+3"
 	fi
 
-	if [ "$failed_3" == "" ]; then
+	if [ "$success_3" != "" ]; then
 		let "bonus_points=$bonus_points+4"
 	fi
 
@@ -958,7 +877,6 @@ else
 		echo "Destroy,0" >> $vocareumGradeFile
 	fi
 fi
-
 
 # Sub back in the existing main file so that it isn't overwritten
 mv saved_main.cpp main.cpp

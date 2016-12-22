@@ -71,14 +71,11 @@ private:
 	// Checks to see if a number is a power of two
 	bool isPowerOfTwo(unsigned int x);
 
-	// Functions to split/combine blocks of memory
-	//bool split_block(Addr start_address);
-	//bool combine_blocks(Addr start_address1, Addr start_address2);
-	//bool are_buddies(Addr start_address1, Addr start_address2);
+	std::map<int, Addr> *memory_array;
 
 public:
 
-	/* Getter Functions */
+	// Getter Functions
 	char *getHeadPointer();
 	unsigned int getBasicBlockSize();
 	unsigned int getMemSize();
@@ -86,48 +83,48 @@ public:
 	bool getInitialized();
 	std::map<int, Addr> *getMemoryArray();
 
+	// Are two blocks buddies?
 	bool are_buddies(Addr start_address1, Addr start_address2);
+	
+	// Combine two blocks pointed to by start_address1 and start_address2
+	// into one larger block and insert them into the memory array.  
+	// Only do this if they are buddies and the same size
 	bool combine_blocks(Addr start_address1, Addr start_address2);
+	
+	// Split a larger block into two smaller blocks, each half the size 
+	// of the larger block
 	bool split_block(Addr start_address);
 
-	/* Function to search for a block's brother.  Returns
-	 * (Addr) NULL if the brother is in use or is not found.  
-	 */
+	// Function to search for a block's brother.  Returns
+	// (Addr) NULL if the brother is in use or is not found.  
 	Addr find_unused_buddy(Addr sibling_block);
 
-	// MOVE THIS LATER!!!
-	std::map<int, Addr> *memory_array;
-
+	// Constructor
 	MyAllocator();
 	
-	/* This function initializes the memory allocator and makes a portion of 
-     * ’_mem_size’ bytes available. The allocator uses a ’_basic_block_size’ as 
-     * its minimal unit of allocation. The function returns the amount of 
-     * memory made available to the allocator. If an error occurred, 
-     * it returns 0. 
-     */ 
+	// This function initializes the memory allocator and makes a portion of 
+    // ’_mem_size’ bytes available. The allocator uses a ’_basic_block_size’ as 
+    // its minimal unit of allocation. The function returns the amount of 
+    // memory made available to the allocator. If an error occurred, 
+    // it returns 0. 
 	unsigned int init_allocator(unsigned int _basic_block_size, 
 		unsigned int _mem_size); 
 	
-	/* This function returns any allocated memory to the operating system. 
-     * After this function is called, any allocation fails.
-     */ 	
+	// This function returns any allocated memory to the operating system. 
+    // After this function is called, any allocation fails.
 	void release_allocator();
 	
-	/* Allocate _length number of bytes of free memory and returns the 
-     * address of the allocated portion. Returns 0 when out of memory. 
-     */ 
+	// Allocate _length number of bytes of free memory and returns the 
+    // address of the allocated portion. Returns 0 when out of memory.  
 	Addr my_malloc(unsigned int _length);
 	
-	/* Frees the section of physical memory previously allocated 
-     * using ’my_malloc’. Returns true if everything ok, false otherwise. 
-     */ 
+	// Frees the section of physical memory previously allocated 
+    // using ’my_malloc’. Returns true if everything ok, false otherwise.  
 	bool my_free(Addr _a);
 	
-	/* Diagnostic function to print out your entire memory array.  
-	 * Use this to view the state of your program for debugging
-	 */
-	 void print_array();
+	// Diagnostic function to print out your entire memory array.  
+	// Use this to view the state of your program for debugging
+	void print_array();
 	// Note from one student to another.  You will not be graded on the
 	// print_array function other than that it needs to output something
 	// reasonably coherent.  I would strongly recommend putting some time into

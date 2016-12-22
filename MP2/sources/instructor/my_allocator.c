@@ -76,8 +76,10 @@ bool MyAllocator::isPowerOfTwo(unsigned int x)
 MyAllocator::MyAllocator()
 {
 	memory_array = NULL;
+	head_pointer = NULL;
 	basic_block_size = 0;
 	mem_size = 0;
+	num_tiers = 0;
 	initialized = false;
 }
 

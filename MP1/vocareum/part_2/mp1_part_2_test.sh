@@ -20,11 +20,7 @@ echo "
 /* --------------------------------------------------------------------------- */
 
 #include <iostream>
-#include <sstream>
-#include <string.h>
-#include <getopt.h>
 #include <climits>
-#include <iomanip>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -37,68 +33,9 @@ int main(int argc, char ** argv)
 {
 	/* Variable declarations */
 	linked_list2 linkedList2;
-	int option_char;
 	int block_size = 128;
 	int mem_size = block_size * 128;
 	int tiers = 16;	
-	
-	char buf [1024];
-	memset (buf, 1, 1024);	
-
-	/* Argparse for command line options lives here */
-	while(( option_char = getopt(argc, argv, \"b:s:t:h\") ) != EOF)
-	{
-		switch(option_char)
-		{
-			case 'b': block_size = atoi(optarg); break;
-			case 's': mem_size = atoi(optarg); break;
-			case 't': tiers = atoi(optarg); break;
-            case 'h': std::cout << print_usage(); break;
-            case ':': std::cout << \"Unknown option!\n\"; return 1;
-		}
-	}
-	
-	/* Check input arguments for validity */
-	if(block_size < 0)
-	{
-		int new_block_size = 0;
-        std::cout << \"ERROR: Block size can not be negative!\" << std::endl
-		          << \"Please enter a new block size: \";
-		while (!(std::cin >> new_block_size) || (new_block_size < 0))
-        {
-            std::cout << \"Bad input - try again: \";
-            std::cin.clear();
-            std::cin.ignore(INT_MAX, '\n'); // NB: preferred method for flushing cin
-        }
-        block_size = new_block_size;
-	}
-	if(mem_size < 0)
-	{
-		int new_memory_size = 0;
-        std::cout << \"ERROR: Memory size can not be negative\" << std::endl
-		          << \"Please enter a new memory size: \";
-		while (!(std::cin >> new_memory_size) || (new_memory_size < 0))
-        {
-            std::cout << \"Bad input - try again: \";
-            std::cin.clear();
-            std::cin.ignore(INT_MAX, '\n'); // NB: preferred method for flushing cin
-        }
-        mem_size = new_memory_size;
-	}
-	if(tiers < 0)
-	{
-		int new_tiers = 0;
-        std::cout << \"ERROR: Number of tiers can not be negative\" << std::endl
-		          << \"Please enter a new number of tiers: \";
-		while (!(std::cin >> new_tiers) || (new_tiers < 0))
-        {
-            std::cout << \"Bad input - try again: \";
-            std::cin.clear();
-            std::cin.ignore(INT_MAX, '\n'); // NB: preferred method for flushing cin
-        }
-        tiers = new_tiers;
-		
-	}
 	
 	/* --------------------------------------------------------------------------- */
 	/* Test Constructor                                                            */
@@ -107,60 +44,48 @@ int main(int argc, char ** argv)
 	int bad_constructor_values = 0;
 
 	char** pre_head_pointer = linkedList2.getHeadPointer();
-	node** pre_front_pointer = linkedList2.getFrontPointer();
-	node** pre_free_pointer = linkedList2.getFreePointer();
-
-	int pre_block_size = linkedList2.getBlockSize();
-	int pre_mem_size = linkedList2.getMemSize();
-	int pre_max_data_size = linkedList2.getMaxDataSize();
-	int pre_num_tiers = linkedList2.getNumTiers();
-	bool pre_initialized = linkedList2.getInitialized();
 
 	if(pre_head_pointer != NULL)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(pre_front_pointer != NULL)
+	if(linkedList2.getFrontPointer() != NULL)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(pre_free_pointer != NULL)
+	if(linkedList2.getFreePointer() != NULL)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(pre_block_size != 0)
+	if(linkedList2.getBlockSize() != 0)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(pre_mem_size != 0)
+	if(linkedList2.getMemSize() != 0)
 	{
 		bad_constructor_values += 1;
 	}
 	
-	if(pre_max_data_size != 0)
+	if(linkedList2.getMaxDataSize() != 0)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(pre_num_tiers != 0)
+	if(linkedList2.getNumTiers() != 0)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(pre_initialized != false)
+	if(linkedList2.getInitialized() != false)
 	{
 		bad_constructor_values += 1;
 	}
 
-	if(bad_constructor_values > 0)
-	{
-		std::cout << \"Class Constructor Failed \" << std::endl;
-	}
-	else
+	if(bad_constructor_values == 0)
 	{
 		std::cout << \"Class Constructor Succeeded \" << std::endl;
 	}
@@ -174,17 +99,11 @@ int main(int argc, char ** argv)
 
 	int bad_init_values = 0;
 
-	char** init_head_pointer = linkedList2.getHeadPointer();
 	node** init_front_pointer = linkedList2.getFrontPointer();
 	node** init_free_pointer = linkedList2.getFreePointer();
 
-	int init_block_size = linkedList2.getBlockSize();
-	int init_mem_size = linkedList2.getMemSize();
-	int init_max_data_size = linkedList2.getMaxDataSize();
-	int init_num_tiers = linkedList2.getNumTiers();
-	bool init_initialized = linkedList2.getInitialized();
-
-	if(init_head_pointer == NULL || init_head_pointer == pre_head_pointer)
+	if(linkedList2.getHeadPointer() == NULL 
+		|| linkedList2.getHeadPointer() == pre_head_pointer)
 	{
 		bad_init_values += 1;
 	}
@@ -217,27 +136,27 @@ int main(int argc, char ** argv)
 		bad_init_values += 1;
 	}
 	
-	if(init_block_size != block_size)
+	if(linkedList2.getBlockSize() != block_size)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_mem_size != mem_size)
+	if(linkedList2.getMemSize() != mem_size)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_max_data_size != (block_size - sizeof(node)))
+	if(linkedList2.getMaxDataSize() != (block_size - sizeof(node)))
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_num_tiers != tiers)
+	if(linkedList2.getNumTiers() != tiers)
 	{
 		bad_init_values += 1;
 	}
 
-	if(init_initialized != true)
+	if(linkedList2.getInitialized() != true)
 	{
 		bad_init_values += 1;
 	}
@@ -255,588 +174,53 @@ int main(int argc, char ** argv)
 	// Insert some stuff in a few different tiers and make sure the data ends 
 	// up in the right place
 	int numbers_per_tier = INT_MAX/tiers;
-	linkedList2.Insert(0, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 1, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 2, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 3, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 4, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 5, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 6, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 7, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 8, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 9, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 10, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 11, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 12, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 13, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 14, \"Hello World!\", 12);
-	linkedList2.Insert(numbers_per_tier * 15, \"Hello World!\", 12);
+	for(unsigned short int i=0; i<16; i++)
+    {
+		linkedList2.Insert(numbers_per_tier * i, \"Hello World!\", 12);                                      
+  	}
 
 	/* Lookup each node to see if it is in the right place */
-	node* lookup_node = NULL;
 	int failed_lookups = 0;
 
-	node* lookup_test = NULL;
 	int insert_failures = 0;
 	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 0);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 0)
+    node *lookup_test = NULL;
+   	for(unsigned short int i=0; i<16; i++)
+    {
+		lookup_test = linkedList2.Lookup(numbers_per_tier * i);
+		if(lookup_test == NULL)
 		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
+			failed_lookups += 1;
 		}
 		else
 		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
+			if(lookup_test->key != numbers_per_tier * i)
 			{
 				insert_failures += 1;
 			}
-		}
-	}
+			else if(lookup_test->value_len != 12)
+			{
+				insert_failures += 1;
+			}
+			else
+			{
+				char* node_address = (char*) lookup_test;
+				node_address = node_address + sizeof(node);
+					
+				// Iterate through pointers to recover the entire string
+				std::string data_string = \"\";
+				for(int i=0; i<12; i++)
+				{
+					data_string = data_string + *node_address;
+					node_address++;
+				}
 	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 1);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 1)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
+				if(data_string != \"Hello World!\")
+				{
+					insert_failures += 1;
+				}
 			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 2);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 2)
-		{
-			insert_failures += 1;
 		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 3);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 3)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 4);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 4)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 5);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 5)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 6);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 6)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 7);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 7)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 8);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 8)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 9);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 9)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 10);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 10)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 11);
-	if(lookup_test == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 11)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 12);
-	if(linkedList2.Lookup(numbers_per_tier * 12) == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 12)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 13);
-	if(linkedList2.Lookup(numbers_per_tier * 13) == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 13)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 14);
-	if(linkedList2.Lookup(numbers_per_tier * 14) == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 14)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
-	}
-	
-	lookup_test = linkedList2.Lookup(numbers_per_tier * 15);
-	if(linkedList2.Lookup(numbers_per_tier * 15) == NULL)
-	{
-		failed_lookups += 1;
-	}
-	else
-	{
-		if(lookup_test->key != numbers_per_tier * 15)
-		{
-			insert_failures += 1;
-		}
-		else if(lookup_test->value_len != 12)
-		{
-			insert_failures += 1;
-		}
-		else
-		{
-			char* node_address = reinterpret_cast<char*>(lookup_test);
-			node_address = node_address + sizeof(node);
-			
-			// Iterate through pointers to recover the entire string
-			std::string data_string = \"\";
-			for(int i=0; i<12; i++)
-			{
-				data_string = data_string + *node_address;
-				node_address++;
-			}
-
-			if(data_string != \"Hello World!\")
-			{
-				insert_failures += 1;
-			}
-		}		
 	}
 	
 	if(failed_lookups > 0)
@@ -884,6 +268,10 @@ int main(int argc, char ** argv)
 		std::cout << \"Failed Tier Setup \" << failed_tiers
 			<< \" \" << std::endl;
 	}
+	else
+	{
+		std::cout << \"Tier Setup Succeeded \" << std::endl;
+	}
 		
 	/* Test Deletions */
 	int failed_deletions = 0;
@@ -891,22 +279,21 @@ int main(int argc, char ** argv)
 	for(int i=0; i<16; i++)
 	{
 		linkedList2.Delete(numbers_per_tier * i);
+                       
+        if(linkedList2.Lookup(numbers_per_tier * i) != NULL)
+        {
+        	failed_deletions += 1;              
+        }
 	}
-	
-	for(int i=0; i<16; i++)
-	{
-		node* test_node = linkedList2.Lookup(numbers_per_tier * i);
-		
-		if(test_node != NULL)
-		{
-			failed_deletions += 1;
-		}
-	}
-	
+
 	if(failed_deletions > 0)
 	{
 		std::cout << \"Failed Delete \" << failed_deletions
 			<< \" \" << std::endl;
+	}
+	else
+	{
+		std::cout << \"Delete Succeeded \" << std::endl;
 	}
 
 	/* Test Destroy */
@@ -942,69 +329,58 @@ int main(int argc, char ** argv)
 		|| pre_destroy_head_pointer == post_destroy_head_pointer)
 	{
 		failed_destroy += 1;
-		std::cout << \"Flag 1\" << std::endl;
 	}
 	
 	if(post_destroy_front_pointer != NULL
 		|| pre_destroy_front_pointer == post_destroy_front_pointer)
 	{
 		failed_destroy += 1;
-		
-		std::cout << \"Pre: \" << pre_destroy_front_pointer << std::endl;
-		std::cout << \"Post: \" << post_destroy_front_pointer << std::endl;
-		std::cout << \"Flag 2\" << std::endl;
 	}
 	
 	if(post_destroy_free_pointer != NULL
 		|| pre_destroy_free_pointer == post_destroy_free_pointer)
 	{
 		failed_destroy += 1;
-		
-		std::cout << \"Pre: \" << pre_destroy_free_pointer << std::endl;
-		std::cout << \"Post: \" << post_destroy_free_pointer << std::endl;
-		
-		std::cout << \"Flag 3\" << std::endl;
 	}
 	
 	if(post_destroy_block_size != 0
 		|| pre_destroy_block_size == post_destroy_block_size)	
 	{
 		failed_destroy += 1;
-		std::cout << \"Flag 4\" << std::endl;
 	}
 	
 	if(post_destroy_mem_size != 0
 		|| pre_destroy_mem_size == post_destroy_mem_size)
 	{
 		failed_destroy += 1;
-		std::cout << \"Flag 5\" << std::endl;
 	}
 	
 	if(post_destroy_max_data_size != 0
 		|| pre_destroy_mem_size == post_destroy_mem_size)
 	{
 		failed_destroy += 1;
-		std::cout << \"Flag 6\" << std::endl;
 	}
 	
 	if(post_destroy_num_tiers != 0
 		|| pre_destroy_num_tiers == post_destroy_num_tiers)
 	{
 		failed_destroy += 1;
-		std::cout << \"Flag 7\" << std::endl;
 	}
 	
 	if(post_destroy_initialized != false
 		|| pre_destroy_initialized == post_destroy_initialized)
 	{
 		failed_destroy += 1;
-		std::cout << \"Flag 8\" << std::endl;
 	}
 	
 	if(failed_destroy > 0)
 	{
 		std::cout << \"Failed Destroy \" << failed_destroy
 			<< \" \" << std::endl;
+	}
+	else
+	{
+		std::cout << \"Destroy Succeeded \" << std::endl;
 	}
 
 	return 0;
@@ -1053,12 +429,6 @@ if [ "$test_output" == "" ]; then
 	exit 1
 fi
 
-# Search to see how the test program performed
-test_constructor=$(echo "$test_output" | grep "Class Constructor Succeeded")
-test_init=$(echo "$test_output" | grep "Init Succeeded")
-test_lookup=$(echo "$test_output" | grep "Lookup Succeeded")
-test_insert=$(echo "$test_output" | grep "Insert Succeeded")
-
 # Maximum points for each category
 init_points=16
 destroy_points=6
@@ -1068,12 +438,13 @@ lookup_points=8
 printlist_points=8
 bonus_points=10
 
-# Init 
-if [ "$test_constructor" == "" ]; then
+# Constructor 
+if [ "$(echo "$test_output" | grep "Class Constructor Succeeded")" == "" ]; then
 	let "init_points=$init_points-8"
 fi
 
-if [ "$test_init" == "" ]; then
+# Init
+if [ "$(echo "$test_output" | grep "Init Succeeded")" == "" ]; then
 	number_bad=$(echo "$test_output" | grep "Bad Init Values")
 
 	if [ "$number_bad" != "" ]; then
@@ -1090,7 +461,7 @@ if [ "$test_init" == "" ]; then
 fi
 
 # Lookup
-if [ "$test_lookup" == "" ]; then
+if [ "$(echo "$test_output" | grep "Lookup Succeeded")" == "" ]; then
 	number_bad=$(echo "$test_output" | grep "Faled Lookup")
 
 	if [ "$number_bad" != "" ]; then
@@ -1107,7 +478,7 @@ if [ "$test_lookup" == "" ]; then
 fi
 
 # Insert
-if [ "$test_insert" == "" ]; then
+if [ "$(echo "$test_output" | grep "Insert Succeeded")" == "" ]; then
 	number_bad=$(echo "$test_output" | grep "Failed Insert")
 	
 	if [ "$number_bad" != "" ]; then
@@ -1126,8 +497,7 @@ if [ "$test_insert" == "" ]; then
 fi
 
 # Tier Setup (Pairs with init)
-test_tier=$(echo "$test_output" | grep "Failed Tier Setup")
-if [ "$test_tier" != "" ]; then
+if [ "$(echo "$test_output" | grep "Tier Setup Succeeded")" == "" ]; then
 	temp4=$(echo "$test_lookup" | sed 's/.*Failed Tier Setup[ ]\([0-9]*\).*/\1/g')
 	
 	tier_subtraction=$temp4
@@ -1138,8 +508,7 @@ if [ "$test_tier" != "" ]; then
 fi
 
 # Delete
-test_delete=$(echo "$test_output" | grep "Failed Delete")
-if [ "$test_delete" != "" ]; then
+if [ "$(echo "$test_output" | grep "Delete Succeeded")" == "" ]; then
 	temp5=$(echo "$test_delete" | sed 's/.*Failed Delete[ ]\([0-9]*\).*/\1/g')
 
 	delete_subtraction=$temp5
@@ -1154,8 +523,7 @@ if [ "$test_delete" != "" ]; then
 fi
 
 # Destroy
-test_destroy=$(echo "$test_output" | grep "Failed Destroy")
-if [ "$test_destroy" != "" ]; then
+if [ "$(echo "$test_output" | grep "Destroy Succeeded")" == "" ]; then
 	temp6=$(echo "$test_destroy" | sed 's/.*Failed Destroy[ ]\([0-9]*\).*/\1/g')
 
 	destroy_subtraction=$temp6
@@ -1185,11 +553,7 @@ echo "
 /* --------------------------------------------------------------------------- */
 
 #include <iostream>
-#include <sstream>
-#include <string.h>
-#include <getopt.h>
 #include <climits>
-#include <iomanip>
 
 /* --------------------------------------------------------------------------- */
 /* User Defined Includes                                                       */
@@ -1202,75 +566,13 @@ int main(int argc, char ** argv)
 {
 	/* Variable declarations */
 	linked_list2 linkedList2;
-	int option_char;
 	int block_size = 128;
 	int mem_size = block_size * 128;
 	int tiers = 16;	
-	
-	char buf [1024];
-	memset (buf, 1, 1024);	
-
-	/* Argparse for command line options lives here */
-	while(( option_char = getopt(argc, argv, \"b:s:t:h\") ) != EOF)
-	{
-		switch(option_char)
-		{
-			case 'b': block_size = atoi(optarg); break;
-			case 's': mem_size = atoi(optarg); break;
-			case 't': tiers = atoi(optarg); break;
-            case 'h': std::cout << print_usage(); break;
-            case ':': std::cout << \"Unknown option!\n\"; return 1;
-		}
-	}
-	
-	/* Check input arguments for validity */
-	if(block_size < 0)
-	{
-		int new_block_size = 0;
-        std::cout << \"ERROR: Block size can not be negative!\" << std::endl
-		          << \"Please enter a new block size: \";
-		while (!(std::cin >> new_block_size) || (new_block_size < 0))
-        {
-            std::cout << \"Bad input - try again: \";
-            std::cin.clear();
-            std::cin.ignore(INT_MAX, '\n'); // NB: preferred method for flushing cin
-        }
-        block_size = new_block_size;
-	}
-	if(mem_size < 0)
-	{
-		int new_memory_size = 0;
-        std::cout << \"ERROR: Memory size can not be negative\" << std::endl
-		          << \"Please enter a new memory size: \";
-		while (!(std::cin >> new_memory_size) || (new_memory_size < 0))
-        {
-            std::cout << \"Bad input - try again: \";
-            std::cin.clear();
-            std::cin.ignore(INT_MAX, '\n'); // NB: preferred method for flushing cin
-        }
-        mem_size = new_memory_size;
-	}
-	if(tiers < 0)
-	{
-		int new_tiers = 0;
-        std::cout << \"ERROR: Number of tiers can not be negative\" << std::endl
-		          << \"Please enter a new number of tiers: \";
-		while (!(std::cin >> new_tiers) || (new_tiers < 0))
-        {
-            std::cout << \"Bad input - try again: \";
-            std::cin.clear();
-            std::cin.ignore(INT_MAX, '\n'); // NB: preferred method for flushing cin
-        }
-        tiers = new_tiers;
-		
-	}
 
 	/*Initialize the list using the given parameters*/
 	linkedList2.Init(mem_size, block_size, tiers);
-	int numbers_per_tier = INT_MAX/tiers;
-
 	int total_num_blocks = mem_size / block_size;
-	int blocks_per_tier = total_num_blocks / tiers;
 	
 	/* 
 	 * If the list looses track of data when delete is called, then
@@ -1280,16 +582,16 @@ int main(int argc, char ** argv)
 	bool failure = false;
 	for(int i=0; i<2 * total_num_blocks; i++)
 	{
-		linkedList2.Insert(numbers_per_tier * 0, \"Hello World!\", 12);
-		node* test_node = linkedList2.Lookup(numbers_per_tier * 0);
+		linkedList2.Insert(0, \"Hello World!\", 12);
+		node* test_node = linkedList2.Lookup(0);
 		if(test_node == NULL)
 		{
 			failure = true;
 			break;
 		}
-		linkedList2.Delete(numbers_per_tier * 0);
+		linkedList2.Delete(0);
 		
-		test_node = linkedList2.Lookup(numbers_per_tier * 0);
+		test_node = linkedList2.Lookup(0);
 		if(test_node != NULL)
 		{
 			failure = true;
@@ -1304,6 +606,8 @@ int main(int argc, char ** argv)
 }
 " > main.cpp
 
+
+ 
 make &> /dev/null
 
 if [ "$?" != 0 ]; then

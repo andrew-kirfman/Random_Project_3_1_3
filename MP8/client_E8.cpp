@@ -65,15 +65,15 @@
     but they might help.
  */
 struct PARAMS_request {
-    
+
 };
 
 struct PARAMS_WORKER {
-    
+
 };
 
 struct PARAMS_STAT {
-    
+
 };
 
 /*
@@ -118,15 +118,15 @@ std::string make_histogram(std::string name, std::vector<int> *data) {
     You'll need to fill these in.
 */
 void* request_thread_function(void* arg) {
-    
+
 }
 
 void* worker_thread_function(void* arg) {
-    
+
 }
 
 void* stat_thread_function(void* arg) {
-    
+
 }
 
 /*--------------------------------------------------------------------------*/
@@ -168,9 +168,9 @@ int main(int argc, char * argv[]) {
                 exit(0);
         }
     }
-    
+
     int pid = fork();
-    if(pid == 0){
+	if (pid > 0) {
         struct timeval start_time;
         struct timeval finish_time;
         int64_t start_usecs;
@@ -178,28 +178,29 @@ int main(int argc, char * argv[]) {
         std::ofstream ofs;
         if(USE_ALTERNATE_FILE_OUTPUT) ofs.open("output2.txt", std::ios::out | std::ios::app);
         else ofs.open("output.txt", std::ios::out | std::ios::app);
-        
+
         std::cout << "n == " << n << std::endl;
         std::cout << "b == " << b << std::endl;
         std::cout << "w == " << w << std::endl;
-        
+
         std::cout << "CLIENT STARTED:" << std::endl;
         std::cout << "Establishing control channel... " << std::flush;
         RequestChannel *chan = new RequestChannel("control", RequestChannel::CLIENT_SIDE);
         std::cout << "done." << std::endl;
-        
+
         /*
             This time you're up a creek.
             What goes in this section of the code?
-            Hint: it looks a bit like what went here 
+            Hint: it looks a bit like what went here
             in MP7, but only a *little* bit.
          */
-        
+
         ofs.close();
         std::cout << "Sleeping..." << std::endl;
         usleep(10000);
         std::string finale = chan->send_request("quit");
         std::cout << "Finale: " << finale << std::endl;
     }
-    else if(pid != 0) execl("dataserver", NULL);
+	else if (pid == 0)
+		execl("dataserver", NULL);
 }

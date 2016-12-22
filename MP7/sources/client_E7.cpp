@@ -234,7 +234,7 @@ int main(int argc, char * argv[]) {
     }
 
     int pid = fork();
-    if(pid == 0){
+	if (pid > 0) {
 
         std::cout << "n == " << n << std::endl;
         std::cout << "w == " << w << std::endl;
@@ -383,6 +383,6 @@ int main(int argc, char * argv[]) {
         delete chan;
         std::cout << "Finale: " << finale << std::endl; //However, this line is optional.
     }
-	else if (pid != 0)
+	else if (pid == 0)
 		execl("dataserver", (char*) NULL);
 }

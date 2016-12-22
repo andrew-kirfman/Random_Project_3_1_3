@@ -200,22 +200,22 @@ void* worker_thread_function(void* arg) {
 		}
 
         if(request == "data John Smith") {
-            pthread_mutex_lock(wp.john_m);
+			pthread_mutex_lock(wp.john_m);
             wp.john_frequency_count->at(stoi(response) / 10) += 1;
-            pthread_mutex_unlock(wp.john_m);
+			pthread_mutex_unlock(wp.john_m);
         }
         else if(request == "data Jane Smith") {
-            pthread_mutex_lock(wp.jane_m);
+			pthread_mutex_lock(wp.jane_m);
             wp.jane_frequency_count->at(stoi(response) / 10) += 1;
-            pthread_mutex_unlock(wp.jane_m);
+			pthread_mutex_unlock(wp.jane_m);
         }
         else if(request == "data Joe Smith") {
-            pthread_mutex_lock(wp.joe_m);
+			pthread_mutex_lock(wp.joe_m);
             wp.joe_frequency_count->at(stoi(response) / 10) += 1;
-            pthread_mutex_unlock(wp.joe_m);
+			pthread_mutex_unlock(wp.joe_m);
         }
         else if(request == "quit") {
-            delete wp.workerChannel;
+			delete wp.workerChannel;
             break;
         }
     }
@@ -286,7 +286,7 @@ int main(int argc, char * argv[]) {
     }
 
     pid_t pid = fork();
-    if(pid == 0){
+	if (pid > 0) {
         struct timeval start_time;
         struct timeval finish_time;
         int64_t start_usecs;
@@ -357,7 +357,7 @@ int main(int argc, char * argv[]) {
 		pthread_create(&john_req_tid, NULL, request_thread_function, (void*) &john_req_params);
 		pthread_create(&jane_req_tid, NULL, request_thread_function, (void*) &jane_req_params);
 		pthread_create(&joe_req_tid, NULL, request_thread_function, (void*) &joe_req_params);
-
+		sleep(5);
 		pthread_join(john_req_tid, NULL);
 		pthread_join(jane_req_tid, NULL);
 		pthread_join(joe_req_tid, NULL);
@@ -431,7 +431,7 @@ int main(int argc, char * argv[]) {
 			}
 		}
 
-		for(int i = 0; i < w; ++i) {
+		for (int i = 0; i < w; ++i) {
 			if(v >= VERBOSITY_HYPER) threadsafe_console_output.println("MAIN: joining worker thread " + std::to_string(i) + "...");
 			if(!wtps[i].failed && (errno = pthread_join(wtids[i], NULL)) != 0) {
 				threadsafe_console_output.perror("MAIN: failed on pthread_join for [" + std::to_string(i) + "]");
@@ -484,7 +484,7 @@ int main(int argc, char * argv[]) {
 		 	must be called somehow.
          */
         std::string finale = chan->send_request("quit");
-        delete chan;
+		delete chan;
 
 		std::ofstream ofs;
 		ofs.open("output.txt", std::ios::out | std::ios::app);
@@ -503,6 +503,6 @@ int main(int argc, char * argv[]) {
 		if (v >= VERBOSITY_DEFAULT)
 			std::cout << "Finale: " << finale << std::endl;
     }
-	else if (pid != 0)
+	else if (pid == 0)
 		execl("dataserver", (char*) NULL);
 }

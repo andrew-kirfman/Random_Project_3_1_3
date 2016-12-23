@@ -12,12 +12,8 @@
 /* Standard Library Includes                                                */ 
 /*--------------------------------------------------------------------------*/
 
-#include<vector>
-#include<iostream>
-#include<map>
-#include<unistd.h>
-#include<stdio.h>
-#include<stdlib.h>
+#include <iostream>
+#include <map>
 
 /*--------------------------------------------------------------------------*/
 /* Standard Library Includes                                                */ 

@@ -49,7 +49,11 @@ output*.txt
 #Eclipse byproducts
 .project
 .cproject
+.pydevproject
 
 #Other
 *.gz*
 .settings
+*.swp
+install
+3.4.2

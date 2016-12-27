@@ -1,5 +1,7 @@
 import sys
 import gdb
+from subprocess import call
 
-print("Hello World!");
-gdb.execute('quit');
+call(["make", "clean"])
+call(["make", "all"])
+gdb.execute('quit')

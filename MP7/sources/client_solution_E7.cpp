@@ -357,7 +357,7 @@ int main(int argc, char * argv[]) {
 		pthread_create(&john_req_tid, NULL, request_thread_function, (void*) &john_req_params);
 		pthread_create(&jane_req_tid, NULL, request_thread_function, (void*) &jane_req_params);
 		pthread_create(&joe_req_tid, NULL, request_thread_function, (void*) &joe_req_params);
-		sleep(5);
+//		sleep(5);
 		pthread_join(john_req_tid, NULL);
 		pthread_join(jane_req_tid, NULL);
 		pthread_join(joe_req_tid, NULL);

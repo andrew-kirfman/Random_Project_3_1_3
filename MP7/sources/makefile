@@ -18,4 +18,4 @@ client_solution: client_solution_E7.cpp reqchannel.o SafeBuffer.o
 	g++ -std=c++11 -g -O1 -o client_solution client_solution_E7.cpp reqchannel.o SafeBuffer.o -lpthread -lrt
 
 clean:
-	rm -rf *.o fifo* *.DS_Store dataserver dataserver_debug client client_solution client_debug client_solution_debug output*
+	rm -rf *.o fifo* *.DS_Store dataserver dataserver_debug client client_solution client_debug client_solution_debug *output*

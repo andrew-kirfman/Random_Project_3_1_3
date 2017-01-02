@@ -33,7 +33,7 @@ client_solution
 reqchannel_test
 
 #Extraneous Program Output
-output*.txt
+*output*.txt
 
 #OS X mumbo-jumbo
 *.dSYM

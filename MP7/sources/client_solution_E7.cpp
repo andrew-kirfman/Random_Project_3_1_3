@@ -227,7 +227,7 @@ void* worker_thread_function(void* arg) {
 
 int main(int argc, char * argv[]) {
 
-    int n = 10000; //default number of requests per "patient"
+	int n = 100; //default number of requests per "patient"
     int w = 10; //default number of worker threads
     int v = VERBOSITY_DEFAULT;
     int opt = 0;
@@ -337,16 +337,6 @@ int main(int argc, char * argv[]) {
                                              &jane_frequency_count, &joe_frequency_count,
                                              &john_m, &jane_m, &joe_m, v));
 
-        /*
-            Request buffer is populated sequentially,
-            as opposed to using request threads as in
-            the original MP4. "quit" requests are pushed
-            in advance as well, since there's no bounded
-            buffer to manage the synchronization.
-         */
-
-        //assert(gettimeofday(&start_time, 0) == 0);
-
         if(v >= VERBOSITY_DEBUG) {
             std::cout << "Populating request buffer; starting request threads... ";
             fflush(NULL);
@@ -357,7 +347,6 @@ int main(int argc, char * argv[]) {
 		pthread_create(&john_req_tid, NULL, request_thread_function, (void*) &john_req_params);
 		pthread_create(&jane_req_tid, NULL, request_thread_function, (void*) &jane_req_params);
 		pthread_create(&joe_req_tid, NULL, request_thread_function, (void*) &joe_req_params);
-//		sleep(5);
 		pthread_join(john_req_tid, NULL);
 		pthread_join(jane_req_tid, NULL);
 		pthread_join(joe_req_tid, NULL);
@@ -471,7 +460,7 @@ int main(int argc, char * argv[]) {
 			std::cout << "Time to completion: "
 			        << std::to_string(finish_usecs - start_usecs) << " usecs"
 			        << std::endl;
-		if (v >= VERBOSITY_DEBUG)
+		if (v >= VERBOSITY_DEFAULT)
 			std::cout << histogram_table << std::endl;
 
 		if (v >= VERBOSITY_DEFAULT)

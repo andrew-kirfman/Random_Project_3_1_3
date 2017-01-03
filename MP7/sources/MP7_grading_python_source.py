@@ -9,13 +9,15 @@ from subprocess import call
 		2. Take arguments for run instead of hard-coding them.
 		3. Record grading-relevant final results cleanly and efficiently
 		4. Error-checked
+		5. Access and observe request_buffer directly from Python,
+		rather than parsing enormous amounts of program output.
 """
 def stop_handler (event):
 	try:
 		print ("event is something like " + event.__class__.__name__)
 		if event.__class__.__name__ == "BreakpointEvent":
 			for bp in event.breakpoints:
-				print("Hit breakpoint at " + bp.location)
+				print("Hit breakpoint at " + str(bp.location))
 				if bp.location == "request_thread_function" and bp.hit_count == 1:
 					""" Wish List #1 """
 					gdb.execute("thread 1")
@@ -41,7 +43,6 @@ def stop_handler (event):
 						supposedly from trying to convert a NoneType to a str.
 						What's going on here?
 					"""
-					# data_watch = gdb.Breakpoint("-l request_buffer.data", gdb.BP_WATCHPOINT, gdb.WP_WRITE, False, False)
 					gdb.execute("watch -l request_buffer.data")
 		print("Un-breaking/continuing...")
 		gdb.execute("cont")
@@ -55,7 +56,7 @@ def main():
 		rtf_break = gdb.Breakpoint("request_thread_function", gdb.BP_BREAKPOINT, 0, False, False)
 		wtf_break = gdb.Breakpoint("worker_thread_function", gdb.BP_BREAKPOINT, 0, False, False)
 		""" Wish List #2 """
-		gdb.execute("run -v 3 -w 40 -n 100")
+		gdb.execute("run -v 3 -w 20 -n 100")
 		""" ------------ """
 		gdb.execute("quit")
 	except TypeError:

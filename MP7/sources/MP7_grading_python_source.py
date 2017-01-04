@@ -45,25 +45,36 @@ from subprocess import call
 		gdb.breakpoints()[1] - worker_thread_function
 		gdb.breakpoints()[2] - display_histograms
 		gdb.breakpoints()[3] - -location request_buffer.data
+		
+	Questions I have yet to answer:
+		1. Should calls to pthread_create and pthread_join
+		be breakpoint-checked, to ensure correct orderings? Their
+		arguments could also be checked each time, if it would help.
 """
 
 rtf_hitcount = 0
 wtf_hitcount = 0
+
+R1_three_request_threads = False
+R3_request_threads_running_when_workers_start = False
+W1_worker_threads_running_when_mht_called = False
+W3_1_SafeBuffer_used = False
+
 
 def stop_handler (event):
 	try:
 		if event.__class__.__name__ == "BreakpointEvent":
 			for bp in event.breakpoints:
 				print("Hit breakpoint at " + str(bp.location))
-				if bp.location == "request_thread_function":
+				if bp.location == "request_thread_function" or bp.number == 1:
 					rtf_hitcount = bp.hit_count
 					if bp.hit_count == 1:
 						gdb.execute("thread 1")
 						gdb.execute("up 99999")
 						gdb.execute("watch -l request_buffer.data")
 						if gdb.execute("whatis request_buffer", False, True) == "type = SafeBuffer\n":
-							W3_1_gained = True
-							print("Student gained points for W3.1!")
+							W3_1_SafeBuffer_used = True
+							print("Student used SafeBuffer!")
 							"""
 								Odds are that the student will lose a lot more points than
 								just W3.1 if they don't use the SafeBuffer class.
@@ -73,18 +84,51 @@ def stop_handler (event):
 								data watchpoint is added, now can we?
 							"""
 						else:
-							W3_1_gained = False
-							print("Student lost points for W3.1...")
+							W3_1_SafeBuffer_used = False
+							print("Student did not use SafeBuffer...")
+					elif bp.hit_count == 3:
+						R1_three_request_threads = True
+						print("Third request thread created!")
+					elif three_request_threads = True and bp.hit_count > 3:
+						R1_three_request_threads = False
+						print("Seriously, why would you make more than 3 request threads?")
 		
-				elif bp.location == "worker_thread_function":
+				elif bp.location == "worker_thread_function" or bp.number == 2:
 					wtf_hitcount = bp.hit_count
 					if bp.hit_count == 1:
 						if len(gdb.inferiors()[0].threads()) == 2:
-							R3_gained = True
-							print("Student gained points for R3!")
+							R3_request_threads_running_when_workers_start = True
+							print("Request threads halted before worker threads began!")
 						else:
-							R3_gained = False
-							print("Student lost points for R3...")
+							R3_request_threads_running_when_workers_start = False
+							print("Request threads did not halt before worker threads began...")
+				elif bp.location == "make_histogram_table" or bp.number == 3:
+					"""
+						This might be a good place to compare wtf_hitcount to
+						the w parameter, if that ends up having relevance.
+						
+						May also want to check whether contents of request_buffer
+						are as expected (empty).
+					"""
+					if len(gdb.inferiors()[0].threads()) == 1:
+						"""
+							This is only one of the factors that goes in
+							to evaluating W1, need to flesh out the system.
+						"""
+						W1_worker_threads_running_when_mht_called = True
+						print("Worker threads halted before call to make_histogram_table!")
+					else:
+						W1_worker_threads_running_when_mht_called = False
+						print("Worker threads did not halt before call to make_histogram_table...")
+					"""
+						Would this be a good place to evaluate
+						the output of make_histogram_table?
+					"""
+				elif bp.location == None or bp.number == 4
+					"""
+						Now it's time to figure out how to crack
+						into the request_buffer from Python!
+					"""
 	
 		print("Un-breaking/continuing...")
 		gdb.execute("cont")
@@ -97,8 +141,14 @@ def main():
 		gdb.events.stop.connect (stop_handler)
 		rtf_break = gdb.Breakpoint("request_thread_function", gdb.BP_BREAKPOINT, 0, False, False)
 		wtf_break = gdb.Breakpoint("worker_thread_function", gdb.BP_BREAKPOINT, 0, False, False)
-		display_break = gdb.Breakpoint("display_histograms", gdb.BP_BREAKPOINT, 0, False, False)
+		histogram_break = gdb.Breakpoint("make_histogram_table", gdb.BP_BREAKPOINT, 0, False, False)
 		gdb.execute("run -v 3 -w 20 -n 100")
+		"""
+			Guessing that this is the place where all
+			the points would be tallied up based on the
+			variables evaluated at the different
+			break points.
+		"""
 		gdb.execute("quit")
 	except TypeError:
 		traceback.print_exc()

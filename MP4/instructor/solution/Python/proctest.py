@@ -886,40 +886,6 @@ def main():
     temp_mem_array = process_data.getmemory_map()
     for line in temp_mem_array:
         print "     %s" % line
-"""
-    print "  5) Time Information"
-    print "     stime: %s" % stat_array[14]
-    print "     utime: %s" % stat_array[13]
-    print "     cstime: %s" % stat_array[16]
-    print "     cutime: %s" % stat_array[15]
-    print ""
-    print "  6) Address Space"
-    print "     Startcode: %s" % stat_array[25]
-    print "     Endcode: %s" % stat_array[26]
-    print "     ESP: %s" % stat_array[28]
-    print "     EIP: %s" % stat_array[29]
-    print ""
-    print "  7) Resources"
-    print "     File Handles: %s" % (num_fds - 1)
-    for i in range(0, len(status_array) - 1):
-        if "voluntary" in status_array[i][0] and "nonvoluntary" not in status_array[i][0]:
-            print "     Voluntary Context Switches: %s" % status_array[i][1]
-
-    for i in range(0, len(status_array)):
-        if "nonvoluntary" in status_array[i][0]:
-            print "     Involuntary Context Switches: %s" % status_array[i][1]
-    print ""
-    print "  8) Processor"
-    print "     Last Processor: %s" % stat_array[38]
-    for i in range(0, len(status_array)):
-        if "Cpus_allowed" in status_array[i][0] and "list" not in status_array[i][0]:
-            print "     Allowed Cores: %s" % status_array[35][0]
-    print ""
-    print "  9) Memory Map"
-    # Print memory map
-    for item in mem_array:
-        print "     %s" % item
-"""
 
 
 if __name__ == "__main__":

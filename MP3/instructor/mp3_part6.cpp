@@ -45,7 +45,7 @@ int main()
 
         int ret_val = 0;
 
-        ret_val = execlp("ps", "ps", "-elf", NULL);
+        ret_val = execlp("ls", "ls", "-la", NULL);
 
         if(ret_val == -1)
         {

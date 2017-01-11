@@ -20,6 +20,8 @@ int main()
 
     // execl won't return if it is successful
     ret_val = execl("/bin/ls", "/bin/ls", "-la", NULL);
+    //ret_val = execl("/bin/ls", "/bin/ls", "-la", NULL);
+
 
     if(ret_val == -1)
     {

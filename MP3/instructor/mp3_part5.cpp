@@ -28,7 +28,7 @@ int main()
     }
     else if(pid == 0)
     {
-        std::cout << "Hello" << std::endl;   
+        std::cout << "Hello";   
     }
     else
     {

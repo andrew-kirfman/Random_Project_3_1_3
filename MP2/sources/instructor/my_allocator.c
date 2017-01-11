@@ -231,7 +231,15 @@ void MyAllocator::release_allocator()
 	
 	// Actually free the head pointer
 	free(head_pointer);
-	
+ 
+ 	// Also free the memory array
+	free(memory_array);
+ 	
+ 	// Set everything to null
+ 	head_pointer = NULL;
+ 	memory_array = NULL;
+ 
+ 
 	// Also set initialized = false to indicate that memory was freed.  
 	initialized = false;
 }

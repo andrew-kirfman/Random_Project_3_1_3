@@ -1,4 +1,13 @@
 # ---------------------------------------------------------------------------- #
+# Developer: Andrew Kirfman                                                    #
+# Project: CSCE-313 Machine Problem #4                                         #
+#                                                                              #
+# File: ./Grading                                                              #
+# ---------------------------------------------------------------------------- #
+
+echo 'VOC_NO_REPORT_OUTPUT' >> $vocareumReportFile 
+
+# ---------------------------------------------------------------------------- #
 # Select Language                                                              # 
 # ---------------------------------------------------------------------------- #
 
@@ -615,6 +624,10 @@ if [ "$CHOSEN_LANGUAGE" == "BASH" ]; then
 		echo "getmemory     ...   Failed [0/20]" >> $vocareumReportFile
 		echo "getmemory_map,0" >> $vocareumGradeFile
     fi
+
+	# Output the report file at the very end
+	echo "Full Grading Report: "
+	cat $vocareumReportFile 2> /dev/null | grep -v "VOC"
 
 	exit 0
 fi
@@ -2315,6 +2328,10 @@ clean:
 		mv student_makefile Makefile
 	fi
 
+	# Output the report file at the very end
+	echo "Full Grading Report: "
+	cat $vocareumReportFile 2> /dev/null | grep -v "VOC"
+                                                                              
 	exit 0
 fi
 
@@ -2707,8 +2724,7 @@ if __name__ == \"__main__\":
 	# Run Proctest Program                                                         # 
 	# ---------------------------------------------------------------------------- #                                    
            
-	proctest_output="$(python mp4_test.py)"                                      
-    echo $proctest_output           
+	proctest_output="$(python mp4_test.py)"                                               
                                       
 	# ---------------------------------------------------------------------------- #
 	# getpid                                                                       # 
@@ -2717,7 +2733,7 @@ if __name__ == \"__main__\":
     IS_GETPID="$(echo $proctest_output | grep 'getpid Succeeded')"
     
     if [ "$IS_GETPID" != "" ]; then
-    	echo "getpid        ...   Passed [5/5]" >> $vocareumReportFile
+    	echo "getpid		...   Passed [5/5]" >> $vocareumReportFile
    		echo "getpid,5" >> $vocareumGradeFile
 	else
 		echo "getpid        ...   Failed [0/5]" >> $vocareumReportFile
@@ -3074,5 +3090,9 @@ if __name__ == \"__main__\":
 		echo "getmemory_map,0" >> $vocareumGradeFile
 	fi
 
+	# Output the report file at the very end
+	echo "Full Grading Report: "
+	cat $vocareumReportFile 2> /dev/null | grep -v "VOC"                                                                              
+                                                                              
 	exit 0
 fi

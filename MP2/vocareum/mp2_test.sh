@@ -32,10 +32,12 @@ if [[ $FILES_NOT_FOUND -gt 0 ]]; then
 	echo "Required File Not Found." >> $vocareumReportFile
 	echo "init_allocator    ...   Untestable [0/15]" >> $vocareumReportFile
 	echo "release_allocator ...   Untestable [0/5]" >> $vocareumReportFile
-	echo "my_malloc         ...   Untestable [0/20]" >> $vocareumReportFile	
-	echo "my_free           ...   Untestable [0/20]" >> $vocareumReportFile
+	echo "my_malloc         ...   Untestable [0/30]" >> $vocareumReportFile	
+	echo "my_free           ...   Untestable [0/30]" >> $vocareumReportFile
 	echo "print_list        ...   Untestable [0/10]" >> $vocareumReportFile
 	echo "buddy_address     ...   Untestable [0/10]" >> $vocareumReportFile
+	echo "split_block       ...   Untestable [0/20]" >> $vocareumReportFile
+	echo "combine_block     ...   Untestable [0/20]" >> $vocareumReportFile
 
 	echo "init_allocator,0" >> $vocareumGradeFile
 	echo "release_allocator,0" >> $vocareumGradeFile
@@ -43,6 +45,8 @@ if [[ $FILES_NOT_FOUND -gt 0 ]]; then
 	echo "my_free,0" >> $vocareumGradeFile
 	echo "print_list,0" >> $vocareumGradeFile
 	echo "buddy_address,0" >> $vocareumGradeFile
+	echo "split_block,0" >> $vocareumGradeFile
+	echo "combine_block,0" >> $vocareumGradeFile
 
 	exit 0;
 fi
@@ -58,10 +62,12 @@ if [ "$?" != "0" ]; then
 
 	echo "init_allocator    ...   Untestable [0/15]" >> $vocareumReportFile
 	echo "release_allocator ...   Untestable [0/5]" >> $vocareumReportFile
-	echo "my_malloc         ...   Untestable [0/20]" >> $vocareumReportFile	
-	echo "my_free           ...   Untestable [0/20]" >> $vocareumReportFile
+	echo "my_malloc         ...   Untestable [0/30]" >> $vocareumReportFile	
+	echo "my_free           ...   Untestable [0/30]" >> $vocareumReportFile
 	echo "print_list        ...   Untestable [0/10]" >> $vocareumReportFile
 	echo "buddy_address     ...   Untestable [0/10]" >> $vocareumReportFile
+	echo "split_block       ...   Untestable [0/20]" >> $vocareumReportFile
+	echo "combine_block     ...   Untestable [0/20]" >> $vocareumReportFile
 
 	echo "init_allocator,0" >> $vocareumGradeFile
 	echo "release_allocator,0" >> $vocareumGradeFile
@@ -69,6 +75,8 @@ if [ "$?" != "0" ]; then
 	echo "my_free,0" >> $vocareumGradeFile
 	echo "print_list,0" >> $vocareumGradeFile
 	echo "buddy_address,0" >> $vocareumGradeFile
+	echo "split_block,0" >> $vocareumGradeFile
+	echo "combine_block,0" >> $vocareumGradeFile
 
 	exit 0
 fi
@@ -153,13 +161,13 @@ int main(int argc, char ** argv)
 		bad_constructor_values += 1;
 	}
 
-	if(bad_constructor_values > 0)
+	if(bad_constructor_values == 0)
 	{
 		std::cout << \"Constructor Succeeded \";
 	}
 	else
 	{
-		std::cout << \"Constructor Failed \"
+		std::cout << \"Constructor Failed \";
 	}
 	
 	return 0;
@@ -211,13 +219,16 @@ int main(int argc, char ** argv)
 	my_alloc->init_allocator(2 << 6, 2 << 17);
 
 	int bad_init_values = 0;
-	
+
 	char *init_head_pointer = my_alloc->getHeadPointer();
 	unsigned int init_mem_size = my_alloc->getMemSize();
 	unsigned int init_block_size = my_alloc->getBasicBlockSize();
 	unsigned short int init_num_tiers = my_alloc->getNumTiers();
 	bool init_initialized = my_alloc->getInitialized();
 	std::map<int, Addr> *init_memory_array = my_alloc->getMemoryArray();
+
+	init_memory_array->at(128);
+	return 0;
 
 	if(init_head_pointer == NULL)
 	{
@@ -278,7 +289,7 @@ int main(int argc, char ** argv)
 		bad_init_values += 1;
 	}
 
-	header *first_block = (header*) init_memory_array->at(2 << 16);
+	header *first_block = NULL;// (header*) init_memory_array->at(2 << 16);
 
 	if(first_block->in_use != false)
 	{
@@ -308,13 +319,11 @@ int main(int argc, char ** argv)
 	return 0;
 }" > memtest.c
 
-	make # &> /dev/null
+	make &> /dev/null
 	
 	if [ "$?" != "0" ]; then
 		echo "Init Failed 9 "
 	else
-		./memtest
-
 		test_output=$(./memtest 2> /dev/null)
 
 		echo "$test_output"
@@ -416,7 +425,7 @@ int main(int argc, char ** argv)
 	if [ "$?" != "0" ]; then
 		echo "Split Block Failed 4 "
 	else
-		test_output=$(memtest 2>/dev/null)
+		test_output=$(./memtest 2> /dev/null)
 
 		echo "$test_output"
 	fi
@@ -457,8 +466,8 @@ int main(int argc, char ** argv)
 	/* ------------------------------------------------------ */
 
 	// Split a block in two to combine again
-	my_alloc->split_block((Addr) my_alloc->getMemoryArray->at(2 << 17));
-	header *second_block = (header*) my_alloc->getMemoryArray->at(2 << 16);
+	my_alloc->split_block((Addr) my_alloc->getMemoryArray()->at(2 << 17));
+	header *second_block = (header*) my_alloc->getMemoryArray()->at(2 << 16);
 
 	int test_combine_failures = 0;
 
@@ -473,7 +482,7 @@ int main(int argc, char ** argv)
 
 		
 		// Once combined, a single block should be at the next level above
-		iterator = (header*) my_alloc->getMemoryArray->at(2 << 17);
+		iterator = (header*) my_alloc->getMemoryArray()->at(2 << 17);
 
 		if(iterator != NULL)
 		{
@@ -498,12 +507,11 @@ int main(int argc, char ** argv)
 	if [ "$?" != "0" ]; then
 		echo "Combine Blocks Failed "
 	else
-		test_output=$(memtest 2> /dev/null)
+		test_output=$(./memtest 2> /dev/null)
 
 		echo "$test_output"
 	fi
 }
-
 
 test_my_malloc()
 {
@@ -958,6 +966,7 @@ int main(int argc, char ** argv)
 	fi
 }
 
+
 test_print_list()
 {
 echo "
@@ -1004,9 +1013,12 @@ int main(int argc, char ** argv)
 	else
 		test_output=$(./memtest 2> /dev/null)
 	
-		echo "$test_output"
+		if [ "$test_output" == "" ]; then
+			echo "print_list Failed "
+		else
+			echo "$test_output"
+		fi
 	fi
-
 }
 
 test_buddy_address()
@@ -1082,7 +1094,6 @@ int main(int argc, char ** argv)
 
 	return 0;
 }" > memtest.c
-
 	make &> /dev/null
 
 	if [ "$?" != "0" ]; then
@@ -1093,7 +1104,6 @@ int main(int argc, char ** argv)
 		echo "$test_output"
 	fi
 }
-
 
 # --------------------------------------------------------------------------- #
 # Point Allocations                                                           #
@@ -1135,20 +1145,22 @@ fi
 
 # Init
 init_success=$(echo "$init_result" | grep "Init Succeeded")
-echo "$init_result"
 if [ "$init_success" == "" ]; then
 
 	init_failures=$(echo "$init_result" | sed 's/Init Failed \(.*\) /\1/g')
 
-	if [[ $init_failures -gt 0 && $init_failures -lt 9 ]]; then
-		let "init_allocator_points=$init_allocator_points-$init_failures"
-	fi
-
-	if [ "$init_failures" == "9" ]; then
+	if [ "$init_failures" == "$init_failures" ]; then
+		if [[ $init_failures -gt 0 && $init_failures -lt 9 ]]; then
+			let "init_allocator_points=$init_allocator_points-$init_failures"
+		elif [ "$init_failures" == "9" ]; then
+			let "init_allocator_points=0"
+		else
+			let "init_allocator_points=0"
+		fi
+	else
 		let "init_allocator_points=0"
 	fi
 fi
-
 
 # Split Block
 split_block_success=$(echo "$split_block_result" | grep "Split Block Succeeded")
@@ -1156,11 +1168,15 @@ if [ "$split_block_success" == "" ]; then
 	
 	split_failures=$(echo "$split_block_result" | sed 's/Split Block Failed \(.*\) /\1/g')
 
-	if [[ $split_failures -gt 0 && $split_failures -lt 4 ]]; then
-		let "split_block_points=$split_block_points-5*$split_failures"
-	fi
-
-	if [ "$split_failures" == "4" ]; then
+	if [ "$split_failures" == "$split_failures" ]; then
+        if [[ $split_failures -gt 0 && $split_failures -lt 4 ]]; then
+        	let "split_block_points=$split_block_points-5*$split_failures"
+        elif [ "$split_failures" == "4" ]; then
+        	let "split_block_points=0"
+        else
+        	let "split_block_points=0"
+        fi
+	else
 		let "split_block_points=0"
 	fi
 fi
@@ -1213,8 +1229,14 @@ if [ "$my_free_success" == "" ]; then
 
 	free_failures=$(echo "$my_free_result" | sed 's/Free Failed \(.*\) /\1/g')
 
-	if [[ $free_failures -gt 0 ]]; then
-		let "my_free_points=$my_free_points-10*$free_failures"
+	if [ "$free_failures" == "$free_failures" ]; then
+		if [[ $free_failures -gt 0 ]]; then
+			let "my_free_points=$my_free_points-10*$free_failures"
+		else
+			let "my_free_points=0"
+		fi
+	else
+		let "my_free_points=0"
 	fi
 fi
 
@@ -1246,6 +1268,50 @@ fi
 
 # Each function should return something 
 
+# Constructor
+if [ "$constructor_result" == "" ]; then
+	let "init_allocator_points=$init_allocator_points-2"
+fi
+
+# Init
+if [ "$init_result" == "" ]; then
+	let "init_allocator_points=0"
+fi
+
+# Split_block
+if [ "$split_block_result" == "" ]; then
+	let "split_block_points=0"
+fi
+
+# Combine_block
+if [ "$combine_block_result" == "" ]; then
+	let "combine_block_points=0"
+fi
+
+# My_malloc
+if [ "$my_malloc_result" == "" ]; then
+	let "my_malloc_points=0"
+fi
+
+# My_free
+if [ "$my_free_result" == "" ]; then
+	let "my_free_points=0"
+fi
+
+# Release_allocator
+if [ "$release_allocator_result" == "" ]; then
+	let "release_allocator_points=0"
+fi
+
+# Print_list
+if [ "$print_list_result" == "" ]; then
+	let "print_list_points=0"
+fi
+
+# Buddy_address
+if [ "$buddy_address_result" == "" ]; then
+	let "buddy_address_points=0"
+fi
 
 # --------------------------------------------------------------------------- #
 # No Negative Points                                                          #
@@ -1291,10 +1357,10 @@ fi
 if [ "$init_allocator_points" == "15" ]; then
 	echo "init_allocator      ...   Passed [15/15]" >> $vocareumReportFile
 	echo "init_allocator,15" >> $vocareumGradeFile
-else if [[ $init_allocator_points -lt 15 && $init_allocator_points -gt 0 ]]; then
+elif [[ $init_allocator_points -lt 15 && $init_allocator_points -gt 0 ]]; then
 	echo "init_allocator      ...   Partial Pass [$init_allocator_points/15]" >> $vocareumReportFile
 	echo "init_allocator,$init_allocator_points" >> $vocareumGradeFile
-else if [ "$init_allocator_points" == "0" ]; then
+elif [ "$init_allocator_points" == "0" ]; then
 	echo "init_allocator      ...   Failed [0/15]" >> $vocareumReportFile
 	echo "init_allocator,0" >> $vocareumGradeFile
 fi
@@ -1303,10 +1369,10 @@ fi
 if [ "$release_allocator_points" == "5" ]; then
 	echo "release_allocator   ...   Passed [5/5]" >> $vocareumReportFile
 	echo "release_allocator,5" >> $vocareumGradeFile
-else if [[ $release_allocator_points -lt 5 && $release_allocator_points -gt 0 ]]; then
+elif [[ $release_allocator_points -lt 5 && $release_allocator_points -gt 0 ]]; then
 	echo "release_allocator   ...   Partial Pass [$release_allocator_points/5]" >> $vocareumReportFile	
 	echo "release_allocator,$release_allocator_points" >> $vocareumGradeFile
-else if [ "$release_allocator_points" == "0" ]; then
+elif [ "$release_allocator_points" == "0" ]; then
 	echo "release_allocator   ...   Failed [0/5]" >> $vocareumReportFile
 	echo "release_allocator,0" >> $vocareumGradeFile
 fi
@@ -1315,74 +1381,79 @@ fi
 if [ "$my_malloc_points" == "30" ]; then
 	echo "my_malloc           ...   Passed [30/30]" >> $vocareumReportFile
 	echo "my_malloc,30" >> $vocareumGradeFile
-else if [[ $my_malloc_points -lt 30 && $my_malloc_points -gt 0 ]]; then
+elif [[ $my_malloc_points -lt 30 && $my_malloc_points -gt 0 ]]; then
 	echo "my_malloc           ...   Partial Pass [$my_malloc_points/30]" >> $vocareumReportFile
 	echo "my_malloc,$my_malloc_points" >> $vocareumGradeFile
-else if [ "$my_malloc_points" == "0" ]; then
+elif [ "$my_malloc_points" == "0" ]; then
 	echo "my_malloc           ...   Failed [0/30]" >> $vocareumReportFile
 	echo "my_malloc,0" >> $vocareumGradeFile
 fi
 
 # My Free
-if [ ]; then
-
-else if [[ ]]; then
-
-else if [ ]; then
-
+if [ "$my_free_points" == "30" ]; then
+	echo "my_free             ...   Passed [30/30]" >> $vocareumReportFile
+	echo "my_free,30" >> $vocareumGradeFile
+elif [[ $my_free_points -lt 30 && $my_free_points -gt 0 ]]; then
+	echo "my_free             ...   Partial Pass [$my_free_points/30]" >> $vocareumReportFile
+	echo "my_free,$my_free_points" >> $vocareumGradeFile
+elif [ "$my_free_points" == "0" ]; then
+	echo "my_free             ...   Failed [0/30]" >> $vocareumReportFile
+	echo "my_free,0" >> $vocareumGradeFile
 fi
 
 # Print List
 if [ "$print_list_points" == 10 ]; then
 	echo "print_list          ...   Passed [10/10]" >> $vocareumReportFile
 	echo "print_list,10" >> $vocareumGradeFile
-else if [[ $print_list_points -lt 10 && $print_list_points -gt 0 ]]; then
+elif [[ $print_list_points -lt 10 && $print_list_points -gt 0 ]]; then
 	echo "print_list          ...   Partial Pass [$print_list_points/10]" >> $vocareumReportFile
 	echo "print_list,$print_list_points" >> $vocareumGradeFile
-else if [ "$print_list_points" == "0" ]; then
+elif [ "$print_list_points" == "0" ]; then
 	echo "print_list          ...   Failed [0/10]" >> $vocareumReportFile
 	echo "print_list,0" >> $vocareumGradeFile
 fi
 
 # Buddy Address
-if [ ]; then
-
-else if [[ ]]; then
-
-else if [ ]; then
-
+if [ "$buddy_address_points" == "10" ]; then
+	echo "buddy_address       ...   Passed [10/10]" >> $vocareumReportFile
+	echo "buddy_address,10" >> $vocareumGradeFile
+elif [[ $buddy_address_points -lt 10 && $buddy_address_points -gt 0 ]]; then
+	echo "buddy_address       ...   Partial Pass [$buddy_address_points/10]" >> $voareumReportFile
+	echo "buddy_address,$buddy_address_points" >> $vocareumGradeFile
+elif [ "$buddy_address_points" == "0" ]; then
+	echo "buddy_address       ...   Failed [0/10]" >> $vocareumReportFile
+	echo "buddy_address,0" >> $vocareumGradeFile
 fi
 
 # Split Block
-if [ ]; then
-
-else if [[ ]]; then
-
-else if [ ]; then
-
+if [ "$split_block_points" == "20" ]; then
+	echo "split_block         ...   Passed [20/20]" >> $vocareumReportFile
+	echo "split_block,20" >> $vocareumGradeFile
+elif [[ $split_block_points -lt 20 && $split_block_points -gt 0 ]]; then
+	echo "split_block         ...   Partial Pass [$split_block_points/20]" >> $vocareumReportFile
+	echo "split_block,$split_block_points" >> $vocareumGradeFile
+elif [ "$split_block_points" == "0" ]; then
+	echo "split_block         ...   Failed [0/10]" >> $vocareumReportFile
+	echo "split_block,0" >> $vocareumGradeFile
 fi
 
 # Combine Block
-if [ ]; then
-
-else if [[ ]]; then
-
-else if [ ]; then
-
+if [ "$combine_block_points" == "20" ]; then
+	echo "combine_block       ...   Passed [20/20]" >> $vocareumReportFile
+	echo "combine_block,20" >> $vocareumGradeFile
+elif [[ $combine_block_points -lt 20 && $combine_block_points -gt 0 ]]; then
+	echo "combine_block       ...   Partial Pass [$combine_block_points/20]" >> $vocareumReportFile
+	echo "combine_block,$combine_block_points" >> $vocareumGradeFile
+elif [ "$combine_block_points" == "0" ]; then
+	echo "combine_block       ...   Failed [0/20]" >> $vocareumReportFile
+	echo "combine_block,0" >> $vocareumGradeFile
 fi
 
+exit 0
 
-
-#init_allocator_points=15
-#release_allocator_points=5
-#my_malloc_points=30
-#my_free_points=30
-#print_list_points=10
-#buddy_address_points=10
-#split_block_points=20
-#combine_block_points=20
-
-
+# Print out the grading report file
+echo "Final grade report: "
+cat $voareumReportFile | grep -v "VOC"
 
 
 # Replace student's main function()

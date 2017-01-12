@@ -1,10 +1,11 @@
 # ---------------------------------------------------------------------------- #
 # Developer: Andrew Kirfman                                                    # 
-# Project: Machine Problem #5                                                  #
+# Project: CSCE-313 Machine Problem #5                                         #
 #                                                                              #
-# File: ./vocareum/mp5_test.sh                                                 #
+# File: ./Grading                                                              #
 # ---------------------------------------------------------------------------- #
 
+echo 'VOC_NO_REPORT_OUTPUT' >> $vocareumReportFile
 
 # ---------------------------------------------------------------------------- #
 # Check Student's Files                                                        # 
@@ -395,5 +396,8 @@ else
 	echo "advancedPipe2    ...   Failed [0/15]" >> $vocareumReportFile
 	echo "advancedPipe2,0" >> $vocareumGradeFile
 fi
+
+echo "Full grading report: "
+cat $vocareumReportFile 2> /dev/null | grep -v "VOC"
 
 exit 0

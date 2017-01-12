@@ -1,5 +1,11 @@
+# ---------------------------------------------------------------------------- #
+# Developer: Andrew Kirfman                                                    #
+# Project: CSCE-313 Machine Problem 1                                          #
+#                                                                              #
+# File: ./Grading                                                              #
+# ---------------------------------------------------------------------------- #
 
-echo 'VOC_NO_REPORT_OUTPUT'    >> $vocareumReportFile 
+echo 'VOC_NO_REPORT_OUTPUT' >> $vocareumReportFile 
 
 # ---------------------------------------------------------------------------- #
 # Substitute Main File                                                         #
@@ -296,13 +302,14 @@ make &> /dev/null
 
 if [ "$?" != "0" ]; then
 	# If the student's code does not compile, then there's no reason to continue
-	echo "Code Compiles     ...   Failed" >> $vocareumReportFile
-    echo "Testing Init      ...   Untestable [0/16]" >> $vocareumReportFile
-    echo "Testing Destroy   ...   Untestable [0/6]" >> $vocareumReportFile
-    echo "Testing Insert    ...   Untestable [0/16]" >> $vocareumReportFile
-    echo "Testing Delete    ...   Untestable [0/16]" >> $vocareumReportFile
-    echo "Testing Lookup    ...   Untestable [0/8]" >> $vocareumReportFile
-    echo "Testing PrintList ...   Untestable [0/8]" >> $vocareumReportFile
+	echo "Code Does Not Compile" >> $vocareumReportFile
+    echo "Testing Init________Untestable [0/16]" >> $vocareumReportFile
+    echo "Testing Destroy_____Untestable [0/6]" >> $vocareumReportFile
+    echo "Testing Insert______Untestable [0/16]" >> $vocareumReportFile
+    echo "Testing Delete______Untestable [0/16]" >> $vocareumReportFile
+    echo "Testing Lookup______Untestable [0/8]" >> $vocareumReportFile
+    echo "Testing PrintList___Untestable [0/8]" >> $vocareumReportFile
+	echo "Testing Bonus_______Untestable [0/10]" >> $vocareumReportFile
 
 	echo "Init,0" >> $vocareumGradeFile
 	echo "Destroy,0" >> $vocareumGradeFile
@@ -310,6 +317,7 @@ if [ "$?" != "0" ]; then
 	echo "Delete,0" >> $vocareumGradeFile
 	echo "Lookup,0" >> $vocareumGradeFile
 	echo "PrintList,0" >> $vocareumGradeFile
+	echo "Bonus,0" >> $vocareumGradeFile
 
 	exit 1
 fi
@@ -318,12 +326,13 @@ test_output=$(./List_1)
 
 if [ "$test_output" == "" ]; then
 	echo "Cannot Execute ./List_1" >> $vocareumReportFile
-    echo "Testing Init      ...   Untestable [0/16]" >> $vocareumReportFile
-    echo "Testing Destroy   ...   Untestable [0/6]" >> $vocareumReportFile
-    echo "Testing Insert    ...   Untestable [0/16]" >> $vocareumReportFile
-    echo "Testing Delete    ...   Untestable [0/16]" >> $vocareumReportFile
-    echo "Testing Lookup    ...   Untestable [0/8]" >> $vocareumReportFile
-    echo "Testing PrintList ...   Untestable [0/8]" >> $vocareumReportFile
+    echo "Testing Init________Untestable [0/16]" >> $vocareumReportFile
+    echo "Testing Destroy_____Untestable [0/6]" >> $vocareumReportFile
+    echo "Testing Insert______Untestable [0/16]" >> $vocareumReportFile
+    echo "Testing Delete______Untestable [0/16]" >> $vocareumReportFile
+    echo "Testing Lookup______Untestable [0/8]" >> $vocareumReportFile
+    echo "Testing PrintList___Untestable [0/8]" >> $vocareumReportFile
+	echo "Testing Bonus_______Untestable [0/10]" >> $vocareumReportFile
 
 	echo "Init,0" >> $vocareumGradeFile
 	echo "Destroy,0" >> $vocareumGradeFile
@@ -331,6 +340,7 @@ if [ "$test_output" == "" ]; then
 	echo "Delete,0" >> $vocareumGradeFile
 	echo "Lookup,0" >> $vocareumGradeFile
 	echo "PrintList,0" >> $vocareumGradeFile
+	echo "Bonus,0" >> $vocareumGradeFile
 
 	exit 1
 fi
@@ -752,17 +762,17 @@ else
 	fi
 
 	if [ "$bonus_points" == "10" ]; then
-		echo "Testing Bonus     ...   Passed [0/10]" >> $vocareumReportFile
+		echo "Testing Bonus_______Passed [0/10]" >> $vocareumReportFile
 		echo "Bonus,10" >> $vocareumGradeFile		
 	fi
 
 	if [[ $bonus_points -gt 0 && $bonus_points -lt 10 ]]; then
-		echo "Testing Bonus     ...   Partial Pass [$bonus_points/10]" >> $vocareumReportFile
+		echo "Testing Bonus_______Partial Pass [$bonus_points/10]" >> $vocareumReportFile
 		echo "Bonus,$bonus_points" >> $vocareumGradeFile
 	fi
 
 	if [ "$bonus_points" == "0" ]; then
-		echo "Testing Bonus     ...   Partial Pass [0/10]" >> $vocareumReportFile
+		echo "Testing Bonus_______Failed [0/10]" >> $vocareumReportFile
 		echo "Bonus,0" >> $vocareumGradeFile
 	fi
 fi
@@ -773,85 +783,85 @@ fi
 
 # INIT - 16 points
 if [ "$init_points" == "16" ]; then
-	echo "Testing Init      ...   Passed [16/16]" >> $vocareumReportFile
+	echo "Testing Init________Passed [16/16]" >> $vocareumReportFile
 	echo "Init,16" >> $vocareumGradeFile
 fi
 
 if [[ $init_points -gt 0 && $init_points -lt 16 ]]; then
-	echo "Testing Init      ...   Partial Pass [$init_points/16]" >> $vocareumReportFile
+	echo "Testing Init________Partial Pass [$init_points/16]" >> $vocareumReportFile
 	echo "Init,$init_points" >> $vocareumGradeFile
 fi
 
 if [ $init_points -le 0 ]; then
-	echo "Testing Init      ...   Failed [0/16]" >> $vocareumReportFile
+	echo "Testing Init________Failed [0/16]" >> $vocareumReportFile
 	echo "Init,$init_points" >> $vocareumGradeFile
 fi
 
 # INSERT - 16 points
 if [ "$insert_points" == "16" ]; then
-	echo "Testing Insert    ...   Passed [16/16]" >> $vocareumReportFile
+	echo "Testing Insert______Passed [16/16]" >> $vocareumReportFile
 	echo "Insert,16" >> $vocareumGradeFile
 fi
 
 if [[ $insert_points -gt 0 && $insert_points -lt 16 ]]; then
-	echo "Testing Insert    ...   Partial Pass [$insert_points/16]" >> $vocareumReportFile
+	echo "Testing Insert______Partial Pass [$insert_points/16]" >> $vocareumReportFile
 	echo "Insert,$insert_points" >> $vocareumGradeFile
 fi
 
 if [ $insert_points -le 0 ]; then
-	echo "Testing Insert    ...   Failed [0/16]" >> $vocareumReportFile
+	echo "Testing Insert______Failed [0/16]" >> $vocareumReportFile
 	echo "Insert,0" >> $vocareumGradeFile
 fi
 
 # DELETE - 16 points
 if [ "$delete_points" == "16" ]; then
-	echo "Testing Delete    ...   Passed [16/16]" >> $vocareumReportFile
+	echo "Testing Delete______Passed [16/16]" >> $vocareumReportFile
 	echo "Delete,16" >> $vocareumGradeFile
 fi
 
 if [[ $delete_points -gt 0 && $delete_points -lt 16 ]]; then
-	echo "Testing Delete    ...   Partial Pass [$delete_points/16]" >> $vocareumReportFile
+	echo "Testing Delete______Partial Pass [$delete_points/16]" >> $vocareumReportFile
 	echo "Delete,$delete_points" >> $vocareumGradeFile
 fi
 
 if [ $delete_points -le 0 ]; then
-	echo "Testing Delete    ...   Failed [0/16]" >> $vocareumReportFile
+	echo "Testing Delete______Failed [0/16]" >> $vocareumReportFile
 	echo "Delete,0" >> $vocareumGradeFile
 fi
 
 # LOOKUP - 8 points
 if [ "$lookup_points" == "8" ]; then
-	echo "Testing Lookup    ...   Passed [8/8]" >> $vocareumReportFile
+	echo "Testing Lookup______Passed [8/8]" >> $vocareumReportFile
 	echo "Lookup,8" >> $vocareumGradeFile
 fi
 
 if [[ $lookup_points -gt 0 && $lookup_points -lt 8 ]]; then
-	echo "Testing Lookup    ...   Partial Pass [$lookup_points/8]" >> $vocareumReportFile
+	echo "Testing Lookup______Partial Pass [$lookup_points/8]" >> $vocareumReportFile
 	echo "Lookup,$lookup_points" >> $vocareumGradeFile
 fi
 
 if [ $lookup_points -le 0 ]; then
-	echo "Testing Lookup    ...   Failed [0/8]" >> $vocareumReportFile
+	echo "Testing Lookup______Failed [0/8]" >> $vocareumReportFile
 	echo "Lookup,0" >> $vocareumGradeFile
 fi
 
 # PRINTLIST
 if [ "$printlist_points" == "-1" ]; then
-    echo "Testing PrintList ...   Untestable [0/8]" >> $vocareumReportFile
+    echo "Testing PrintList___Untestable [0/8]" >> $vocareumReportFile
 	echo "PrintList,0" >> $vocareumGradeFile		
 else
 	if [ "$printlist_points" == "8" ]; then
-		echo "Testing PrintList ...   Passed [8/8]" >> $vocareumReportFile
+		echo "Testing PrintList___Passed [8/8]" >> $vocareumReportFile
 		echo "PrintList,8" >> $vocareumGradeFile
 	fi
 
 	if [[ $printlist_points -gt 0 && $printlist_points -lt 8 ]]; then
-		echo "Testing PrintList ...   Partial Pass [$printlist_points/8]" >> $vocareumReportFile
+		echo "Testing PrintList___Partial Pass [$printlist_points/8]" >> $vocareumReportFile
 		echo "PrintList,$printlist_points" >> $vocareumGradeFile
 	fi
 
 	if [ $printlist_points -le 0 ]; then
-		echo "Testing Printlist ...   Failed [0/8]" >> $vocareumReportFile
+		echo "Testing Printlist___Failed [0/8]" >> $vocareumReportFile
 		echo "PrintList,0" >> $vocareumGradeFile
 	fi
 fi
@@ -859,26 +869,30 @@ fi
 
 # DESTROY
 if [ "$destroy_points" == "-1" ]; then
-    echo "Testing Destroy   ...   Untestable [0/6]" >> $vocareumReportFile
+    echo "Testing Destroy_____Untestable [0/6]" >> $vocareumReportFile
 	echo "Destroy,0" >> $vocareumGradeFile
 else
 	if [ "$destroy_points" == "6" ]; then
-		echo "Testing Destroy ...   Passed [6/6]" >> $vocareumReportFile
+		echo "Testing Destroy_____Passed [6/6]" >> $vocareumReportFile
 		echo "Destroy,6" >> $vocareumGradeFile
 	fi
 
 	if [[ $destroy_points -gt 0 && $destroy_points -lt 6 ]]; then
-		echo "Testing Destroy ...   Partial Pass [$destroy_points/6]" >> $vocareumReportFile
+		echo "Testing Destroy_____Partial Pass [$destroy_points/6]" >> $vocareumReportFile
 		echo "Destroy,$destroy_points" >> $vocareumGradeFile
 	fi
 
 	if [ $destroy_points -le 0 ]; then
-		echo "Testing Destroy ...   Failed [0/6]" >> $vocareumReportFile
+		echo "Testing Destroy_____Failed [0/6]" >> $vocareumReportFile
 		echo "Destroy,0" >> $vocareumGradeFile
 	fi
 fi
 
 # Sub back in the existing main file so that it isn't overwritten
 mv saved_main.cpp main.cpp
+             
+# Output the report file at the very end
+echo "Full grading report: "
+cat $vocareumReportFile 2> /dev/null | grep -v "VOC"
 
 exit 0

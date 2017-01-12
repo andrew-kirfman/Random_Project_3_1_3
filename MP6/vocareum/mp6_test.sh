@@ -1,3 +1,10 @@
+# ---------------------------------------------------------------------------- #
+# Developer: Andrew Kirfman                                                    #
+# Project: CSCE-313 Machine Problem #6                                         #
+#                                                                              #
+# File: ./Grading                                                              #
+# ---------------------------------------------------------------------------- #
+
 echo 'VOC_NO_REPORT_OUTPUT'    >> $vocareumReportFile 
 
 # ---------------------------------------------------------------------------- #
@@ -747,3 +754,7 @@ echo "Interactive SJF (Bonus),0" >> $vocareumGradeFile
 echo "Interactive FIFO      ...  Must be Graded Manually [00/20]" >> $vocareumReportFile
 echo "Interactive RR        ...  Must be Graded Manually [00/20]" >> $vocareumReportFile
 echo "Interactive SJF       ...  Must be Graded Manually [00/20]" >> $vocareumReportFile
+
+# Print out the grading report
+echo "Full grading report: "
+cat "$vocareumReportFile" | grep -v "VOC"

@@ -101,22 +101,22 @@ unsigned int MyAllocator::getBasicBlockSize()
 	
 }
 
-unsigned int getMemSize()
+unsigned int MyAllocator::getMemSize()
 {
 	
 }
 
-unsigned short int getNumTiers()
+unsigned short int MyAllocator::getNumTiers()
 {
 	
 }
 
-bool getInitialized()
+bool MyAllocator::getInitialized()
 {
 	
 }
 	
-std::map<int, Addr> *getMemoryArray()
+std::map<int, Addr> *MyAllocator::getMemoryArray()
 {
 	
 }
